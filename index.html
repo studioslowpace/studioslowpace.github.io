@@ -6,15 +6,11 @@
     <title>客舍時間表</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 你的 CSS 樣式保持不變 */
-        :root { --bg-color: #f7f5f2; --card-bg: #ffffff; --text-main: #333333; --primary-blue: #2b579a; --danger-red: #d9534f; --primary-green: #4CAF50; }
-        body { font-family: sans-serif; background: var(--bg-color); padding: 10px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; background: var(--card-bg); padding: 25px; border-radius: 16px; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #efefef; border-left: 1px solid #efefef; }
-        .cell { min-height: 120px; border-right: 1px solid #efefef; border-bottom: 1px solid #efefef; padding: 8px; cursor: pointer; }
-        .day-num { font-weight: bold; margin-bottom: 8px; }
-        .event { font-size: 12px; padding: 4px; margin: 2px 0; border-radius: 4px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; }
+        body { font-family: sans-serif; background: #f7f5f2; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid #ddd; }
+        .cell { min-height: 100px; border: 1px solid #ddd; padding: 5px; cursor: pointer; }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal-card { background: white; padding: 20px; border-radius: 8px; width: 300px; }
     </style>
@@ -22,19 +18,26 @@
 <body>
 
 <div class="container">
-    <div class="header-section">
+    <div class="header">
         <h1>每月時間表</h1>
-        <span id="month-display" onclick="window.openModal('switchMonthModal')">載入中...</span>
+        <span id="month-display" onclick="window.openModal('switchMonthModal')">點擊選月</span>
         <button onclick="window.toggleAdmin()">管理員登入</button>
     </div>
     <div id="calendar" class="grid"></div>
+</div>
+
+<div class="modal-overlay" id="switchMonthModal">
+    <div class="modal-card">
+        <h3>選擇月份</h3>
+        <button onclick="window.closeModal('switchMonthModal')">關閉</button>
+    </div>
 </div>
 
 <div class="modal-overlay" id="authModal">
     <div class="modal-card">
         <h3>管理員驗證</h3>
         <input type="password" id="admin-pwd" placeholder="輸入密碼">
-        <button onclick="window.verifyAdmin()">確認</button>
+        <button onclick="window.verifyAdmin()">確認登入</button>
         <button onclick="window.closeModal('authModal')">取消</button>
     </div>
 </div>
@@ -45,68 +48,56 @@
     const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
     const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. 全域狀態
-    let currentMonth = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+    // 2. 全域變數
+    let currentMonth = "2026-06";
     let isAdmin = false;
     let events = {};
-    let types = [];
-    let correctPassword = "slow2024";
 
-    // 3. 核心功能掛載至 window
-    window.render = function() {
-        const calendarEl = document.getElementById('calendar');
-        calendarEl.innerHTML = '';
-        ['日', '一', '二', '三', '四', '五', '六'].forEach(d => calendarEl.innerHTML += `<div class="weekday">${d}</div>`);
-        
-        const [year, month] = currentMonth.split('-').map(Number);
-        const daysInMonth = new Date(year, month, 0).getDate();
-        
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dayEvents = (events[currentMonth] || []).filter(e => e.day === d);
-            calendarEl.innerHTML += `
-                <div class="cell" onclick="window.setFormDate(${d})">
-                    <div class="day-num">${d}</div>
-                    ${dayEvents.map(e => `<div class="event">${e.text}</div>`).join('')}
-                </div>`;
-        }
-        document.getElementById('month-display').innerText = currentMonth;
+    // 3. 核心函式掛載至 window
+    window.openModal = function(id) {
+        document.getElementById(id).classList.add('active');
     };
 
-    window.fetchData = async function() {
-        const { data, error } = await client.from('events').select('*').eq('id', 1).single();
-        if (error) throw error;
-        events = data.calendar_events || {};
-        types = data.calendar_types || [];
-        window.render();
-    };
-
-    window.setFormDate = function(day) {
-        if (!isAdmin) return;
-        alert("選擇了日期: " + day);
+    window.closeModal = function(id) {
+        document.getElementById(id).classList.remove('active');
     };
 
     window.toggleAdmin = function() {
-        if (!isAdmin) window.openModal('authModal');
-        else { isAdmin = false; alert("已登出"); }
+        if (!isAdmin) {
+            window.openModal('authModal');
+        } else {
+            isAdmin = false;
+            alert("已登出管理模式");
+        }
     };
 
     window.verifyAdmin = function() {
         const pwd = document.getElementById('admin-pwd').value;
-        if (pwd === correctPassword) {
+        if (pwd === "slow2024") {
             isAdmin = true;
             window.closeModal('authModal');
-            alert("管理員模式已開啟");
+            alert("登入成功");
         } else {
             alert("密碼錯誤");
         }
     };
 
-    window.openModal = (id) => document.getElementById(id).classList.add('active');
-    window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+    window.renderCalendar = function() {
+        const calendarEl = document.getElementById('calendar');
+        calendarEl.innerHTML = '';
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(d => {
+            calendarEl.innerHTML += `<div class="cell" style="font-weight:bold">${d}</div>`;
+        });
+        
+        // 簡單渲染 30 天
+        for (let i = 1; i <= 30; i++) {
+            calendarEl.innerHTML += `<div class="cell" onclick="window.alert('日期: ${i}')">${i}</div>`;
+        }
+    };
 
-    // 4. 啟動
+    // 4. 啟動程序
     document.addEventListener('DOMContentLoaded', () => {
-        window.fetchData();
+        window.renderCalendar();
     });
 </script>
 </body>
