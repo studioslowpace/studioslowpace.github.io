@@ -402,23 +402,24 @@ async function fetchData() {
 
 async function syncAndSave() {
     const overlay = document.getElementById('loading-overlay');
-    if(overlay) overlay.classList.add('active');
+    if (overlay) overlay.classList.add('active');
 
     const { data, error } = await supabase
         .from('events')
         .update({ 
+            title: 'main_calendar', // 關鍵：明確指定 title 欄位的值
             calendar_password: correctPassword,
             calendar_events: events,
             calendar_months: months,
             calendar_types: types
         })
-        .eq('title', 'main_calendar');
+        .eq('title', 'main_calendar'); // 告訴資料庫你要更新的是 title 為 'main_calendar' 的那一列
         
     if (overlay) overlay.classList.remove('active');
 
     if (error) {
-        console.error("儲存失敗:", error);
-        alert("儲存失敗: " + error.message);
+        console.error("同步失敗詳細錯誤:", error);
+        alert("同步失敗: " + error.message);
     } else {
         alert("同步成功！");
         render();
