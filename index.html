@@ -6,39 +6,329 @@
     <title>客舍時間表</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background: #f7f5f2; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid #ddd; }
-        .cell { min-height: 100px; border: 1px solid #ddd; padding: 5px; cursor: pointer; }
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
-        .modal-overlay.active { display: flex; }
-        .modal-card { background: white; padding: 20px; border-radius: 8px; width: 300px; }
+:root {
+            --bg-color: #f7f5f2;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #999999;
+            --primary-green: #4CAF50;
+            --danger-red: #d9534f;
+            --primary-blue: #2b579a;
+            --border-color: #efefef;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif; 
+            background: var(--bg-color); padding: 10px; margin: 0; transition: background 0.3s ease;
+        }
+        body.admin-mode { background: #f0f4f8; }
+
+        .container { 
+            max-width: 1100px; margin: auto; background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+        }
+        
+        /* 頁首排版 */
+        .header-section { 
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; gap: 20px;
+        }
+        
+        .sort-btn {
+            display: none; font-size: 12px; color: #888; cursor: pointer; padding: 0 2px; transition: color 0.2s;
+        }
+        .sort-btn:hover { color: var(--primary-blue); }
+        body.admin-mode .sort-btn { display: inline-block; }
+        
+        .type-name-text { cursor: default; }
+        body.admin-mode .type-name-text { cursor: pointer; }
+        body.admin-mode .type-name-text:hover { text-decoration: underline; }
+
+        /* 標題與圖示區塊 */
+        .title-area { 
+            display: flex; align-items: center; gap: 15px; justify-content: flex-end; flex-shrink: 0; 
+        }
+        .title-text-group { text-align: right; }
+        .title-area h1 { margin: 0 0 8px 0; font-size: 48px; color: var(--primary-blue); letter-spacing: 2px; font-weight: bold; }
+        
+        .logo-btn {
+            height: 60px; width: auto; object-fit: contain; cursor: pointer; transition: all 0.3s ease; user-select: none; border: 2px solid transparent; border-radius: 4px;
+        }
+        .logo-btn:hover { transform: scale(1.05); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body.admin-mode .logo-btn { border-color: #ffa000; box-shadow: 0 0 12px rgba(255, 160, 0, 0.4); }
+        
+        #month-display { 
+            font-size: 30px; font-weight: bold; color: var(--primary-blue); display: inline-block; margin-bottom: 12px; cursor: pointer; padding: 6px 12px; border-radius: 4px; transition: all 0.2s ease; user-select: none; 
+        }
+        #month-display:hover { background-color: rgba(0, 0, 0, 0.05); color: #333; }
+        
+        /* 年份大細設定 */
+        .year-big { font-size: 20px; font-weight: bold; margin-right: 6px; color: #4a4a4a; }
+
+        .legend-box { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 0 0; }
+        
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--text-main); padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
+        body.admin-mode .legend-item { background: rgba(0, 0, 0, 0.02); box-shadow: inset 0 0 0 1px #e0e0e0; }
+
+        .box { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+
+        /* 日曆網格 */
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--border-color); border-left: 1px solid var(--border-color); margin-bottom: 10px; }
+        .cell { min-height: 160px; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 8px; box-sizing: border-box; background: #fff; cursor: pointer; transition: background 0.2s; }
+        .cell:not(.empty-cell):hover { background: #fafafa; }
+        body.admin-mode .cell:not(.empty-cell):hover { background: #fffdf0; box-shadow: inset 0 0 0 1px #ffa000; }
+        
+        .weekday { text-align: center; font-size: 18px; font-weight: bold; padding: 12px 0; background: #fff; color: #333; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .day-num { text-align: right; font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #333; }
+        .grid .cell:nth-child(7n+1) .day-num, .holiday-cell .day-num { color: var(--danger-red); }
+        .grid .cell:nth-child(7n) .day-num { color: var(--primary-blue); }
+        
+        /* 電腦版正常活動樣式 */
+        .event { font-size: 13px; padding: 5px 8px; margin: 5px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); color: #333; line-break: anywhere; }
+        .evt-time { font-weight: bold; display: block; margin-bottom: 2px; }
+        .evt-text { display: inline; }
+        
+        /* 管理中控台 */
+        #admin-panel { max-height: 0; overflow: hidden; background: #fffdf0; border-radius: 12px; padding: 0 20px; transition: all 0.4s ease; margin-top: 0; }
+        body.admin-mode #admin-panel { max-height: 1000px; margin-top: 25px; padding: 20px; border: 2px dashed #ffa000; }
+        #admin-panel h3 { margin-top: 0; color: #ffa000; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 18px; }
+
+        .row { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        input, select, button { padding: 10px 14px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; box-sizing: border-box; }
+        button { cursor: pointer; background: var(--primary-blue); color: white; border: none; }
+        button:hover { background: #1e3f70; }
+
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; }
+        .modal-card h3 { margin-top: 0; color: #333; font-size: 20px; }
+        .modal-card p { font-size: 16px; }
+        .modal-card buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        
+        #loading-overlay { background: rgba(255,255,255,0.9); font-weight: bold; color: #666; font-size: 18px; }
+
+        .month-select-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 250px; overflow-y: auto; margin-top: 15px; padding-right: 4px;
+        }
+        .month-select-btn {
+            background: #f7f5f2; color: #333; border: 1px solid #eee; padding: 12px; text-align: center; border-radius: 6px; font-size: 15px; transition: all 0.2s; cursor: pointer;
+        }
+        .month-select-btn:hover { background: #eef5ee; border-color: var(--primary-green); }
+        .month-select-btn.active { background: var(--primary-green); color: white; border-color: var(--primary-green); font-weight: bold; }
+
+        /* 📱 手機版專屬 RWD 覆蓋樣式 */
+        @media (max-width: 600px) {
+            .header-section { 
+                flex-direction: column; align-items: center; text-align: center; margin-bottom: 15px; gap: 10px;
+            }
+            .title-area { 
+                flex-direction: row !important; 
+                justify-content: center; 
+                align-items: center; 
+                gap: 12px; 
+                width: 100%;
+            }
+            .title-text-group { text-align: left; }
+            .title-area h1 { font-size: 10px !important; letter-spacing: 0px; margin: 0 0 2px 0; display: block; }
+
+            .year-big { font-size: 14px; display: inline-block; white-space: nowrap; }
+            #month-display { font-size: 12px; margin-bottom: 0; display: inline-block; white-space: nowrap; }
+            .logo-btn { height: 35px; width: auto; }
+
+            .legend-box { justify-content: center; width: 100%; margin-top: 5px; gap: 8px; }
+            .legend-item { font-size: 10px; padding: 4px 6px; }
+            .box { width: 14px; height: 14px; }
+
+            /* 🛠️ 手機版格子：固定正方形外觀、不再因活動字數拉長 */
+            .cell { 
+                min-height: 55px; 
+                height: 55px !important; 
+                padding: 2px; 
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+                overflow: hidden;
+            }
+            .day-num { font-size: 11px; margin-bottom: 0; text-align: right; width: 100%; padding-right: 2px; box-sizing: border-box; }
+            .weekday { font-size: 13px; padding: 6px 0; }
+
+            /* 🛠️ 關鍵核心：手機版隱藏活動內容，僅作為有顏色的底色方塊，或者將時間直接水平呈現 */
+            .event { 
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                margin: 0; padding: 0;
+                border-radius: 0;
+                box-shadow: none;
+                z-index: 1;
+                display: flex;
+                align-items: flex-end;    /* 時間推到最底下 */
+                justify-content: center;
+            }
+            
+            /* 讓日期數字浮在顏色之上 */
+            .day-num { position: relative; z-index: 2; }
+
+            /* 🛠️ 核心：手機版只顯示簡寫時間（支援 pre-line 換行、橫向置中） */
+            .evt-time { 
+                display: block !important;
+                font-size: 9px;
+                font-weight: normal;
+                color: #222;
+                background: rgba(255, 255, 255, 0.4); /* 微透明背景確保時間數字清晰可讀 */
+                width: 100%;
+                text-align: center;
+                white-space: pre-line; /* 👈 關鍵：這行能讓 \n 變成真正的換行 */
+                padding: 1px 0;
+                letter-spacing: -0.3px;
+                transform: scale(0.9);
+            }
+            .evt-text { 
+                display: none !important; /* 👈 完全隱藏活動詳細文字 */
+            } 
+
+            .row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .row input, .row select, .row button { width: 100% !important; }
+            #admin-panel h3 { flex-direction: column; align-items: center; gap: 8px; }
+        }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center; }
+.loading-overlay.active { display: flex; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>每月時間表</h1>
-        <span id="month-display" onclick="window.openModal('switchMonthModal')">點擊選月</span>
-        <button onclick="window.toggleAdmin()">管理員登入</button>
+    <div class="header-section">
+        <div id="legend-list" class="legend-box"></div>
+        <div class="title-area">
+            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="https://static.wixstatic.com/media/fc4bd9_7b52415be7aa42219d5b7a68fc82e136~mv2.png" alt="客舍Logo">
+            <div class="title-text-group">
+                <h1>每月時間表</h1>
+                <span id="month-display" onclick="openModal('switchMonthModal')">連線中...</span>
+            </div>
+        </div>
     </div>
+
     <div id="calendar" class="grid"></div>
+
+    <div id="admin-panel">
+        <h3>
+            <span>🛠 管理員智慧中控台</span>
+            <button onclick="openModal('passwordModal')" style="background:#673ab7; font-size:13px; padding:4px 8px;">🔑 修改管理員密碼</button>
+        </h3>
+        <div class="row">
+            <input type="number" id="e-day" placeholder="日">
+            <input type="text" id="e-time" placeholder="時間 (如 19:30)">
+            <input type="text" id="e-text" placeholder="活動內容">
+            <select id="e-type"></select>
+            <button onclick="addEvent()" id="btn-save-event">新增活動</button>
+            <button onclick="clearEventForm()" style="background:#888">清空</button>
+        </div>
+        <div class="row" style="border-top: 1px dashed #ddd; padding-top: 15px; margin-bottom: 0;">
+            <input type="text" id="new-type" placeholder="新類型名稱">
+            <input type="color" id="new-color" value="#dcecfc" style="padding:0; height:35px; cursor:pointer;">
+            <button onclick="addType()">快速新增類型</button>
+            <div style="margin-left: auto; display: flex; gap: 10px; width: 100%;">
+                <button onclick="openModal('monthModal')" style="flex:1;">新增月份</button>
+                <button style="background:var(--danger-red); flex:1;" onclick="openModal('delMonthModal')">刪除本月</button>
+            </div>
+        </div>
+    </div>
 </div>
 
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loader">同步中...</div>
+</div>
+    
 <div class="modal-overlay" id="switchMonthModal">
     <div class="modal-card">
-        <h3>選擇月份</h3>
-        <button onclick="window.closeModal('switchMonthModal')">關閉</button>
+        <h3>請選擇月份</h3>
+        <div id="popup-month-list" class="month-select-grid"></div>
+        <div class="modal-buttons">
+            <button onclick="closeModal('switchMonthModal')" style="background:#888; width: 100%;">關閉</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="typeManageModal">
+    <div class="modal-card">
+        <h3>修改 / 刪除 活動類型</h3>
+        <p style="font-size: 14px; color: #666;">您正在管理類型：<b id="manage-type-target"></b></p>
+        <div style="margin-bottom: 12px;">
+            <label style="font-size:14px; display:block; margin-bottom:4px;">類型名稱：</label>
+            <input type="text" id="manage-type-name" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="font-size:14px; display:block; margin-bottom:4px;">代表顏色：</label>
+            <input type="color" id="manage-type-color" style="padding:0; width:100%; height:40px; cursor:pointer;">
+        </div>
+        <div class="modal-buttons" style="justify-content: space-between;">
+            <button onclick="submitDeleteType()" style="background:var(--danger-red)">🗑 刪除此類型</button>
+            <div>
+                <button onclick="closeModal('typeManageModal')" style="background:#888">取消</button>
+                <button onclick="submitUpdateType()" style="background:var(--primary-green)">💾 儲存修改</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="authModal">
     <div class="modal-card">
-        <h3>管理員驗證</h3>
-        <input type="password" id="admin-pwd" placeholder="輸入密碼">
-        <button onclick="window.verifyAdmin()">確認登入</button>
-        <button onclick="window.closeModal('authModal')">取消</button>
+        <h3>安全驗證</h3>
+        <p>請輸入管理員密碼：</p>
+        <input type="password" id="admin-pwd" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 10px;">
+        <div class="modal-buttons">
+            <button onclick="closeModal('authModal')" style="background:#888">取消</button>
+            <button onclick="verifyAdmin()">確認登入</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="passwordModal">
+    <div class="modal-card">
+        <h3>修改管理員密碼</h3>
+        <p>請輸入全新密碼：</p>
+        <input type="text" id="new-pwd-input" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 10px;" placeholder="請輸入新密碼">
+        <div class="modal-buttons">
+            <button onclick="closeModal('passwordModal')" style="background:#888">取消</button>
+            <button onclick="submitChangePassword()" style="background:#673ab7;">確認修改</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="monthModal">
+    <div class="modal-card">
+        <h3>新增月份</h3>
+        <p>請選擇欲建立的月份：</p>
+        <input type="month" id="new-month-input" value="2026-02" style="width: 100%; box-sizing: border-box; padding: 10px;">
+        <div class="modal-buttons">
+            <button onclick="closeModal('monthModal')" style="background:#888">取消</button>
+            <button onclick="submitAddMonth()">建立</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="delMonthModal">
+    <div class="modal-card">
+        <h3 style="color:var(--danger-red)">警告</h3>
+        <p>確定要刪除整個 <b><span class="text-current-month"></span></b> 月份的所有活動嗎？</p>
+        <div class="modal-buttons">
+            <button onclick="closeModal('delMonthModal')" style="background:#888">取消</button>
+            <button onclick="submitDelMonth()" style="background:var(--danger-red)">確定刪除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="eventActionModal">
+    <div class="modal-card">
+        <h3 id="modal-action-title">活動詳細資訊</h3>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary-blue);" id="info-event-preview"></div>
+        <div class="modal-buttons" id="modal-action-buttons">
+            </div>
     </div>
 </div>
 
