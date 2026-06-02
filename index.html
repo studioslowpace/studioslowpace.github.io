@@ -336,8 +336,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co/rest/v1/events'; 
-const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG'; // 請檢查這是否為 anon key
+const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co'; // 只要保留到 .co，不要加 /rest...
+const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG'; 
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 const today = new Date();
