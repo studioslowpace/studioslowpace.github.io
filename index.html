@@ -333,7 +333,13 @@
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyjQoJIvd9X3WOpUqrCWG86Gx7WN_HtSekS6CjWzemoKz6SqJVuQzU7xZA-gcejurIx/exec";    
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co/rest/v1/events'; 
+const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG'; // 請檢查這是否為 anon key
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 const today = new Date();
 const currentYearStr = today.getFullYear();
 const currentMonthStr = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -357,42 +363,66 @@ const holidays = [
     "2026-12-25", "2026-12-26"
 ];
 
-// 1. 初始化讀取 (修正 fetch 引號與變數對接)
 async function initApp() {
     try {
-        const res = await fetch(GAS_URL);
-        const data = await res.json();
-        correctPassword = data.password || "";
-        types = data.types || [];
-        months = data.months || [];
-        events = data.events || {};
-        render();
+        const data = await fetchData();
+        if (data) {
+            types = data.types || [];
+            months = data.months || [];
+            events = data.events || {};
+            correctPassword = data.password || "";
+            render();
+        }
     } catch (e) {
         console.error("資料載入失敗:", e);
         document.getElementById('month-display').innerText = "連線失敗";
     }
 }
 
-// 修改後的讀取邏輯
 async function fetchData() {
-    const response = await fetch(GAS_URL);
-    const textData = await response.text(); // 獲取純文字
-    const data = JSON.parse(textData); // 轉為 JSON
-    console.log("讀取到的資料:", data);
-    return data;
+    const { data, error } = await supabase
+        .from('events') 
+        .select('calendar_password, calendar_events, calendar_months, calendar_types')
+        .eq('title', 'main_calendar')
+        .single();
+    
+    if (error) {
+        console.error("讀取資料失敗:", error);
+        return null;
+    }
+    
+    // 將資料庫的欄位名稱轉回你的 JavaScript 變數
+    return {
+        password: data.calendar_password,
+        events: data.calendar_events,
+        months: data.calendar_months,
+        types: data.calendar_types
+    };
 }
 
-// 修改後的寫入邏輯
 async function syncAndSave() {
-    // 這裡我們不使用預檢 (Preflight) 複雜請求，簡化為單純的 POST
-    const response = await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors", // 使用 no-cors 模式，避開 Preflight check
-        body: JSON.stringify({ types, months, events, password: correctPassword })
-    });
-    // 注意：在 no-cors 模式下，response.text() 會是空的，這是正常的
-    alert("資料已發送！");
-    render();
+    const overlay = document.getElementById('loading-overlay');
+    if(overlay) overlay.classList.add('active');
+
+    const { data, error } = await supabase
+        .from('events')
+        .update({ 
+            calendar_password: correctPassword,
+            calendar_events: events,
+            calendar_months: months,
+            calendar_types: types
+        })
+        .eq('title', 'main_calendar');
+        
+    if (overlay) overlay.classList.remove('active');
+
+    if (error) {
+        console.error("儲存失敗:", error);
+        alert("儲存失敗: " + error.message);
+    } else {
+        alert("同步成功！");
+        render();
+    }
 }
 
     // 測試直接呼叫同步函數，看看網路有沒有反應
