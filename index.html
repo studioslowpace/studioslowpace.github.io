@@ -366,17 +366,23 @@ const holidays = [
 
 async function initApp() {
     try {
+        console.log("開始嘗試連接 Supabase...");
         const data = await fetchData();
         if (data) {
+            console.log("資料取得成功:", data);
             types = data.types || [];
             months = data.months || [];
             events = data.events || {};
             correctPassword = data.password || "";
             render();
+            // 成功後隱藏連線中
+            document.getElementById('loading-overlay').classList.remove('active'); 
+        } else {
+            document.getElementById('month-display').innerText = "資料庫無資料";
         }
     } catch (e) {
-        console.error("資料載入失敗:", e);
-        document.getElementById('month-display').innerText = "連線失敗";
+        console.error("嚴重錯誤:", e);
+        document.getElementById('month-display').innerText = "連線失敗: " + e.message;
     }
 }
 
