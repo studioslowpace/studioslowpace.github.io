@@ -344,11 +344,9 @@ let currentMonth = "2026-06";
 let isAdmin = false;
 let dbData = { events: {}, months: [], types: [], password: "" };
 
-// --- 初始化與資料同步 ---
+// --- 初始化函式 ---
 async function fetchData() {
-    document.getElementById('loading-overlay').classList.add('active');
     const { data, error } = await client.from(TABLE_NAME).select('*').eq('id', 1).single();
-    
     if (!error && data) {
         dbData = {
             events: data.calendar_events || {},
@@ -359,10 +357,9 @@ async function fetchData() {
         renderCalendar();
         renderLegend();
     }
-    document.getElementById('loading-overlay').classList.remove('active');
 }
 
-// --- 核心功能：渲染 ---
+// --- 介面渲染 ---
 function renderCalendar() {
     const calendarEl = document.getElementById('calendar');
     const [year, month] = currentMonth.split('-').map(Number);
@@ -371,13 +368,9 @@ function renderCalendar() {
     const firstDay = new Date(year, month - 1, 1).getDay();
     const daysInMonth = new Date(year, month, 0).getDate();
     
-    calendarEl.innerHTML = `
-        <div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div>
-        <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>
-    `;
+    calendarEl.innerHTML = `<div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>`;
 
     for (let i = 0; i < firstDay; i++) calendarEl.innerHTML += `<div class="cell empty-cell"></div>`;
-
     for (let d = 1; d <= daysInMonth; d++) {
         const events = (dbData.events[currentMonth] || []).filter(e => e.day === d);
         let eventsHtml = events.map(e => `
@@ -385,77 +378,68 @@ function renderCalendar() {
                 <span class="evt-time">${e.time}</span><span class="evt-text">${e.text}</span>
             </div>
         `).join('');
-
         calendarEl.innerHTML += `<div class="cell" onclick="handleCellClick(${d})"><div class="day-num">${d}</div>${eventsHtml}</div>`;
     }
 }
 
 function renderLegend() {
-    const container = document.getElementById('legend-list');
-    container.innerHTML = dbData.types.map(t => `
-        <div class="legend-item">
-            <div class="box" style="background:${t.color}"></div>${t.name}
-        </div>
-    `).join('');
-    
-    const select = document.getElementById('e-type');
-    select.innerHTML = dbData.types.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+    document.getElementById('legend-list').innerHTML = dbData.types.map(t => `<div class="legend-item"><div class="box" style="background:${t.color}"></div>${t.name}</div>`).join('');
+    document.getElementById('e-type').innerHTML = dbData.types.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
 }
 
-// --- 資料庫寫入函式 ---
-async function saveDB() {
-    const { error } = await client.from(TABLE_NAME).update({
-        calendar_events: dbData.events,
-        calendar_months: dbData.months,
-        calendar_types: dbData.types,
-        calendar_password: dbData.password
-    }).eq('id', 1);
-    if (!error) fetchData();
-}
+// --- 管理員動作 (明確掛載到 window) ---
+window.toggleAdmin = function() {
+    if (!isAdmin) { window.openModal('authModal'); } 
+    else { isAdmin = false; document.body.classList.remove('admin-mode'); alert("已登出"); }
+};
 
-// --- 管理員動作 ---
+window.verifyAdmin = function() {
+    if (document.getElementById('admin-pwd').value === dbData.password) {
+        isAdmin = true;
+        document.body.classList.add('admin-mode');
+        window.closeModal('authModal');
+    } else { alert("密碼錯誤"); }
+};
+
 window.addEvent = function() {
-    if (!isAdmin) return alert("請先登入管理模式");
     const day = parseInt(document.getElementById('e-day').value);
     const time = document.getElementById('e-time').value;
     const text = document.getElementById('e-text').value;
     const type = document.getElementById('e-type').value;
-
     if (!dbData.events[currentMonth]) dbData.events[currentMonth] = [];
     dbData.events[currentMonth].push({ day, time, text, type });
     saveDB();
 };
 
-window.verifyAdmin = function() {
-    const pwd = document.getElementById('admin-pwd').value;
-    if (pwd === dbData.password) {
-        isAdmin = true;
-        document.body.classList.add('admin-mode');
-        closeModal('authModal');
-    } else {
-        alert("密碼錯誤");
-    }
-};
-window.toggleAdmin = function() {
-    if (!isAdmin) {
-        window.openModal('authModal');
-    } else {
-        isAdmin = false;
-        document.body.classList.remove('admin-mode');
-        alert("已登出管理模式");
-    }
+window.addType = function() {
+    const name = document.getElementById('new-type').value;
+    const color = document.getElementById('new-color').value;
+    dbData.types.push({ name, color });
+    saveDB();
 };
 
-window.openModal = function(id) {
-    document.getElementById(id).classList.add('active');
-};    
+window.submitAddMonth = function() {
+    const m = document.getElementById('new-month-input').value;
+    if (!dbData.months.includes(m)) dbData.months.push(m);
+    saveDB();
+    window.closeModal('monthModal');
+};
 
-// --- 輔助函式 ---
+// --- 資料庫同步 ---
+async function saveDB() {
+    await client.from(TABLE_NAME).update({
+        calendar_events: dbData.events,
+        calendar_months: dbData.months,
+        calendar_types: dbData.types
+    }).eq('id', 1);
+    fetchData();
+}
+
+// --- 輔助 ---
 window.openModal = (id) => document.getElementById(id).classList.add('active');
 window.closeModal = (id) => document.getElementById(id).classList.remove('active');
 window.handleCellClick = (d) => { if(isAdmin) document.getElementById('e-day').value = d; };
 
-// --- 啟動 ---
 document.addEventListener('DOMContentLoaded', fetchData);
 </script>
 </body>
