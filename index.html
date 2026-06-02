@@ -436,6 +436,19 @@ window.verifyAdmin = function() {
         alert("密碼錯誤");
     }
 };
+window.toggleAdmin = function() {
+    if (!isAdmin) {
+        window.openModal('authModal');
+    } else {
+        isAdmin = false;
+        document.body.classList.remove('admin-mode');
+        alert("已登出管理模式");
+    }
+};
+
+window.openModal = function(id) {
+    document.getElementById(id).classList.add('active');
+};    
 
 // --- 輔助函式 ---
 window.openModal = (id) => document.getElementById(id).classList.add('active');
