@@ -334,10 +334,12 @@
 </div>
 
 <script>
-// --- 1. 初始化 (確保只執行一次) ---
-const { createClient } = supabase;
+// --- 1. 初始化 ---
 const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co';
 const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
+
+// 直接使用全域的 supabase 物件 (這是 CDN 載入後的標準使用方式)
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 
 // 使用 window.supabase 確保全域唯一性，避免重複宣告錯誤
 if (!window.supabase) {
@@ -362,7 +364,7 @@ const holidays = ["2026-01-01", "2026-02-17", "2026-02-18", "2026-02-19", "2026-
 
 window.syncAndSave = async function() {
     console.log("正在同步至 Supabase...");
-    const { error } = await window.supabase
+    const { error } = await client // 這裡改用上面定義的 client
         .from('events')
         .update({ 
             calendar_password: correctPassword,
@@ -372,6 +374,13 @@ window.syncAndSave = async function() {
         })
         .eq('id', 1);
     if (error) { alert("同步失敗: " + error.message); } else { alert("同步成功！"); }
+};
+
+window.fetchData = async function() {
+    // 這裡改用 client 呼叫
+    const { data, error } = await client.from('events').select('*').eq('id', 1).single();
+    if (error) throw error;
+    return data ? { password: data.calendar_password, events: data.calendar_events, months: data.calendar_months, types: data.calendar_types } : null;
 };
 
 window.fetchData = async function() {
