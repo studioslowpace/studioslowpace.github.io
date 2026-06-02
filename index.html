@@ -410,15 +410,46 @@ window.verifyAdmin = function() {
 };
 
 window.render = function() {
-    // 渲染月份選單
-    document.getElementById('popup-month-list').innerHTML = months.map(m => {
-        let activeClass = m === currentMonth ? 'active' : '';
-        return `<div class="month-select-btn ${activeClass}" onclick="window.selectMonthFromPopup('${m}')">${window.convertToChineseMonth(m)}</div>`;
-    }).join('');
-    
-    document.getElementById('month-display').innerHTML = window.convertToChineseMonth(currentMonth);
-    
-    // 渲染日曆... (其餘邏輯維持不變)
+    // ... 前面的月份選單渲染邏輯保持不變 ...
+
+    const [year, month] = currentMonth.split('-').map(Number);
+    const calendarEl = document.getElementById('calendar');
+    calendarEl.innerHTML = ''; // 清空舊內容
+
+    // 星期表頭
+    ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+        calendarEl.innerHTML += `<div class="weekday">${day}</div>`;
+    });
+
+    // 計算當月日期
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // 填充空白格
+    for (let i = 0; i < firstDay; i++) {
+        calendarEl.innerHTML += `<div class="cell empty-cell"></div>`;
+    }
+
+    // 填充日期格
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${month.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+        const dayEvents = (events[currentMonth] || []).filter(e => e.day === d);
+        
+        let eventHtml = dayEvents.map((e, index) => {
+            const typeInfo = types.find(t => t.name === e.type) || { color: '#ccc' };
+            return `
+                <div class="event" style="background:${typeInfo.color}" onclick="window.triggerEventAction(${index}, event)">
+                    <span class="evt-time">${e.time}</span>
+                    <span class="evt-text">${e.text}</span>
+                </div>`;
+        }).join('');
+
+        calendarEl.innerHTML += `
+            <div class="cell" onclick="${isAdmin ? `window.setFormDate(${d})` : ''}">
+                <div class="day-num">${d}</div>
+                ${eventHtml}
+            </div>`;
+    }
 };
 
 window.convertToChineseMonth = function(monthStr) {
