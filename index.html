@@ -336,10 +336,15 @@
 <script>
 
 
+// 確保這行在最上方
+const { createClient } = supabase;
 
-const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co'; // 只要保留到 .co，不要加 /rest...
-const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG'; 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// 初始化
+const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co';
+const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
+
+// 直接呼叫 createClient
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const today = new Date();
 const currentYearStr = today.getFullYear();
@@ -386,8 +391,16 @@ async function initApp() {
     }
 }
 
+async function checkSupabaseReady() {
+    if (typeof supabase === 'undefined') {
+        console.error("Supabase 尚未載入！");
+        return false;
+    }
+    return true;
+}
 // 修改同步函數
 async function syncAndSave() {
+    if (!(await checkSupabaseReady())) return;
     const { data, error } = await supabase
         .from('events')
         .update({ 
