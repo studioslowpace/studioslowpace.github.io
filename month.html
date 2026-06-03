@@ -572,19 +572,41 @@ window.closeModal = (id) => document.getElementById(id).classList.remove('active
 
 document.addEventListener('DOMContentLoaded', fetchData);
 
-        // 抓取頁首
-        fetch('header.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('header-container').innerHTML = data;
+    fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+            const container = document.getElementById('header-container');
+            container.innerHTML = data;
+            
+            // 重要：載入完成後，立刻呼叫綁定事件的函式
+            setupHeaderMenu();
+        });
+
+    // 2. 載入頁尾
+    fetch('footer.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('global-footer').innerHTML = data;
+        });
+
+    // 3. 定義綁定事件的函式
+    function setupHeaderMenu() {
+        const toggleButton = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        if (toggleButton && navLinks) {
+            toggleButton.addEventListener('click', (e) => {
+                navLinks.classList.toggle('active');
+                e.stopPropagation();
             });
 
-        // 抓取頁尾
-        fetch('footer.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('global-footer').innerHTML = data;
+            document.addEventListener('click', (e) => {
+                if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                    navLinks.classList.remove('active');
+                }
             });
+        }
+    }
 </script>
 </body>
 </html>
