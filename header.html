@@ -13,8 +13,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 35px 50px;
+        padding: 0px 50px;
     }
+
     .logo-area {
         display: flex;
         align-items: center;
@@ -26,19 +27,7 @@
         width: auto;
         object-fit: contain;
     }
-    .logo-text .ch {
-        font-size: 2.3rem;
-        font-weight: 700;
-        color: #1465A3;
-        letter-spacing: 3px;
-        line-height: 1.1;
-    }
-    .logo-text .en {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1465A3;
-        letter-spacing: 1px;
-    }
+
     .nav-links {
         display: flex;
         gap: 35px;
@@ -54,17 +43,44 @@
         color: #1465A3;
     }
 
+    .menu-toggle { display: none; background: none; border: none; font-size: 2rem; cursor: pointer; }
+
     /* 頁首響應式手機板優化 */
     @media (max-width: 1024px) {
         .navbar { padding: 25px 30px; }
-        .logo-icon img { height: 55px; }
-        .logo-text .ch { font-size: 1.8rem; }
+        .logo-icon img { height: 100px; }
         .nav-links a { font-size: 1.1rem; }
     }
     @media (max-width: 768px) {
-        .navbar { flex-direction: column; gap: 20px; padding: 20px; }
+        .navbar { flex-direction: column; gap: 20px; padding: 20px; position: relative;}
         .nav-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+        /* 顯示按鈕 */
+    .menu-toggle { display: block; }
+
+    /* 選單變成垂直下拉，預設隱藏 */
+    .nav-links {
+        display: none; 
+        flex-direction: column;
+        position: absolute;
+        top: 80px; /* 根據你的 Header 高度設定 */
+        left: 0;
+        width: 100%;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
+.logo-area {
+        width: 100%;
+        display: flex;
+        justify-content: space-between; /* 讓 Logo 在左，按鈕在右 */
+        align-items: center;
+    }
+    }
+    .nav-links.active {
+    display: flex;
+    z-index: 9999; /* 讓選單蓋在所有內容之上 */
+}
+
 </style>
 
 <header class="navbar">
@@ -72,9 +88,7 @@
         <div class="logo-icon">
             <img src="images/logo-rectangular.png" alt="空間客舍 Logo">
         </div>
-        <div class="logo-text">
-
-        </div>
+        <button class="menu-toggle" aria-label="打開選單">☰</button>
     </div>
     <nav class="nav-links">
         <a href="index.html">自主企劃 Passion Project</a>
@@ -86,3 +100,20 @@
         <a href="#">更多</a>
     </nav>
 </header>
+
+<script>
+    const toggleButton = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.nav-links');
+
+    toggleButton.addEventListener('click', (e) => {
+        navLinks.classList.toggle('active');
+        e.stopPropagation(); // 防止點擊按鈕時觸發後面的關閉邏輯
+    });
+
+    // 點擊網頁任何地方時關閉選單
+    document.addEventListener('click', (e) => {
+        if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+            navLinks.classList.remove('active');
+        }
+    });
+</script>
