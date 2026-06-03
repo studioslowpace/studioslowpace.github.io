@@ -216,19 +216,24 @@
         .then(data => {
             const container = document.getElementById('header-container');
             container.innerHTML = data;
-            
-            // 重要：載入完成後，立刻呼叫綁定事件的函式
-            setupHeaderMenu();
+            setupHeaderMenu(); // 載入後才綁定選單
         });
 
-    // 2. 載入頁尾
+    // 2. 載入頁尾並處理年份
     fetch('footer.html')
         .then(response => response.text())
         .then(data => {
-            document.getElementById('global-footer').innerHTML = data;
+            const footerContainer = document.getElementById('global-footer');
+            footerContainer.innerHTML = data;
+            
+            // 頁尾載入完成後，更新年份
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
         });
 
-    // 3. 定義綁定事件的函式
+    // 3. 定義 Header 選單邏輯
     function setupHeaderMenu() {
         const toggleButton = document.querySelector('.menu-toggle');
         const navLinks = document.querySelector('.nav-links');

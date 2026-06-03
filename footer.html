@@ -4,10 +4,12 @@
         width: 100%;
         background-color: #F7EAE3; /* 🎨 溫暖的粉米色背景 */
         border-top: 1px solid #E0D3CC;
-        padding: 60px 0 40px 0;
+        padding: 30px 0 40px 0;
         display: flex;
         flex-direction: column;
         align-items: center;
+        border-top: 4px solid #1b1918; 
+    border-color: rgba(20, 101, 163, 0.6); /* 設定淺淺的藍色橫線 */
     }
     .footer-content {
         width: 100%;
@@ -112,14 +114,72 @@
         letter-spacing: 0.5px;
     }
 
+.copyright-line {
+    /* 這裡負責畫線 */
+    border-top: 2px solid rgba(20, 101, 163, 0.4); /* 加深一點顏色讓你看得見 */
+    
+    /* 這裡控制線與文字的間距 */
+    padding-top: 15px; 
+    margin-top: 20px; /* 給線條上方留點空間 */
+    
+    /* 這裡確保它是區塊級元素，能橫向伸展但又不會太長 */
+    display: inline-block; 
+    width: 50%; /* 設定為文字區塊的 90% 或固定寬度 */
+
+}
+
     /* 頁尾手機板優化 */
     @media (max-width: 1024px) {
-        .footer-content { gap: 40px; }
+        .footer-content { gap: 20px; padding: 0 10px; }
     }
     @media (max-width: 768px) {
-        .footer-content { flex-direction: column; gap: 30px; text-align: center; padding: 0 20px; }
+            .custom-footer {
+       padding: 20px 0 20px 0;
+
+    }
         .footer-title-row { justify-content: center; flex-direction: column; align-items: center; gap: 5px; }
         .footer-ig-link { justify-content: center; }
+        .footer-content { 
+            flex-direction: column; 
+            gap: 10px; 
+            text-align: center; 
+            padding: 0 10px; 
+        }
+         .footer-title-row {
+         gap: 5px;
+        }
+
+        /* 1. 縮小 Logo 圖片 */
+        .footer-logo-img {
+            display: none; /* 在手機版完全隱藏該圖片 */
+        }
+
+        /* 2. 縮小標題與副標題 */
+        .footer-title-row h3 {
+            font-size: 1.6rem; /* 縮小主標題 */
+        }
+        .footer-title-row span {
+            font-size: 1.1rem; /* 縮小副標題 */
+        }
+
+        /* 3. 縮小標籤與內文 */
+        .footer-tags {
+            font-size: 1rem; /* 標籤變小 */
+        }
+        .footer-details {
+            font-size: 1rem; /* 內文變小 */
+            line-height: 1.6;
+        }
+
+        /* 4. 調整 IG 連結的間距 */
+        .footer-ig-link { 
+            justify-content: center;
+            font-size: 1rem;
+        }
+            .footer-copyright {
+              font-size: 1rem; /* 內文變小 */
+              margin-top: 5px;
+    }
     }
 </style>
 
@@ -146,5 +206,7 @@
     </div>
 </div>
 <div class="footer-copyright">
-    &copy; 2026 by Slow Pace Studio
+    <span class="copyright-line">
+        &copy; <span id="current-year"></span> by Slow Pace Studio
+    </span>
 </div>
