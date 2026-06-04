@@ -42,20 +42,6 @@
             max-width: 1100px; margin: auto; background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
         }
         
-        /* 頁首排版 */
-        .header-section { 
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; gap: 20px;
-        }
-        
-        .sort-btn {
-            display: none; font-size: 12px; color: #888; cursor: pointer; padding: 0 2px; transition: color 0.2s;
-        }
-        .sort-btn:hover { color: var(--primary-blue); }
-        body.admin-mode .sort-btn { display: inline-block; }
-        
-        .type-name-text { cursor: default; }
-        body.admin-mode .type-name-text { cursor: pointer; }
-        body.admin-mode .type-name-text:hover { text-decoration: underline; }
 
         /* 標題與圖示區塊 */
         .title-area { 
@@ -172,14 +158,7 @@
         border-radius: 12px !important;
         box-shadow: none !important; /* 手機版可移除陰影增加視覺寬度 */
     }
-    /* 調整頂部區塊的排版，改為垂直堆疊 */
-    .header-section { 
-        flex-direction: column;    /* 設定 flex 排列方向為垂直 */
-        align-items: right;       /* 水平置中內容 */
-        text-align: right;        /* 文字置中 */
-        margin-bottom: 15px;       /* 區塊下方留白 15px */
-        gap: 10px;                 /* 內部元素間距 10px */
-    }
+
 
     /* 標題區域調整為水平並排 */
     .title-area { 
@@ -328,10 +307,9 @@
 <div id="header-container" class="navbar-wrapper"></div>
 
 <div class="container">
-    <div class="header-section">
         <div id="legend-list" class="legend-box"></div>
         <div class="title-area">
-            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="https://static.wixstatic.com/media/fc4bd9_7b52415be7aa42219d5b7a68fc82e136~mv2.png" alt="客舍Logo">
+            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="images/logo-small.png" alt="客舍Logo">
             <div class="title-text-group">
                 <h1>每月時間表</h1>
                 <span id="month-display" onclick="openModal('switchMonthModal')">連線中...</span>
@@ -470,7 +448,11 @@ const client = supabase.createClient(supabaseUrl, supabaseKey);
 const holidays = ["2026-01-01", "2026-02-17", "2026-02-18", "2026-02-19", "2026-04-03", "2026-04-04", "2026-04-06", "2026-04-07", "2026-05-01", "2026-05-25", "2026-06-19", "2026-07-01", "2026-09-26", "2026-10-01", "2026-10-19", "2026-12-25", "2026-12-26"];
 
 // --- 全域變數 ---
-let currentMonth = "2026-06";
+const today = new Date();
+const currentYearStr = today.getFullYear();
+const currentMonthStr = (today.getMonth() + 1).toString().padStart(2, '0');
+// 🛠️ 統一使用這個宣告好的變數
+let currentMonth = `${currentYearStr}-${currentMonthStr}`; 
 let isAdmin = false;
 let dbData = { events: {}, months: [], types: [], password: "" };
 
