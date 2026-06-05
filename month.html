@@ -47,7 +47,6 @@
             display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0px; gap: 20px; 
         }
         
-        
         .sort-btn {
             display: none; font-size: 12px; color: #888; cursor: pointer; padding: 0 2px; transition: color 0.2s;
         }
@@ -97,9 +96,9 @@
 .new-legend-box {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  margin: 20px 0 0 0;
+  margin: 0 20px 0 0;
 }
 
         /* 日曆網格 */
@@ -144,7 +143,7 @@
         /* 彈窗樣式 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000;
+            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 900;
         }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-card { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; }
@@ -177,11 +176,18 @@
 
 /* 📱 手機版專屬 RWD (響應式設計) 覆蓋樣式 */
 /* 當裝置螢幕寬度小於 600px 時，以下規則才會生效 */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
 
-    /* 1. 調整 body 的外距 */
-    body {
-        padding: 5px !important; /* 將原本的 10px 縮減 */
+
+/* 💡 核心關鍵：強迫頁首導覽列成為全網頁最高層級，壓過下方的日曆 */
+    .navbar {
+        position: relative !important;
+        z-index: 99999 !important; /* 給它一個極大的值 */
+    }
+
+    /* 💡 同步確保下拉選單容器的層級也是最高的 */
+    .nav-links {
+        z-index: 99999 !important;
     }
 
     /* 2. 重置 container 的寬度與內距，達成滿版效果 */
@@ -191,6 +197,8 @@
         border-radius: 12px !important;
         box-shadow: none !important; /* 手機版可移除陰影增加視覺寬度 */
         margin: 50px auto 20px auto;
+        z-index: 1 !important;
+        
     }
 
     .header-section { 
@@ -203,8 +211,6 @@
     .title-area { 
         order: 2;        /*  order 的預設值是 0。數值越小，排列越靠前；數值越大，排列越靠後。*/
         flex-direction: row !important; /* 強制設定為水平排列 */
-        justify-content: right;        /* 內容水平置中 */
-        align-items: right;            /* 內容垂直置中 */
         gap: 12px;                      /* 元素間距 12px */
         width: 45%;                    /* 寬度佔滿父容器 */
     }
@@ -241,7 +247,6 @@
     /* 圖例區塊排版 */
     .legend-box {
         order: 1;
-        justify-content: left;        /* 水平置中 */
         width: 65%; 
         margin-top: 5px; 
         gap: 5px; 
@@ -249,6 +254,7 @@
     
     /* 圖例項目字型與內距 */
     .legend-item { font-size: 8px; padding: 3px 4px; } /* padding: 上下(4px) 左右(6px); */
+
     
     /* 圖例顏色方塊尺寸 */
     .box { width: 8px; height: 8px; }
@@ -292,7 +298,6 @@
         z-index: 1;                     /* 層級低於日期數字 */
         display: flex;
         flex-direction: column;         /* 垂直排列內容 */
-        justify-content: cneter;    /* 從中間開始排列 */
         align-items: flex-end;          /* 靠右對齊 */
 
     }
@@ -300,7 +305,7 @@
     /* 活動時間文字設定 */
     .evt-time { 
         display: block !important;
-        font-size: 6.5px;                 /* 建議字體大小 */
+        font-size: 8px;                 /* 建議字體大小 */
         font-weight: normal;            /* 字體粗細正常 */
         color: #222;                    /* 深灰色文字 */
         width: 100%; 
@@ -310,6 +315,7 @@
         line-height: 1.1;               /* 設定行高，使行距緊湊 */
         letter-spacing: -0.5px;         /* 壓縮字元間距，容納更多內容 */
         margin-bottom: 1px;             /* 與下方內容留空 */
+        margin-top: 2px;  
     }
 
     /* 活動內容文字設定 */
@@ -337,6 +343,7 @@
         align-items: center;            /* 將所有內容水平置中，適合小螢幕瀏覽 */
         gap: 8px;                       /* 標題內部元素的間距 */
     }
+
     }
     </style>
 </head>
@@ -470,7 +477,7 @@
 <div class="modal-overlay" id="eventActionModal">
     <div class="modal-card">
         <h3 id="modal-action-title">活動詳細資訊</h3>
-        <div style="background: #f1a2a2; padding: 15px; border-radius: 6px; font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary-blue);" id="info-event-preview"></div>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary-blue);" id="info-event-preview"></div>
         <div class="modal-buttons" id="modal-action-buttons">
             </div>
     </div>
@@ -828,7 +835,36 @@ window.submitEditEvent = function() {
 window.openModal = (id) => document.getElementById(id).classList.add('active');
 window.closeModal = (id) => document.getElementById(id).classList.remove('active');
 
-document.addEventListener('DOMContentLoaded', fetchData);
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 第一步：先載入 Header
+    fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+            const container = document.getElementById('header-container');
+            if (container) {
+                container.innerHTML = data;
+                setupHeaderMenu(); // 綁定選單點擊事件
+            }
+            
+            // 第二步：⚠️ 確定 Header 塞進網頁、選單綁定成功後，才去抓資料庫跟渲染日曆！
+            fetchData(); 
+        })
+        .catch(err => {
+            console.error("頁首載入失敗:", err);
+            fetchData(); // 萬一 header 壞了，保底還是要讓日曆出來
+        });
+
+    // 2. 載入頁尾並處理年份（這個維持不變）
+    fetch('footer.html')
+        .then(response => response.text())
+        .then(data => {
+            const footerContainer = document.getElementById('global-footer');
+            if (footerContainer) footerContainer.innerHTML = data;
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+        });
+});
 
 // 1. 載入頁首
     fetch('header.html')

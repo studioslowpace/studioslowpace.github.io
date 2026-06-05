@@ -5,7 +5,7 @@
         background-color: #ffffff;
         border-bottom: 1px solid #EAEAEA;
         position: relative; /* 確保下拉選單能定位在此 */
-        z-index: 1000;      /* 確保 Header 在最上層 */
+        z-index: 9000;      /* 確保 Header 在最上層 */
     }
 
     .navbar-container {
@@ -59,7 +59,15 @@
         justify-content: space-between; /* 讓 Logo 在左，按鈕在右 */
         align-items: center;
     }
-        .menu-toggle { display: block; font-size: 3rem;}
+        .menu-toggle { 
+        display: block !important;
+        font-size: 2rem !important;
+        color: #333333 !important;
+        background: #ffffff !important; /* 給按鈕一個白底，確保看得見 */
+        padding: 5px 10px !important;
+        border-radius: 6px !important;
+        border: none !important;
+        cursor: pointer !important;}
 
         .nav-links {
             display: none; /* 預設隱藏 */
