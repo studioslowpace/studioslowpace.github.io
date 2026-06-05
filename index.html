@@ -319,7 +319,7 @@
 
 /* 1. 讓最外層的 section 寬度自適應，並加上內縮，字才不會貼到螢幕邊緣 */
   .neighbour-section {
-    padding: 40px 15px !important;
+    padding: 10px 15px !important;
   }
 
   /* 2. 核心修正：大盒子解除 600px 限制，改成由內容自動撐開高度 */
@@ -335,47 +335,40 @@
     align-items: center !important;
   }
 
-  /* 3. 標題文字（h2 / h3）解除絕對定位，在手機版置中老實排隊 */
-  .neighbour-card h2, 
+  .neighbour-card h2 {
+    position: relative !important;
+
+    font-size: 24px !important; /* 手機版標題字體稍微縮小 */
+    margin: 0px 50px -20px 0px !important;
+    text-align: left; 
+  }
+  
   .neighbour-card h3 {
     position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    text-align: center !important; /* 手機版文字置中 */
-    max-width: 100% !important;
-    width: 100% !important;
-    margin-left: 0 !important;
-  }
-  
-  .neighbour-card h2 {
-    font-size: 24px !important; /* 手機版標題字體稍微縮小 */
-    margin-bottom: 5px !important;
-  }
-  
-  .neighbour-card h3 {
-    font-size: 16px !important;
-    margin-bottom: 30px !important; /* 讓英文副標題與下方照片拉開距離 */
+    font-size: 20px !important;
+    margin: -50px 12px -220px 0px !important;
+    text-align: right; 
   }
 
   /* 4. 左邊【紅色鄰里人】相片：解除定位，縮小尺寸，置中 */
   .neighbour-img {
     position: relative !important;
-    top: auto !important;
+    top: 30;
     left: auto !important;
     height: 320px !important; /* 💡 手機版照片高度縮小到 320px，寬度會自動等比例縮小 */
     width: auto !important;
-    margin: 0 auto 15px auto !important;
+    margin: -30px auto 0px -30px !important;
     display: block !important;
   }
 
   /* 5. 右邊【藍色客舍人】相片：同樣解除定位，縮小尺寸，置中 */
   .neighbour-img2 {
     position: relative !important;
-    top: auto !important;
+    top: 0 !important;
     left: auto !important;
     height: 320px !important; /* 💡 手機版照片高度 */
     width: auto !important;
-    margin: 40px auto 15px auto !important; /* 上方加 40px，跟左邊的介紹文字拉開距離 */
+    margin: -60px auto 0px auto !important; /* 上方加 40px，跟左邊的介紹文字拉開距離 */
     display: block !important;
   }
 
@@ -386,26 +379,25 @@
     left: auto !important;
     max-width: 100% !important;
     width: 90% !important;
-    text-align: center !important; /* 手機版內文置中更好閱讀 */
-    margin: 0 auto 20px auto !important;
+    text-align: right; /* 手機版內文置中更好閱讀 */
+    margin: 0 auto 20px 3px !important;
   }
 
   /* 7. 右邊介紹文字：解除定位，文字從靠右改成置中 */
   .neighbour-info2 {
     position: relative !important;
-    top: auto !important;
+    top: 0 !important;
     right: auto !important;
     max-width: 100% !important;
     width: 90% !important;
-    text-align: center !important; /* 💡 右邊文字在手機版也改成置中，才不會歪一邊 */
-    margin: 0 auto 40px auto !important;
+    text-align: left; /* 💡 右邊文字在手機版也改成置中，才不會歪一邊 */
+    margin: -70px 3px 20px auto !important;
   }
-
-  /* 確保右邊的 h4 標題與段落文字在手機上也是置中 */
-  .neighbour-info2 h4, 
-  .neighbour-info2 p {
-    text-align: center !important;
-  }
+ 
+  .neighbour-footer {
+  font-size: 10px;
+  text-align: left;
+}
 }
     </style>
 </head>
@@ -440,7 +432,7 @@
     </div>
 
     <section class="neighbour-section">
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSf3ViVbwi-QYfr-RiRwNOilQYFMo2hHQPn0SkgicE7Ifk5twQ/viewform" class="neighbour-link" aria-label="客舍鄰里人計劃">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSf3ViVbwi-QYfr-RiRwNOilQYFMo2hHQPn0SkgicE7Ifk5twQ/viewform" target="_blank" rel="noopener noreferrer" class="neighbour-link" aria-label="客舍鄰里人計劃">
       <div class="neighbour-card">
         <h2>成為鄰里人</h2>
     <h3>Becoming<br>our<br>neighbour</h3>

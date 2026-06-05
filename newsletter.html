@@ -21,6 +21,8 @@
 </head>
 <body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300 antialiased selection:bg-indigo-500/30">
 
+<div id="header-container" class="navbar-wrapper"></div>
+
     <!-- 導覽列 -->
     <nav class="border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-800/90 backdrop-blur sticky top-0 z-50 transition-colors duration-300">
         <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -226,22 +228,8 @@
         </div>
     </div>
 
-    <!-- 狀態橫幅 -->
-    <footer class="mt-auto border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 transition-colors duration-300">
-        <div class="max-w-5xl mx-auto px-4 py-4">
-            <div id="statusBanner" class="p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between transition-all bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400 gap-2 text-center sm:text-left">
-                <div class="flex items-center space-x-2.5">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <p id="statusText" class="font-bold text-[11px] md:text-xs">當前介面：讀者模式（唯讀）</p>
-                </div>
-                <span id="adminBadge" class="hidden text-[10px] bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">管理員權限已解鎖</span>
-            </div>
-            <p class="text-center text-[11px] text-gray-400 mt-3">© 2026 客舍電子報. All rights reserved.</p>
-        </div>
-    </footer>
+
+   <footer id="global-footer" class="custom-footer"></footer>
 
     <script>
         const SECURE_STORAGE_KEY = 'kese_newsletter_data_secure';
@@ -810,6 +798,48 @@
         function saveToLocalStorage() {
             localStorage.setItem(SECURE_STORAGE_KEY, JSON.stringify(posts));
         }
+
+        // 1. 載入頁首
+    fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+            const container = document.getElementById('header-container');
+            container.innerHTML = data;
+            setupHeaderMenu(); // 載入後才綁定選單
+        });
+
+    // 2. 載入頁尾並處理年份
+    fetch('footer.html')
+        .then(response => response.text())
+        .then(data => {
+            const footerContainer = document.getElementById('global-footer');
+            footerContainer.innerHTML = data;
+            
+            // 頁尾載入完成後，更新年份
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        });
+
+    // 3. 定義 Header 選單邏輯
+    function setupHeaderMenu() {
+        const toggleButton = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        if (toggleButton && navLinks) {
+            toggleButton.addEventListener('click', (e) => {
+                navLinks.classList.toggle('active');
+                e.stopPropagation();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                    navLinks.classList.remove('active');
+                }
+            });
+        }
+    }
     </script>
 </body>
 </html>

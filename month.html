@@ -110,7 +110,7 @@
         
         .weekday { text-align: center; font-size: 18px; font-weight: bold; padding: 12px 0; background: #f0d0d0; color: #333; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); border-radius: 8px;}
         .day-num { text-align: right; font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #333; }
-        .grid .cell:nth-child(7n+1) .day-num, .holiday-cell .day-num { color: var(--danger-red); }
+        .grid .cell:nth-child(7n+1) .day-num, .cell.holiday .day-num { color: var(--danger-red); }
         .grid .cell:nth-child(7n) .day-num { color: var(--primary-blue); }
         
         /* 電腦版正常活動樣式 */
@@ -470,7 +470,7 @@
 <div class="modal-overlay" id="eventActionModal">
     <div class="modal-card">
         <h3 id="modal-action-title">活動詳細資訊</h3>
-        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary-blue);" id="info-event-preview"></div>
+        <div style="background: #f1a2a2; padding: 15px; border-radius: 6px; font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary-blue);" id="info-event-preview"></div>
         <div class="modal-buttons" id="modal-action-buttons">
             </div>
     </div>
@@ -524,14 +524,31 @@ function renderCalendar() {
     calendarEl.innerHTML = `<div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>`;
 
     for (let i = 0; i < firstDay; i++) calendarEl.innerHTML += `<div class="cell empty-cell"></div>`;
-    for (let d = 1; d <= daysInMonth; d++) {
+ for (let d = 1; d <= daysInMonth; d++) {
+        // --- 🛠️【新增：判斷是否為假日】---
+        // 將目前的日(d) 補零轉成字串，例如 1 變成 "01"
+        const dayStr = d.toString().padStart(2, '0');
+        // 組合出完整日期，格式為 "YYYY-MM-DD"
+        const fullDateStr = `${currentMonth}-${dayStr}`;
+        // 檢查 holidays 陣列有沒有包含這個日期
+        const isHoliday = holidays.includes(fullDateStr);
+        // 如果是假日就加上 'holiday' 樣式類別
+        const holidayClass = isHoliday ? 'holiday' : '';
+        // ---------------------------------
+
         const events = (dbData.events[currentMonth] || []).filter(e => e.day === d);
         let eventsHtml = events.map(e => `
             <div class="event" style="background:${dbData.types.find(t=>t.name==e.type)?.color || '#dcecfc'}">
                 <span class="evt-time">${e.time}</span><span class="evt-text">${e.text}</span>
             </div>
         `).join('');
-        calendarEl.innerHTML += `<div class="cell" onclick="handleCellClick(${d})"><div class="day-num">${d}</div>${eventsHtml}</div>`;
+        
+        // 💡【修改】：在 cell 的 class 列表中加入 ${holidayClass}
+        calendarEl.innerHTML += `
+            <div class="cell ${holidayClass}" onclick="handleCellClick(${d})">
+                <div class="day-num">${d}</div>
+                ${eventsHtml}
+            </div>`;
     }
 }
 
