@@ -350,6 +350,8 @@
 
     }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -371,27 +373,38 @@
 
     <div id="calendar" class="grid"></div>
     <div id="admin-panel">
-        <h3>
-            <span>🛠 管理員智慧中控台</span>
+<h3>
+        <span>🛠 管理員智慧中控台</span>
+        <span id="edit-mode-badge" style="display:none; background:#f0a818; color:white; font-size:12px; padding:2px 8px; border-radius:4px; margin-left:10px; vertical-align:middle;">✏️ 編輯模式</span>
+        <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button onclick="exportEventImage()" style="background:#2196F3; font-size:13px; padding:4px 8px;">🖼️ 導出本月圖檔 (108x135)</button>
             <button onclick="openModal('passwordModal')" style="background:#673ab7; font-size:13px; padding:4px 8px;">🔑 修改管理員密碼</button>
-        </h3>
-        <div class="row">
-            <input type="number" id="e-day" placeholder="日">
-            <input type="text" id="e-time" placeholder="時間 (如 19:30)">
-            <input type="text" id="e-text" placeholder="活動內容">
-            <select id="e-type"></select>
-            <button onclick="addEvent()" id="btn-save-event">新增活動</button>
-            <button onclick="clearEventForm()" style="background:#888">清空</button>
         </div>
-        <div class="row" style="border-top: 1px dashed #ddd; padding-top: 15px; margin-bottom: 0;">
-            <input type="text" id="new-type" placeholder="新類型名稱">
-            <input type="color" id="new-color" value="#dcecfc" style="padding:0; height:35px; cursor:pointer;">
-            <button onclick="addType()">快速新增類型</button>
-            <div style="margin-left: auto; display: flex; gap: 10px; width: 100%;">
-                <button onclick="openModal('monthModal')" style="flex:1;">新增月份</button>
-                <button style="background:var(--danger-red); flex:1;" onclick="openModal('delMonthModal')">刪除本月</button>
-            </div>
+    </h3>
+    <canvas id="exportCanvas" width="1080" height="1350" style="display: none;"></canvas>
+
+    <input type="hidden" id="edit-idx-target" value="-1">
+    <input type="hidden" id="edit-day-target" value="-1">
+
+    <div class="row">
+        <input type="number" id="e-day" placeholder="日">
+        <input type="text" id="e-time" placeholder="時間 (如 19:30)">
+        <input type="text" id="e-text" placeholder="活動內容">
+        <select id="e-type"></select>
+        
+        <button onclick="handleEventSubmit()" id="btn-save-event" style="background:var(--primary-blue)">新增活動</button>
+        <button onclick="clearEventForm()" style="background:#888">清空 / 取消</button>
+    </div>
+    
+    <div class="row" style="border-top: 1px dashed #ddd; padding-top: 15px; margin-bottom: 0;">
+        <input type="text" id="new-type" placeholder="新類型名稱">
+        <input type="color" id="new-color" value="#dcecfc" style="padding:0; height:35px; cursor:pointer;">
+        <button onclick="addType()">快速新增類型</button>
+        <div style="margin-left: auto; display: flex; gap: 10px; width: 100%;">
+            <button onclick="openModal('monthModal')" style="flex:1;">新增月份</button>
+            <button style="background:var(--danger-red); flex:1;" onclick="openModal('delMonthModal')">刪除本月</button>
         </div>
+    </div>
     </div>
 </div>
     
@@ -763,13 +776,10 @@ window.moveType = function(direction) {
 
 // --- 合併後的 handleCellClick ---
 window.handleCellClick = function(day) {
-    // 1. 如果是管理員模式，且你有點擊輸入框的需求 (如原本的邏輯)
-    // 我們可以加入一個判斷：如果是在編輯模式下，才填入日期；否則開啟彈窗
-    if (isAdmin && document.getElementById('e-day')) {
+    if (isAdmin && document.getElementById('e-day') && document.getElementById('edit-idx-target').value === "-1") {
         document.getElementById('e-day').value = day;
     }
 
-    // 2. 開啟活動詳細資訊彈窗
     const dayEvents = (dbData.events[currentMonth] || []).filter(e => e.day === day);
     
     document.getElementById('modal-action-title').innerText = `${day}日 活動資訊`;
@@ -780,19 +790,155 @@ window.handleCellClick = function(day) {
         preview.innerHTML = "今日無活動。";
         buttons.innerHTML = `<button onclick="window.closeModal('eventActionModal')" style="background:#888; width:100%">關閉</button>`;
     } else {
+        // 💡 關鍵修正：在每條活動右側加上「編輯」與「單獨刪除」按鈕
         preview.innerHTML = dayEvents.map((e, idx) => `
-            <div style="margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid #eee;">
-                <b>${e.time}</b> : ${e.text} <small>(${e.type})</small>
+            <div style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <div style="flex: 1; padding-right: 10px;">
+                    <b>${e.time}</b> : ${e.text} <small style="color:#666;">(${e.type})</small>
+                </div>
+                ${isAdmin ? `
+                    <div style="display:flex; gap:5px; flex-shrink:0;">
+                        <button onclick="window.switchToEditMode(${day}, ${idx})" style="background:#f0a818; color:#fff; padding:4px 8px; font-size:12px; border:none; border-radius:4px; cursor:pointer;">✏️</button>
+                        <button onclick="window.deleteSingleEvent(${day}, ${idx})" style="background:var(--danger-red); color:#fff; padding:4px 8px; font-size:12px; border:none; border-radius:4px; cursor:pointer;">🗑️</button>
+                    </div>
+                ` : ''}
             </div>
         `).join('');
         
         buttons.innerHTML = `
-            <button onclick="window.closeModal('eventActionModal')" style="background:#888">關閉</button>
-            ${isAdmin ? `<button onclick="deleteEventsOfDay(${day})" style="background:var(--danger-red)">🗑 刪除今日所有活動</button>` : ''}
+            <button onclick="window.closeModal('eventActionModal')" style="background:#888; width:100%;">關閉</button>
+            ${isAdmin ? `<button onclick="deleteEventsOfDay(${day})" style="background:#333; margin-top:8px; font-size:12px; padding:4px;">⚠️ 刪除今日所有活動</button>` : ''}
         `;
     }
     
     window.openModal('eventActionModal');
+};
+
+// --- 💡 完美比例、原樣高畫質、徹底消滅怪框與空格終極版 ---
+window.exportEventImage = function() {
+    console.log("正在執行黃金比例等比無損出圖...");
+
+    // 1. 抓取你的日曆主範圍 (.container)
+    const targetElement = document.querySelector('.container'); 
+    if (!targetElement) {
+        alert("找不到日曆區域，請確認網頁結構中包含 .container 元素");
+        return;
+    }
+
+    // 2. 暫時隱藏管理員控制台中控台
+    const adminPanel = document.getElementById('admin-panel');
+    let originalAdminDisplay = "";
+    if (adminPanel) {
+        originalAdminDisplay = adminPanel.style.display;
+        adminPanel.style.display = 'none'; 
+    }
+
+    // 3. 自動獲取網頁目前日曆背景的顏色
+    let webBgColor = '#e8f0e0';
+    try {
+        const computedStyle = window.getComputedStyle(targetElement);
+        if (computedStyle.backgroundColor && computedStyle.backgroundColor !== 'transparent' && computedStyle.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+            webBgColor = computedStyle.backgroundColor;
+        }
+    } catch(e) {}
+
+    // 4. 直接對原網頁進行高清像素捕捉，並在 clone 瞬間徹底殺死所有排版 Bug
+    html2canvas(targetElement, {
+        useCORS: true,              // 支援外部大頭貼頭像
+        allowTaint: true,
+        scale: 3,                   // 保持 3 倍高清採樣，兼顧速度與極致清晰度
+        backgroundColor: webBgColor,
+        letterRendering: false,     // 💡 關鍵 1：強迫關閉 html2canvas 的逐字拆解，防止文字中間爆開空格
+        logging: false,
+        
+        onclone: function(clonedDoc) {
+            // 💡 關鍵 2：直接抓出頂部出問題的分類標籤區（不管是列表還是自訂方塊）
+            // 我們直接將所有可能產生淡灰色背景框、外邊框、陰影的屬性全部拔除
+            const legendItems = clonedDoc.querySelectorAll('.container *, #legend-list *, .legend-box *, .legend *');
+            
+            legendItems.forEach(el => {
+                // 1. 徹底消滅截圖中多出來的灰色細框線與怪異陰影
+                el.style.setProperty('box-shadow', 'none', 'important');
+                el.style.setProperty('border', 'none', 'important');
+                el.style.setProperty('outline', 'none', 'important');
+                
+                // 如果是包裹文字的區塊，拔除其背景，防止產生灰色底色塊
+                if (el.tagName === 'SPAN' && !el.style.backgroundColor && !el.className.includes('color')) {
+                    el.style.setProperty('background', 'transparent', 'important');
+                }
+
+                // 2. 修正字體散開：強制將字距重設為網頁原生的 0 像素，取消任何「分散對齊」的干擾
+                el.style.setProperty('letter-spacing', '0px', 'important');
+                el.style.setProperty('word-spacing', '0px', 'important');
+                
+                // 3. 解決小方塊與文字緊貼、黏在一起的問題：拉開舒適的 6px 間距
+                const computedStyle = window.getComputedStyle(el);
+                if (computedStyle.display === 'flex' || el.style.display === 'flex') {
+                    el.style.setProperty('gap', '6px', 'important');
+                }
+            });
+        }
+    }).then(domCanvas => {
+        
+        // 還原管理員中控台的網頁顯示
+        if (adminPanel) adminPanel.style.display = originalAdminDisplay;
+
+        // 5. 建立最終 4:5 的標準 1080x1350 導出大畫布
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = 1080;
+        finalCanvas.height = 1350;
+        const ctx = finalCanvas.getContext('2d');
+
+        // 開啟最高等級的雙線性平滑抗鋸齒，使字體與圓角卡片不發毛、不模糊
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // 填滿跟日曆完全相同的背景底色
+        ctx.fillStyle = webBgColor;
+        ctx.fillRect(0, 0, 1080, 1350);
+
+        // 6. 💡【完美等比例縮放算法】：計算不變形的最佳渲染寬高
+        const imgWidth = domCanvas.width;
+        const imgHeight = domCanvas.height;
+        
+        // 畫布邊緣保留安全邊距（四周留空，視覺更優雅舒適）
+        const maxWidth = 1020; 
+        const maxHeight = 1290;
+        
+        // 計算等比例縮放比值 (取最小者，確保橫向、縱向都不會被拉伸或壓扁)
+        const scaleRatio = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
+        
+        const renderWidth = imgWidth * scaleRatio;
+        const renderHeight = imgHeight * scaleRatio;
+
+        // 絕對完美的中央置中座標計算
+        const x = (1080 - renderWidth) / 2;
+        const y = (1350 - renderHeight) / 2;
+
+        // 7. 將完全不變形的高清網頁原樣快照繪製到大畫布中央
+        ctx.drawImage(domCanvas, 0, 0, imgWidth, imgHeight, x, y, renderWidth, renderHeight);
+
+        // 8. 觸發不壓縮最高品質 PNG 下載
+        try {
+            const dataURL = finalCanvas.toDataURL('image/png', 1.0);
+            const downloadLink = document.createElement('a');
+            downloadLink.style.display = 'none';
+            downloadLink.href = dataURL;
+            downloadLink.download = `客舍時間表-${currentMonth}-1080x1350.png`;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            console.log("完美等比、無雜質高清日曆圖匯出成功！");
+        } catch (err) {
+            console.error("圖片儲存失敗:", err);
+            alert("導出失敗，建議更換為 Chrome 瀏覽器再試一次。");
+        }
+    }).catch(error => {
+        console.error("html2canvas 執行出錯:", error);
+        alert("快照擷取失敗");
+        if (adminPanel) adminPanel.style.display = originalAdminDisplay;
+    });
 };
 
 // --- 執行刪除 ---
@@ -822,17 +968,37 @@ window.openEditModal = function(day, index) {
 
 // 儲存修改內容
 window.submitEditEvent = function() {
-    const day = parseInt(document.getElementById('edit-day').value);
-    const index = parseInt(document.getElementById('edit-index').value);
+const day = parseInt(document.getElementById('edit-day').value);
+    const index = parseInt(document.getElementById('edit-index').value); // 這是當天過濾後的第幾筆
     
-    // 找到該天活動列表中的特定項目並修改
-    let dayEvents = dbData.events[currentMonth].filter(e => e.day === day);
-    dayEvents[index].time = document.getElementById('edit-time').value;
-    dayEvents[index].text = document.getElementById('edit-text').value;
-    dayEvents[index].type = document.getElementById('edit-type').value;
+    // 1. 找出當月的所有活動
+    let monthEvents = dbData.events[currentMonth] || [];
     
-    saveDB();
-    window.closeModal('editEventModal');
+    // 2. 算出這個「當天第 index 筆」的活動，在「整個月」的陣列中真正的萬用索引值 (globalIndex)
+    let currentDayMatchCount = 0;
+    const globalIndex = monthEvents.findIndex(e => {
+        if (e.day === day) {
+            if (currentDayMatchCount === index) return true;
+            currentDayMatchCount++;
+        }
+        return false;
+    });
+
+    // 3. 如果有找到，直接更新該筆資料
+    if (globalIndex !== -1) {
+        monthEvents[globalIndex] = {
+            day: day, // 保持原本日期，或也可以允許從 input 修改
+            time: document.getElementById('edit-time').value,
+            text: document.getElementById('edit-text').value,
+            type: document.getElementById('edit-type').value
+        };
+        
+        // 4. 存檔並關閉視窗
+        saveDB();
+        window.closeModal('editEventModal');
+    } else {
+        alert("找不到該筆活動資料，修改失敗。");
+    }
 };
 
 // --- 輔助 ---
