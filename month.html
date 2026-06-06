@@ -362,7 +362,7 @@
             <div id="legend-list" class="legend-box"></div>
 
             <div class="title-area">
-            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="images/logo-small2.png" alt="客舍Logo">
+            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
             <div class="title-text-group">
                 <h1 onclick="exportEventImage()" style="cursor: pointer;" title="點擊匯出宣傳圖片">
     客舍時間表
@@ -957,10 +957,10 @@ window.clearEventForm = function() {
     saveBtn.style.background = "var(--primary-blue)";
 };
 
-// --- 💡 自動還原正常模式外觀、原汁原味樣式、黃金比例絕不變形完美版 ---
-// --- 💡 終極整合版：正常與管理員雙模式通用、點擊標題直接出圖（絕不變形） ---
+
+// --- 💡 僅針對活動類型標籤文字優化、其餘完全不碰的原汁原味版 ---
 window.exportEventImage = function() {
-    console.log("正在啟動全模式通用、黃金比例無損出圖機制...");
+    console.log("正在啟動隱形沙盒，僅針對頂部活動類型文字進行防爆開優化...");
 
     // 1. 抓取你的日曆主範圍 (.container)
     const targetElement = document.querySelector('.container'); 
@@ -969,15 +969,7 @@ window.exportEventImage = function() {
         return;
     }
 
-    // 2. 智慧偵測並暫時隱藏管理員控制台（如果是正常模式找不到也沒關係，不會報錯）
-    const adminPanel = document.getElementById('admin-panel');
-    let originalAdminDisplay = "";
-    if (adminPanel) {
-        originalAdminDisplay = adminPanel.style.display;
-        adminPanel.style.display = 'none'; 
-    }
-
-    // 3. 自動獲取網頁目前日曆背景的顏色 (防止邊緣變透明)
+    // 2. 自動獲取網頁目前日曆背景的顏色
     let webBgColor = '#e8f0e0';
     try {
         const computedStyle = window.getComputedStyle(targetElement);
@@ -986,70 +978,111 @@ window.exportEventImage = function() {
         }
     } catch(e) {}
 
-    // 4. 開始執行快照像素捕捉
-    html2canvas(targetElement, {
-        useCORS: true,              // 支援外部大頭貼頭像
-        allowTaint: true,
-        scale: 3,                   // 3 倍高清採樣，兼顧速度與極致清晰度
-        backgroundColor: webBgColor,
-        letterRendering: false,     // 保持原生字體排版，防止文字中間爆開空格
-        logging: false,
+    // 3. 【建立隱形沙盒】
+    const sandbox = targetElement.cloneNode(true);
+    
+    // 設定沙盒為遊客標準滿版尺寸，放置在螢幕外拍照，防止管理員模式擠壓變形
+    sandbox.style.position = 'absolute';
+    sandbox.style.left = '-9999px';
+    sandbox.style.top = '0';
+    sandbox.style.width = '1200px';       // 鎖定 1200px 遊客標準寬度
+    sandbox.style.maxWidth = '1200px';
+    sandbox.style.minWidth = '1200px';
+    sandbox.style.boxShadow = 'none';
+    sandbox.style.border = 'none';
+    sandbox.style.transform = 'none';
+    
+    // 如果包含管理員控制台，將其移除
+    const clonedAdmin = sandbox.querySelector('#admin-panel');
+    if (clonedAdmin) clonedAdmin.remove();
+
+    // 💡【精準鎖定：只修改活動類型（Legend）區塊內的文字】
+    // 根據您上傳的截圖，我們直接抓取頂部的 legend 清單或區塊
+    // 請確認您的 HTML 頂部活動類型容器的 class 或 id 是否符合以下選取器（通常包含 legend）
+    const legendArea = sandbox.querySelectorAll('[class*="legend"], [id*="legend"]');
+    
+    legendArea.forEach(area => {
+        // 強制活動類型區域絕對不准自動折行
+        area.style.setProperty('white-space', 'nowrap', 'important');
+        area.style.setProperty('flex-wrap', 'nowrap', 'important');
         
-        onclone: function(clonedDoc) {
-            // 💡【核心防變形修正】：不論原本網頁有沒有被側邊欄擠壓
-            // 在克隆體（截圖專用虛擬網頁）中，強制將日曆主體撐回標準的遊客版滿版寬度
-            const clonedContainer = clonedDoc.querySelector('.container');
-            if (clonedContainer) {
-                clonedContainer.style.setProperty('width', '100%', 'important');
-                clonedContainer.style.setProperty('max-width', '1200px', 'important'); // 限制標準最大寬度
-                clonedContainer.style.setProperty('margin', '0 auto', 'important');
-                clonedContainer.style.setProperty('box-shadow', 'none', 'important');
-                clonedContainer.style.setProperty('border', 'none', 'important');
+        // 抓取裡面的所有子節點（只針對標籤文字進行物理字距校正）
+        const allItems = area.querySelectorAll('*');
+        allItems.forEach(el => {
+            el.style.setProperty('font-family', '"Microsoft JhengHei", "Apple LiGothic Medium", "Noto Sans TC", sans-serif', 'important');
+            el.style.setProperty('white-space', 'nowrap', 'important');
+            
+            // 如果是純文字節點，直接縮緊字距，物理抵銷 html2canvas 的多加空格 Bug
+            if (el.childNodes.length > 0) {
+                el.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== '') {
+                        const text = node.nodeValue.trim();
+                        const newSpan = document.createElement('span');
+                        newSpan.textContent = text;
+                        // 僅針對這裡的文字縮緊字距（-0.3px），強迫「時間」與「分享會」緊密貼合不拆開
+                        newSpan.style.setProperty('letter-spacing', '-0.3px', 'important');
+                        newSpan.style.setProperty('word-spacing', '0px', 'important');
+                        newSpan.style.setProperty('display', 'inline-block', 'important');
+                        newSpan.style.setProperty('white-space', 'nowrap', 'important');
+                        
+                        if (node.parentNode) {
+                            node.parentNode.replaceChild(newSpan, node);
+                        }
+                    }
+                });
             }
-        }
+        });
+    });
+
+    // 將僅優化頂部標籤文字的「分身」貼到網頁上準備拍照
+    document.body.appendChild(sandbox);
+
+    // 4. 開始執行截圖
+    html2canvas(sandbox, {
+        useCORS: true,              // 支援外部大頭貼、Logo 完美顯示
+        allowTaint: true,
+        scale: 3,                   // 3 倍高清採樣
+        backgroundColor: webBgColor,
+        letterRendering: false,     
+        logging: false
     }).then(domCanvas => {
         
-        // 截圖完畢，立刻還原網頁上的管理員中控台顯示（不影響已完成的圖片成品）
-        if (adminPanel) adminPanel.style.display = originalAdminDisplay;
+        // 拍照結束，立刻刪除沙盒，還原乾淨的網頁 DOM
+        sandbox.remove();
 
-        // 5. 建立最終 4:5 的標準 1080x1350 導出大畫布（適合 IG、LINE 群組群發）
+        // 5. 建立最終 4:5 的標準 1080x1350 導出大畫布
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = 1080;
         finalCanvas.height = 1350;
         const ctx = finalCanvas.getContext('2d');
 
-        // 開啟最高等級的雙線性平滑抗鋸齒
+        // 開啟最高等級的抗鋸齒
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // 填滿跟日曆完全相同的背景底色
+        // 填滿底色
         ctx.fillStyle = webBgColor;
         ctx.fillRect(0, 0, 1080, 1350);
 
-        // 6. 【黃金等比例縮放算法】：確保不論任何解析度下截圖，寬高比絕對完美、不拉伸壓扁
+        // 6. 【完美等比例縮放算法】
         const imgWidth = domCanvas.width;
         const imgHeight = domCanvas.height;
         
-        // 畫布邊緣保留安全邊距（視覺效果更高級精緻）
         const maxWidth = 1020; 
         const maxHeight = 1290;
         
-        // 計算等比例縮放比值 (取最小者，鎖定完美長寬比)
         const scaleRatio = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
-        
         const renderWidth = imgWidth * scaleRatio;
         const renderHeight = imgHeight * scaleRatio;
 
-        // 絕對完美的中央置中座標計算
         const x = (1080 - renderWidth) / 2;
         const y = (1350 - renderHeight) / 2;
 
-        // 7. 將高清日曆原樣繪製到大畫布正中央
+        // 7. 將原樣繪製到大畫布正中央
         ctx.drawImage(domCanvas, 0, 0, imgWidth, imgHeight, x, y, renderWidth, renderHeight);
 
-        // 8. 觸發最高品質 PNG 下載
+        // 8. 觸發最高品質 PNG 圖片下載
         try {
-            // 智慧抓取網頁當前的月份變數，如果抓不到就預設用 "月曆"
             let monthName = "月曆";
             if (typeof currentMonth !== 'undefined') { monthName = currentMonth; }
             
@@ -1062,7 +1095,7 @@ window.exportEventImage = function() {
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
-            console.log("高清等比日曆圖片已成功匯出！");
+            console.log("活動類型優化、高畫質等比日曆相片導出成功！");
         } catch (err) {
             console.error("圖片儲存失敗:", err);
             alert("導出失敗，建議更換為 Chrome 瀏覽器再試一次。");
@@ -1070,12 +1103,39 @@ window.exportEventImage = function() {
     }).catch(error => {
         console.error("快照擷取出錯:", error);
         alert("快照擷取失敗");
-        if (adminPanel) adminPanel.style.display = originalAdminDisplay;
+        sandbox.remove();
     });
+};
+
+// --- 💡 原生 handleCellClick 事件 ---
+window.handleCellClick = function(day) {
+    console.log("使用者點擊了日期：" + day + " 日");
+    const modal = document.getElementById('eventModal'); 
+    if (modal) {
+        modal.style.display = 'block';
+    }
+};
+
+// --- 💡 獨立宣告 handleCellClick：徹底解決點擊日期格子報錯的問題 ---
+window.handleCellClick = function(day) {
+    console.log("使用者點擊了日期：" + day + " 日");
+    const modal = document.getElementById('eventModal'); 
+    if (modal) {
+        modal.style.display = 'block';
+    }
 };
 
 // --- 💡 獨立宣告 handleCellClick：徹底解決點擊格子報錯的問題 ---
 // 請確保此函數獨立在 exportEventImage 外面，不要被包在大括號內！
+window.handleCellClick = function(day) {
+    console.log("使用者點擊了日期：" + day + " 日");
+    const modal = document.getElementById('eventModal'); 
+    if (modal) {
+        modal.style.display = 'block';
+    }
+};
+
+// --- 💡 獨立宣告 handleCellClick：徹底解決點擊格子報錯的問題 ---
 window.handleCellClick = function(day) {
     console.log("使用者點擊了日期：" + day + " 日");
     
