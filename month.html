@@ -68,7 +68,7 @@
             height: 60px; width: auto; object-fit: contain; cursor: pointer; transition: all 0.3s ease; user-select: none; border: 2px solid transparent; border-radius: 4px;
         }
         .logo-btn:hover { transform: scale(1.05); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        body.admin-mode .logo-btn { border-color: #ffa000; box-shadow: 0 0 12px rgba(255, 160, 0, 0.4); }
+   
         
         #month-display { 
             font-size: 30px; font-weight: bold; color: var(--primary-blue); display: inline-block; margin-bottom: 12px; cursor: pointer; padding: 6px 12px; border-radius: 4px; transition: all 0.2s ease; user-select: none; 
@@ -81,7 +81,7 @@
         .legend-box { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 0 0; }
         
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--text-main); padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
-        body.admin-mode .legend-item { background: rgba(0, 0, 0, 0.02); box-shadow: inset 0 0 0 1px #e0e0e0; }
+    
 
         .box { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
 
@@ -1204,6 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchData(); // 萬一 header 壞了，保底還是要讓日曆出來
         });
 
+
     // 2. 載入頁尾並處理年份（這個維持不變）
     fetch('footer.html')
         .then(response => response.text())
@@ -1215,25 +1216,101 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 });
 
+// ==========================================
+// 3. 定義 Header 選單邏輯（升級版演算法）
+// ==========================================
+function setupHeaderMenu() {
+    const toggleButton = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.header-nav-links');
 
-    // 3. 定義 Header 選單邏輯
-    function setupHeaderMenu() {
-        const toggleButton = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
+    // --- (A) 手機版漢堡選單開關邏輯 ---
+    if (toggleButton && navLinks) {
+        // 使用 onclick 確保不重複綁定事件
+        toggleButton.onclick = function(e) {
+            navLinks.classList.toggle('active');
+            e.stopPropagation();
+        };
 
-        if (toggleButton && navLinks) {
-            toggleButton.addEventListener('click', (e) => {
-                navLinks.classList.toggle('active');
-                e.stopPropagation();
-            });
+        document.onclick = function(e) {
+            if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                navLinks.classList.remove('active');
+            }
+        };
+    }
 
-            document.addEventListener('click', (e) => {
-                if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
-                    navLinks.classList.remove('active');
-                }
-            });
+    // --- (B) 智能偵測寬度：過長項目收進「更多」演算法 ---
+    const mainNav = document.querySelector('.header-nav-links'); // 抓取主導覽列容器
+    if (!mainNav) return;
+
+    // 1. 動態建立「更多」下拉選單結構（如果 header.html 裡面還沒有的話，JS 會自動補上）
+    let moreMenu = document.getElementById('more-menu');
+    let overflowLinks = document.getElementById('overflow-links');
+    
+    if (!moreMenu) {
+        moreMenu = document.createElement('div');
+        moreMenu.id = 'more-menu';
+        moreMenu.className = 'more-dropdown';
+        moreMenu.innerHTML = `
+            <a href="#" class="more-toggle" onclick="return false;">更多 ▾</a>
+            <div class="more-dropdown-content" id="overflow-links"></div>
+        `;
+        mainNav.appendChild(moreMenu);
+        overflowLinks = document.getElementById('overflow-links');
+    }
+
+    // 2. 找出所有原本的連結項目（排除掉「更多」按鈕本身）
+    // 💡 這裡會抓取 nav 裡面所有的 <a> 標籤作為選單項目
+    const allLinks = Array.from(mainNav.children).filter(el => el !== moreMenu && el.tagName === 'A');
+
+    // 3. 核心計算函式
+    function adjustNavItems() {
+        // 📱 如果是手機版（寬度 <= 768px），停止收納演算法，將所有項目還原給漢堡選單垂直排列
+        if (window.innerWidth <= 768) {
+            allLinks.forEach(item => mainNav.insertBefore(item, moreMenu));
+            moreMenu.style.display = 'none';
+            return;
+        }
+
+        // 💻 電腦版自動收納計算
+        moreMenu.style.display = 'none'; // 先隱藏「更多」
+        overflowLinks.innerHTML = '';    // 清空收納盒
+        allLinks.forEach(item => mainNav.insertBefore(item, moreMenu)); // 先把所有項目放回主列以便測量真實寬度
+
+        let navContainerWidth = mainNav.offsetWidth;
+        let totalWidth = 0;
+        let isOverflow = false;
+        const moreBtnWidth = 90; // 預留給「更多 ▾」按鈕出現時的寬度緩衝
+
+        for (let i = 0; i < allLinks.length; i++) {
+            const item = allLinks[i];
+
+            // 如果前面已經爆滿了，後面的項目直接丟進「更多」收納盒
+            if (isOverflow) {
+                overflowLinks.appendChild(item);
+                continue;
+            }
+
+            // 累加當前項目的寬度（包含外距）
+            const itemStyle = window.getComputedStyle(item);
+            const marginLeft = parseFloat(itemStyle.marginLeft) || 0;
+            const marginRight = parseFloat(itemStyle.marginRight) || 0;
+            totalWidth += item.offsetWidth + marginLeft + marginRight;
+
+            // 💡 關鍵判斷：如果目前的總寬度加上「更多」按鈕寬度超過了導覽列總寬
+            if (totalWidth + moreBtnWidth > navContainerWidth) {
+                isOverflow = true;
+                moreMenu.style.display = 'inline-block'; // 顯現「更多」
+                overflowLinks.appendChild(item);         // 將當前這個放進收納盒
+            }
         }
     }
+
+    // 4. 初始化執行，並綁定視窗縮放事件
+    adjustNavItems();
+    window.removeEventListener('resize', adjustNavItems); // 防重複綁定
+    window.addEventListener('resize', adjustNavItems);
+}
+
 </script>
 </body>
 </html>

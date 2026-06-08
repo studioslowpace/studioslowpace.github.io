@@ -1,143 +1,490 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>客舍電子報管理系統</title>
-    <!-- 引入 Tailwind CSS 進行現代化排版與深色模式支援 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
-    <!-- 引入 FontAwesome 圖標 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-                * {
+        /* --- 全局變數與基礎設定 --- */
+        :root {
+            --bg-main: #f9fafb;
+            --bg-card: #ffffff;
+            --bg-nav: rgba(255, 255, 255, 0.9);
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --primary-text: #3730a3;
+            --amber: #d97706;
+            --amber-hover: #b45309;
+            --amber-light: #fef3c7;
+            --amber-text: #92400e;
+            --rose: #e11d48;
+            --rose-hover: #be123c;
+            --rose-light: #ffe4e6;
+            --emerald: #059669;
+            --sky: #0284c7;
+        }
+
+        html.dark {
+            --bg-main: #111827;
+            --bg-card: #1f2937;
+            --bg-nav: rgba(31, 41, 55, 0.9);
+            --border-color: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --text-light: #6b7280;
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --primary-light: #1e1b4b;
+            --primary-text: #c7d2fe;
+            --amber: #fbbf24;
+            --amber-hover: #f59e0b;
+            --amber-light: #78350f;
+            --amber-text: #fde68a;
+            --rose: #fb7185;
+            --rose-hover: #f43f5e;
+            --rose-light: #4c0519;
+            --emerald: #34d399;
+            --sky: #38bdf8;
+        }
+
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        html, body {
-            height: 100%;
-        }
+
         body {
-            background-color: #ebf3dd; 
             font-family: "Noto Sans TC", sans-serif;
-            color: #4A4A4A;
-            -webkit-font-smoothing: antialiased;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            width: 100%;
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
         }
-        /* 隱藏滾動條但保持滾動功能 (用於手機橫滑相片) */
+
+        /* --- 實用通用類別 --- */
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        .hidden { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .flex-row-end { display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* --- 導覽列與全新動態搜尋欄 --- */
+        .navbar {
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-nav);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .nav-container {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        /* 導覽列靠右的 Logo 與名稱 */
+.nav-right-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    font-size: 20px;
+    color:#2b579a;
+    text-align: center;
+    
+    /* 核心修改：利用絕對定位實現水平完美居中 */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+        .logo-btn {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
+            vertical-align: middle;
+        }
+
+        /* 左側動態展開搜尋區塊 */
+        .nav-left-search {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .search-trigger-btn {
+            padding: 10px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+        .search-trigger-btn:hover { background-color: var(--border-color); }
+        
+        /* 搜尋展開組件基礎設定 (向左展開) */
+.expandable-search-wrapper {
+    display: flex;
+    align-items: center;
+    width: 0px;
+    opacity: 0;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+    position: absolute;
+    right: 44px; /* 定位在搜尋圖示的左側 */
+    white-space: nowrap;
+    z-index: 1;
+}
+
+/* 點擊觸發後的展開狀態 */
+.expandable-search-wrapper.open {
+    width: 400px; /* 電腦端展開輸入框寬度 */
+    opacity: 1;
+}
+
+.search-input-field {
+    width: 100%;
+    padding: 8px 32px 8px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+}
+
+.inline-clear-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+        /* --- 按鈕樣式 --- */
+        .btn-icon {
+            padding: 10px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .btn-icon:hover { background-color: var(--border-color); }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-amber { background-color: var(--amber); color: white; }
+        .btn-amber:hover { background-color: var(--amber-hover); }
+        .btn-rose { background-color: var(--rose); color: white; }
+        .btn-rose:hover { background-color: var(--rose-hover); }
+        .btn-emerald { background-color: var(--emerald); color: white; }
+        .btn-sky { background-color: var(--sky); color: white; }
+        .btn-text { background: transparent; color: var(--text-muted); box-shadow: none; }
+        .btn-text:hover { color: var(--text-main); }
+
+        /* --- 主頁面與面板 --- */
+        .main-content {
+            padding: 24px 0;
+            flex-grow: 1;
+        }
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .form-control {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 15px;
+            outline: none;
+        }
+        .form-control:focus { border-color: var(--primary); }
+        
+        /* 圖片預覽區 */
+        .img-preview-container {
+            margin-top: 12px;
+            padding: 12px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .img-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .preview-item {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .preview-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        /* --- 備份與後台選單面板 --- */
+        .backup-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .backup-title { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; }
+        .backup-title i { color: var(--primary); }
+
+        /* --- 文章列表標頭與黑暗模式按鈕整合 --- */
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .list-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .list-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .post-count {
+            font-size: 13px;
+            color: var(--text-muted);
+            background-color: var(--border-color);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+        .posts-container { display: flex; flex-direction: column; gap: 20px; }
+        
+        .post-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .post-card:hover { transform: translateY(-2px); }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+        
+        /* 標籤元件 */
+        .tag {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+        }
+        .tag-issue { background-color: var(--primary-light); color: var(--primary-text); border-color: var(--primary-color); }
+        .tag-category { background-color: var(--amber-light); color: var(--amber-text); border-color: var(--amber-color); }
+        .tag-author { background-color: var(--border-color); color: var(--text-muted); font-weight: 500; }
+        .tag-info { background-color: var(--bg-main); color: var(--text-light); font-weight: 500; display: inline-flex; align-items: center; gap: 4px;}
+
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .card-body { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 64px 0;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            color: var(--text-light);
+        }
+        .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; }
+
+        /* --- 文章詳細頁面 --- */
+        .article-view { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 40px; }
+        .article-title { font-size: 28px; font-weight: 900; margin: 16px 0; }
+        .article-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-light); padding-bottom: 16px; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
+        .article-body { font-size: 17px; color: var(--text-main); line-height: 1.8; white-space: pre-line; word-break: break-all; }
+        
+        /* 圖片輪播 */
+        .carousel-desktop {
+            display: flex; position: relative; width: 100%; max-height: 500px; align-items: center; justify-content: center; 
+            background-color: var(--bg-main); border-radius: 12px; padding: 8px; border: 1px solid var(--border-color);
+        }
+        .carousel-desktop img { max-width: 100%; max-height: 460px; object-fit: contain; border-radius: 8px; }
+        .carousel-btn { position: absolute; background: rgba(0,0,0,0.4); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .carousel-btn:hover { background: rgba(0,0,0,0.7); }
+        .carousel-btn.prev { left: 12px; }
+        .carousel-btn.next { right: 12px; }
+        .carousel-indicator { position: absolute; bottom: 16px; background: rgba(0,0,0,0.6); color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        
+        .carousel-mobile { display: none; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; width: 100%; padding: 4px 0; }
+        .carousel-mobile-item { width: 100%; flex-shrink: 0; scroll-snap-align: center; display: flex; justify-content: center; background-color: var(--bg-main); border-radius: 12px; border: 1px solid var(--border-color); padding: 4px; }
+        .carousel-mobile-item img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px; }
+
+        /* --- 驗證彈窗 --- */
+        .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .modal-card { background-color: var(--bg-card); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color); transform: scale(0.95); opacity: 0; transition: all 0.3s; }
+        .modal-card.active { transform: scale(1); opacity: 1; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-error { color: var(--rose); font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+
+        /* --- 響應式微調 --- */
+        @media (max-width: 768px) {
+            .carousel-desktop { display: none; }
+            .carousel-mobile { display: flex; }
+            .article-view { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .hidden-mobile { display: none !important; }
+            .expandable-search-wrapper.open { width: 160px; } /* 手機端展開窄一點避免擠壓 */
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300 antialiased selection:bg-indigo-500/30">
+<body>
 
-<div id="header-container" class="navbar-wrapper"></div>
+<div id="header-container"></div>
 
-    <!-- 導覽列 -->
-    <nav class="border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-800/90 backdrop-blur sticky top-0 z-50 transition-colors duration-300">
-        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="backToHome()">
-                <i class="fa-solid fa-hotel text-indigo-600 dark:text-indigo-400 text-xl md:text-2xl"></i>
-                <span class="font-bold text-lg md:text-xl tracking-tight">客舍電子報</span>
-            </div>
-            
-            <!-- 智慧工具列 -->
-            <div class="flex items-center space-x-2 md:space-x-3">
-                <!-- 深淺色切換 -->
-                <button id="themeToggle" class="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400" title="切換深淺色">
-                    <i class="fa-solid fa-sun hidden dark:block text-lg"></i>
-                    <i class="fa-solid fa-moon block dark:hidden text-lg"></i>
-                </button>
-
-                <!-- 修改密碼 -->
-                <button id="changePwdBtn" class="hidden flex items-center space-x-1 bg-amber-500 hover:bg-amber-600 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium shadow transition-all" title="修改管理密碼">
-                    <i class="fa-solid fa-key"></i>
-                    <span class="hidden md:inline">修改密碼</span>
-                </button>
-
-                <!-- 讀者/管理員切換 -->
-                <button id="modeToggleBtn" class="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2.5 md:px-4 md:py-2 rounded-xl text-sm font-medium shadow transition-all">
-                    <i class="fa-solid fa-lock text-xs"></i>
-                    <span id="modeBtnText" class="text-xs md:text-sm">管理員</span>
-                </button>
+    <nav class="navbar">
+        <div class="nav-container container">
+            <div class="nav-right-logo" style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 20px;">
+                <img class="logo-btn" id="logoAdminBtn" onclick="handleAdminClick()" style="cursor: pointer; height: 32px; width: auto; object-fit: contain;" title="管理員模式切換" src="images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
+                <span onclick="backToHome()" style="cursor: pointer; line-height: 1.2;" title="返回電子報首頁">空間客寫<br><span style="font-size: 12px; font-weight: normal; opacity: 0.8;">Slow Pace Newsletter</span></span>
             </div>
         </div>
     </nav>
 
-    <!-- 【主頁面視窗】 -->
-    <div id="homePage" class="max-w-4xl w-full mx-auto px-4 py-6 md:py-8 flex-grow block">
-        <!-- 搜尋功能欄位 -->
-        <div class="mb-6 md:mb-8 relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </div>
-            <input type="text" id="searchInput" class="w-full pl-11 pr-24 py-3 md:py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm text-base transition-all" placeholder="搜尋標題、內文、作者...">
-            <!-- 清除篩選提示按鈕 -->
-            <button id="clearSearchBtn" onclick="clearFilter()" class="hidden absolute inset-y-0 right-0 pr-4 flex items-center text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400 font-medium">
-                清除篩選
-            </button>
-        </div>
+    <main id="homePage" class="main-content container">
 
-        <!-- 後台管理：發布與編輯區塊 -->
-        <section id="adminPanel" class="hidden mb-4 bg-white dark:bg-gray-800 rounded-2xl p-5 md:p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all">
-            <div class="flex items-center justify-between pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
-                <h2 id="panelTitle" class="text-lg md:text-xl font-bold flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span>發布新電子報文章</span>
-                </h2>
+        <section id="adminPanel" class="panel hidden">
+            <div id="panelTitle" class="panel-title">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>發布新電子報文章</span>
             </div>
             
-            <div class="space-y-4">
-                <!-- 欄位組 -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs md:text-sm font-semibold mb-1.5 text-gray-500 dark:text-gray-400">文章標題</label>
-                        <input type="text" id="postTitle" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>文章標題</label>
+                        <input type="text" id="postTitle" class="form-control">
                     </div>
-                    <div>
-                        <label class="block text-xs md:text-sm font-semibold mb-1.5 text-gray-500 dark:text-gray-400">文章作者</label>
-                        <input type="text" id="postAuthor" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base">
+                    <div class="form-group">
+                        <label>文章作者</label>
+                        <input type="text" id="postAuthor" class="form-control">
                     </div>
-                    <div>
-                        <label class="block text-xs md:text-sm font-semibold mb-1.5 text-gray-500 dark:text-gray-400">文章期數</label>
-                        <input type="text" id="postIssue" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base" placeholder="例如：第 003 期">
+                    <div class="form-group">
+                        <label>文章期數</label>
+                        <input type="text" id="postIssue" class="form-control" placeholder="例如：第 003 期">
                     </div>
-                    <div>
-                        <label class="block text-xs md:text-sm font-semibold mb-1.5 text-gray-500 dark:text-gray-400">文章分類</label>
-                        <input type="text" id="postCategory" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base" placeholder="例如：生活隨筆">
+                    <div class="form-group">
+                        <label>文章分類</label>
+                        <input type="text" id="postCategory" class="form-control" placeholder="例如：生活隨筆">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs md:text-sm font-semibold mb-1.5 text-gray-500 dark:text-gray-400">文章內文</label>
-                    <textarea id="postContent" rows="6" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base leading-relaxed"></textarea>
+                <div class="form-group">
+                    <label>文章內文</label>
+                    <textarea id="postContent" rows="6" class="form-control" style="resize:vertical; line-height:1.6;"></textarea>
                 </div>
                 
-                <!-- 附加相片欄位 -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400">附加相片 (支援多選)</label>
-                        <button id="clearImgBtn" onclick="clearImageInput()" class="hidden text-xs text-rose-500 font-bold hover:underline"><i class="fa-solid fa-circle-xmark"></i> 清空已選</button>
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label>附加相片 (支援多選)</label>
+                        <button id="clearImgBtn" onclick="clearImageInput()" class="btn-text" style="color:var(--rose); font-weight:bold; font-size:12px;"><i class="fa-solid fa-circle-xmark"></i> 清空已選</button>
                     </div>
-                    <input type="file" id="postImage" accept="image/*" multiple class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-950/40 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer">
+                    <input type="file" id="postImage" accept="image/*" multiple class="form-control" style="cursor:pointer;">
                     
-                    <!-- 預覽多張圖片縮圖區 -->
-                    <div id="imgPreviewContainer" class="mt-3 hidden bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div id="imgPreviewGrid" class="flex flex-wrap gap-2.5"></div>
+                    <div id="imgPreviewContainer" class="img-preview-container hidden">
+                        <div id="imgPreviewGrid" class="img-preview-grid"></div>
                     </div>
                 </div>
                 
-                <!-- 操作按鈕組 -->
-                <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                    <button id="cancelEditBtn" onclick="resetForm()" class="hidden w-full sm:w-auto order-2 sm:order-1 px-5 py-3 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 sm:bg-transparent">取消修改</button>
-                    <button id="submitPostBtn" onclick="submitArticleForm()" class="w-full sm:w-auto order-1 sm:order-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl shadow flex items-center justify-center space-x-2 transition-all">
+                <div class="flex-row-end" style="margin-top:8px;">
+                    <button id="cancelEditBtn" onclick="resetForm()" class="btn btn-text hidden">取消修改</button>
+                    <button id="submitPostBtn" onclick="submitArticleForm()" class="btn btn-primary">
                         <i class="fa-solid fa-paper-plane"></i>
                         <span id="submitBtnText">立即發布文章</span>
                     </button>
@@ -145,18 +492,31 @@
             </div>
         </section>
 
-        <!-- 獨立的數據備份區塊（位於發布新文章欄目正下方） -->
-        <section id="backupPanel" class="hidden mb-8 md:mb-12 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-5 border border-gray-200 dark:border-gray-700 shadow-sm transition-all">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
-                    <i class="fa-solid fa-database text-indigo-500"></i>
-                    <span class="text-sm font-bold">系統數據本地備份與還原</span>
+        <section id="backupPanel" class="panel hidden">
+            <div class="backup-panel" style="margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+                <div class="backup-title">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>管理員後台權限設定</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
-                    <button onclick="exportBackupJSON()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl transition-all shadow-sm font-bold flex items-center justify-center space-x-1.5">
+                <div class="flex-row-end">
+                    <button id="changePwdBtn" class="btn btn-amber" title="修改管理密碼" onclick="openModal('changePwd')">
+                        <i class="fa-solid fa-key"></i> <span>修改密碼</span>
+                    </button>
+                    <button class="btn btn-rose" onclick="handleAdminClick()">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>安全退出後台</span>
+                    </button>
+                </div>
+            </div>
+            <div class="backup-panel">
+                <div class="backup-title">
+                    <i class="fa-solid fa-database"></i>
+                    <span>系統數據本地備份與還原</span>
+                </div>
+                <div class="flex-row-end">
+                    <button onclick="exportBackupJSON()" class="btn btn-emerald">
                         <i class="fa-solid fa-download"></i> <span>匯出資料備份</span>
                     </button>
-                    <label class="text-xs bg-sky-600 hover:bg-sky-700 text-white py-2.5 px-4 rounded-xl transition-all shadow-sm cursor-pointer inline-flex items-center justify-center space-x-1.5 font-bold">
+                    <label class="btn btn-sky" style="cursor:pointer;">
                         <i class="fa-solid fa-upload"></i> <span>匯入還原資料</span>
                         <input type="file" id="importFile" accept=".json" class="hidden" onchange="importBackupJSON(this)">
                     </label>
@@ -164,89 +524,100 @@
             </div>
         </section>
 
-        <!-- 電子報文章列表區 -->
         <section>
-            <div class="flex items-center justify-between mb-4 md:mb-6">
-                <h2 class="text-xl md:text-2xl font-black tracking-tight">最近文章</h2>
-                <span id="postCount" class="text-xs md:text-sm text-gray-500 bg-gray-200/60 dark:bg-gray-800 px-2.5 py-1 rounded-full font-medium">共 0 篇</span>
+            <div class="list-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <div class="list-header-left" style="display: flex; align-items: center; gap: 12px;">
+                    <h2 style="font-size:22px; font-weight:900;">最近文章</h2>
+                    <span id="postCount" class="post-count">共 0 篇</span>
+                </div>
+                
+                <div class="list-header-right" style="display: flex; align-items: center; gap: 8px; position: relative;">
+                    
+                    <div class="list-search-container" style="display: flex; align-items: center; position: relative;">
+                        <div id="searchWrapper" class="expandable-search-wrapper">
+                            <input type="text" id="searchInput" class="search-input-field" placeholder="搜尋標題、內文、作者...">
+                            <button id="clearSearchBtn" onclick="clearFilter()" class="inline-clear-btn hidden"><i class="fa-solid fa-circle-xmark"></i></button>
+                        </div>
+                        <button class="btn-icon" onclick="toggleSearchField()" title="開啟關鍵字搜尋" style="border: 1px solid var(--border-color); z-index: 2;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+
+                    <button id="themeToggle" class="btn-icon" title="切換深淺色模式" style="border: 1px solid var(--border-color);">
+                        <i class="fa-solid fa-sun hidden dark:inline-block"></i>
+                        <i class="fa-solid fa-moon inline-block dark:hidden"></i>
+                    </button>
+                </div>
             </div>
-            <div id="postsContainer" class="space-y-4 md:space-y-6"></div>
-            <div id="emptyState" class="hidden text-center py-16 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                <i class="fa-solid fa-mailbox text-4xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
-                <p class="text-gray-400 dark:text-gray-500 text-sm">找不到相符的電子報內容。</p>
+            
+            <div id="postsContainer" class="posts-container"></div>
+            <div id="emptyState" class="empty-state hidden">
+                <i class="fa-solid fa-mailbox"></i>
+                <p style="font-size:14px;">找不到相符的電子報內容。</p>
             </div>
         </section>
-    </div>
+    </main>
 
-    <!-- 【詳細內容獨立頁面視窗】 -->
-    <div id="articlePage" class="max-w-3xl w-full mx-auto px-4 py-6 md:py-12 flex-grow hidden">
-        <button onclick="backToHome()" class="mb-5 md:mb-8 flex items-center space-x-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-bold transition-colors group">
-            <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
-            <span>返回電子報列表</span>
+    <div id="articlePage" class="main-content container hidden">
+        <button onclick="backToHome()" class="btn btn-text" style="font-weight:bold; margin-bottom:20px; padding:0;">
+            <i class="fa-solid fa-arrow-left"></i> <span>返回電子報列表</span>
         </button>
         
-        <article class="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-5 md:p-10 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
-            <div class="flex flex-wrap gap-1.5 mb-3.5 order-1">
-                <span id="detailIssue" onclick="filterByTag(this.innerText)" class="text-[11px] font-bold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-md border border-indigo-100 dark:border-indigo-900/40 cursor-pointer"></span>
-                <span id="detailCategory" onclick="filterByTag(this.innerText)" class="text-[11px] font-bold px-2.5 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-md border border-amber-100 dark:border-amber-900/40 cursor-pointer"></span>
-                <span id="detailAuthor" onclick="filterByTag(this.getAttribute('data-val'))" class="text-[11px] font-semibold px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md cursor-pointer"></span>
+        <article class="article-view">
+            <div class="card-tags">
+                <span id="detailIssue" onclick="filterByTag(this.innerText)" class="tag tag-issue" style="cursor:pointer;"></span>
+                <span id="detailCategory" onclick="filterByTag(this.innerText)" class="tag tag-category" style="cursor:pointer;"></span>
+                <span id="detailAuthor" onclick="filterByTag(this.getAttribute('data-val'))" class="tag tag-author" style="cursor:pointer;"></span>
             </div>
             
-            <h1 id="detailTitle" class="text-xl md:text-3xl font-black text-gray-900 dark:text-white leading-snug mb-4 order-2"></h1>
+            <h1 id="detailTitle" class="article-title"></h1>
             
-            <div class="flex items-center text-[11px] text-gray-400 dark:text-gray-500 space-x-4 mb-6 pb-4 border-b border-b-gray-100 dark:border-b-gray-700 order-3">
-                <span class="flex items-center space-x-1">
-                    <i class="fa-regular fa-clock"></i>
-                    <time id="detailDate"></time>
-                </span>
-                <span id="detailViewsContainer" class="hidden flex items-center space-x-1 text-indigo-500">
-                    <i class="fa-solid fa-eye"></i>
-                    <span id="detailViews">0 次瀏覽</span>
-                </span>
+            <div class="article-meta">
+                <span style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-regular fa-clock"></i> <time id="detailDate"></time></span>
+                <span id="detailViewsContainer" class="hidden" style="color:var(--primary); display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-eye"></i> <span id="detailViews">0 次瀏覽</span></span>
             </div>
             
-            <p id="detailContent" class="text-gray-700 dark:text-gray-200 whitespace-pre-line text-base md:text-lg leading-relaxed mb-6 order-4 break-words"></p>
+            <p id="detailContent" class="article-body"></p>
 
-            <!-- 相片置底區 -->
-            <div id="detailImgContainer" class="mt-2 pt-4 border-t border-gray-100 dark:border-gray-750 hidden order-5 relative w-full">
-                <!-- 由 JS 動態生成 -->
-            </div>
+            <div id="detailImgContainer" class="hidden" style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);"></div>
         </article>
     </div>
 
-    <!-- 密碼驗證彈窗 -->
-    <div id="pwdModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-5 md:p-6 shadow-2xl border border-gray-100 dark:border-gray-700 transform scale-95 opacity-0 transition-all duration-300" id="modalCard">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base md:text-lg font-bold text-gray-900 dark:text-white" id="modalTitle">身分驗證</h3>
-                <button onclick="closeModal()" class="text-gray-400 p-1 hover:text-gray-600 dark:hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div id="pwdModal" class="modal-mask hidden">
+        <div class="modal-card" id="modalCard">
+            <div class="modal-header">
+                <h3 id="modalTitle" style="font-weight:bold;">身分驗證</h3>
+                <button onclick="closeModal()" class="btn-icon" style="padding:4px;"><i class="fa-solid fa-xmark" style="font-size:16px;"></i></button>
             </div>
+            
             <div id="loginForm">
-                <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-4">請輸入管理員密碼以解鎖編輯功能。<br><span class="text-xs text-amber-500 font-medium">（預設為：admin123）</span></p>
-                <input type="password" id="adminPwd" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none mb-2 text-base" placeholder="輸入密碼..." onkeydown="if(event.key==='Enter') verifyPassword()">
+                <p style="color:var(--text-muted); font-size:14px; margin-bottom:16px;">請輸入管理員密碼以解鎖編輯功能。<br><span style="color:var(--amber); font-weight:500; font-size:12px;">（預設為：admin123）</span></p>
+                <input type="password" id="adminPwd" class="form-control" style="width:100%; margin-bottom:8px; padding:12px;" placeholder="輸入密碼..." onkeydown="if(event.key==='Enter') verifyPassword()">
             </div>
-            <div id="changePwdForm" class="hidden space-y-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">新管理密碼</label>
-                    <input type="password" id="newPwd1" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base" placeholder="請輸入新密碼...">
+            
+            <div id="changePwdForm" class="hidden" style="display:flex; flex-direction:column; gap:12px;">
+                <div class="form-group">
+                    <label>新管理密碼</label>
+                    <input type="password" id="newPwd1" class="form-control" style="padding:12px;" placeholder="請輸入新密碼...">
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">再次確認新密碼</label>
-                    <input type="password" id="newPwd2" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none text-base" placeholder="請再次輸入新密碼...">
+                <div class="form-group">
+                    <label>再次確認新密碼</label>
+                    <input type="password" id="newPwd2" class="form-control" style="padding:12px;" placeholder="請再次輸入新密碼...">
                 </div>
             </div>
-            <div id="pwdError" class="text-red-500 text-xs hidden mt-2 flex items-center space-x-1">
+            
+            <div id="pwdError" class="modal-error hidden">
                 <i class="fa-solid fa-circle-exclamation"></i> <span id="errorText">密碼錯誤。</span>
             </div>
-            <div class="flex space-x-3 justify-end pt-4">
-                <button onclick="closeModal()" class="px-4 py-2.5 text-sm font-medium text-gray-500">取消</button>
-                <button id="modalSubmitBtn" onclick="verifyPassword()" class="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm">確認解鎖</button>
+            
+            <div class="flex-row-end" style="margin-top:16px; padding-top:16px;">
+                <button onclick="closeModal()" class="btn btn-text">取消</button>
+                <button id="modalSubmitBtn" onclick="verifyPassword()" class="btn btn-primary">確認解鎖</button>
             </div>
         </div>
     </div>
 
-
-   <footer id="global-footer" class="custom-footer"></footer>
+    <footer id="global-footer" class="custom-footer"></footer>
 
     <script>
         const SECURE_STORAGE_KEY = 'kese_newsletter_data_secure';
@@ -287,6 +658,7 @@
         }
 
         function setupEventListeners() {
+            // 深淺色切換事件
             document.getElementById('themeToggle').addEventListener('click', () => {
                 if (document.documentElement.classList.contains('dark')) {
                     document.documentElement.classList.remove('dark');
@@ -297,20 +669,14 @@
                 }
             });
 
-            document.getElementById('modeToggleBtn').addEventListener('click', () => {
-                if (!isAdminMode) openModal('login'); else exitAdminMode();
-            });
-
+            // 搜尋核心邏輯綁定
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 searchQuery = e.target.value.toLowerCase().trim();
                 toggleClearBtn();
                 renderPosts();
             });
 
-            document.getElementById('changePwdBtn').addEventListener('click', () => {
-                if (isAdminMode) openModal('changePwd');
-            });
-
+            // 圖片上傳多選預覽處理
             document.getElementById('postImage').addEventListener('change', function(e) {
                 const files = e.target.files;
                 if (files.length > 0) {
@@ -329,6 +695,27 @@
             });
         }
 
+        // 全新：控制導覽列搜尋欄位展開與收納
+        function toggleSearchField() {
+            const wrapper = document.getElementById('searchWrapper');
+            const input = document.getElementById('searchInput');
+            wrapper.classList.toggle('open');
+            if(wrapper.classList.contains('open')) {
+                setTimeout(() => input.focus(), 150);
+            }
+        }
+
+        // 核心：點擊 Logo 圖標取代原本管理員按鈕
+        function handleAdminClick() {
+            if (!isAdminMode) {
+                openModal('login');
+            } else {
+                if (confirm('確定要退出管理員後台模式嗎？')) {
+                    exitAdminMode();
+                }
+            }
+        }
+
         function renderFormImagePreviews() {
             const grid = document.getElementById('imgPreviewGrid');
             if (currentUploadedImagesArray.length === 0) {
@@ -337,11 +724,10 @@
                 grid.innerHTML = '';
                 return;
             }
-            
             grid.innerHTML = currentUploadedImagesArray.map((img, index) => `
-                <div class="relative group h-16 w-16 md:h-20 md:w-20 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900">
-                    <img src="${img}" class="h-full w-full object-cover">
-                    <button onclick="removeSingleImageFromForm(${index})" class="absolute top-1 right-1 bg-black/70 text-white rounded-full h-5 w-5 text-xs flex items-center justify-center opacity-100" title="刪除">
+                <div class="preview-item">
+                    <img src="${img}">
+                    <button onclick="removeSingleImageFromForm(${index})" class="preview-delete" title="刪除">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -363,6 +749,9 @@
             if(!val) return;
             backToHome();
             const cleanedVal = val.replace('作者：', '').trim();
+            
+            // 強制打開並塞入搜尋字詞
+            document.getElementById('searchWrapper').classList.add('open');
             document.getElementById('searchInput').value = cleanedVal;
             searchQuery = cleanedVal.toLowerCase();
             toggleClearBtn();
@@ -406,13 +795,13 @@
                 submitBtn.setAttribute('onclick', 'saveNewPassword()');
                 setTimeout(() => document.getElementById('newPwd1').focus(), 150);
             }
-            setTimeout(() => card.classList.remove('scale-95', 'opacity-0'), 10);
+            setTimeout(() => card.classList.add('active'), 10);
         }
 
         function closeModal() {
             const modal = document.getElementById('pwdModal');
             const card = document.getElementById('modalCard');
-            card.classList.add('scale-95', 'opacity-0');
+            card.classList.remove('active');
             document.getElementById('pwdError').classList.add('hidden');
             document.getElementById('adminPwd').value = '';
             document.getElementById('newPwd1').value = '';
@@ -448,47 +837,17 @@
 
         function enterAdminMode() {
             isAdminMode = true;
-            const btn = document.getElementById('modeToggleBtn');
-            btn.innerHTML = `<i class="fa-solid fa-unlock-keyhole text-xs"></i> <span class="text-xs md:text-sm">退出管理</span>`;
-            btn.classList.replace('bg-indigo-600', 'bg-rose-600');
-            btn.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-700');
-            document.getElementById('changePwdBtn').classList.remove('hidden');
-
-            const banner = document.getElementById('statusBanner');
-            banner.classList.replace('bg-emerald-50', 'bg-indigo-50');
-            banner.classList.replace('border-emerald-200', 'border-indigo-200');
-            banner.classList.replace('text-emerald-800', 'text-indigo-800');
-            banner.classList.replace('dark:bg-emerald-950/30', 'dark:bg-indigo-950/30');
-            banner.classList.replace('dark:border-emerald-900/50', 'dark:border-indigo-900/50');
-            banner.classList.replace('dark:text-emerald-400', 'dark:text-indigo-400');
-            document.getElementById('statusText').innerText = "當前介面：管理員模式（具備完整管理與備份權限）";
-            document.getElementById('adminBadge').classList.remove('hidden');
-
             document.getElementById('adminPanel').classList.remove('hidden');
             document.getElementById('backupPanel').classList.remove('hidden');
+            document.getElementById('logoAdminBtn').title = "後台管理中 (點擊退出)";
             renderPosts();
         }
 
         function exitAdminMode() {
             isAdminMode = false;
-            const btn = document.getElementById('modeToggleBtn');
-            btn.innerHTML = `<i class="fa-solid fa-lock text-xs"></i> <span class="text-xs md:text-sm">管理員</span>`;
-            btn.classList.replace('bg-rose-600', 'bg-indigo-600');
-            btn.classList.replace('hover:bg-rose-700', 'hover:bg-indigo-700');
-            document.getElementById('changePwdBtn').classList.add('hidden');
-
-            const banner = document.getElementById('statusBanner');
-            banner.classList.replace('bg-indigo-50', 'bg-emerald-50');
-            banner.classList.replace('border-indigo-200', 'border-emerald-200');
-            banner.classList.replace('text-indigo-800', 'text-emerald-800');
-            banner.classList.replace('dark:bg-indigo-950/30', 'dark:bg-emerald-950/30');
-            banner.classList.replace('dark:border-indigo-900/50', 'dark:border-indigo-900/50');
-            banner.classList.replace('dark:text-emerald-400', 'dark:text-emerald-400');
-            document.getElementById('statusText').innerText = "當前介面：讀者模式（唯讀）";
-            document.getElementById('adminBadge').classList.add('hidden');
-
             document.getElementById('adminPanel').classList.add('hidden');
             document.getElementById('backupPanel').classList.add('hidden');
+            document.getElementById('logoAdminBtn').title = "管理員模式切換";
             resetForm();
             renderPosts();
         }
@@ -514,10 +873,9 @@
 
             if (postImages && postImages.length > 0) {
                 detailImgBox.classList.remove('hidden');
-                
                 if (postImages.length === 1) {
                     detailImgBox.innerHTML = `
-                        <img src="${postImages[0]}" class="w-full max-h-[500px] object-contain rounded-xl bg-gray-50/50 dark:bg-gray-900/30 p-1 border border-gray-100 dark:border-gray-700">
+                        <img src="${postImages[0]}" style="width:100%; max-height:500px; object-fit:contain; border-radius:12px; background-color:var(--bg-main); padding:4px; border:1px solid var(--border-color);">
                     `;
                 } else {
                     currentCarouselIndex = 0;
@@ -537,39 +895,24 @@
                 viewsBox.classList.add('hidden');
             }
 
-            document.getElementById('homePage').classList.replace('block', 'hidden');
-            document.getElementById('articlePage').classList.replace('hidden', 'block');
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('articlePage').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         function renderCarouselHTML() {
             const imgs = window.currentArticleImages;
             const container = document.getElementById('detailImgContainer');
-            
             container.innerHTML = `
-                <p class="text-[11px] text-gray-400 text-center mb-2 block md:hidden"><i class="fa-solid fa-hand-pointer animate-pulse"></i> 左右滑動可觀看更多相片 (${imgs.length}張)</p>
-                
-                <!-- 桌面版傳統切換 UI -->
-                <div class="hidden md:flex relative w-full max-h-[500px] items-center justify-center bg-gray-50/70 dark:bg-gray-900/40 rounded-xl p-2 border border-gray-100 dark:border-gray-700 group">
-                    <img id="carouselImg" src="${imgs[currentCarouselIndex]}" class="max-w-full max-h-[460px] object-contain rounded-lg transition-all duration-200">
-                    <button onclick="switchCarousel(-1)" class="absolute left-3 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow">
-                        <i class="fa-solid fa-chevron-left text-lg"></i>
-                    </button>
-                    <button onclick="switchCarousel(1)" class="absolute right-3 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow">
-                        <i class="fa-solid fa-chevron-right text-lg"></i>
-                    </button>
-                    <div class="absolute bottom-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        <span id="carouselIndexText">${currentCarouselIndex + 1}</span> / ${imgs.length}
-                    </div>
+                <p style="font-size:11px; color:var(--text-light); text-align:center; margin-bottom:8px;" class="hidden-desktop"><i class="fa-solid fa-hand-pointer" style="animation: pulse 2s infinite;"></i> 左右滑動可觀看更多相片 (${imgs.length}張)</p>
+                <div class="carousel-desktop">
+                    <img id="carouselImg" src="${imgs[currentCarouselIndex]}" style="transition: all 0.2s;">
+                    <button onclick="switchCarousel(-1)" class="carousel-btn prev"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="switchCarousel(1)" class="carousel-btn next"><i class="fa-solid fa-chevron-right"></i></button>
+                    <div class="carousel-indicator"><span id="carouselIndexText">${currentCarouselIndex + 1}</span> / ${imgs.length}</div>
                 </div>
-
-                <!-- 手機版微波橫向滑動原生體驗 -->
-                <div class="flex md:hidden overflow-x-auto snap-x snap-mandatory gap-4 no-scrollbar w-full py-1">
-                    ${imgs.map(src => `
-                        <div class="w-full shrink-0 snap-center flex justify-center items-center bg-gray-50/50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-700 p-1">
-                            <img src="${src}" class="max-w-full max-h-[400px] object-contain rounded-lg">
-                        </div>
-                    `).join('')}
+                <div class="carousel-mobile no-scrollbar">
+                    ${imgs.map(src => `<div class="carousel-mobile-item"><img src="${src}"></div>`).join('')}
                 </div>
             `;
         }
@@ -579,14 +922,13 @@
             currentCarouselIndex += direction;
             if (currentCarouselIndex < 0) currentCarouselIndex = imgs.length - 1;
             if (currentCarouselIndex >= imgs.length) currentCarouselIndex = 0;
-            
             document.getElementById('carouselImg').src = imgs[currentCarouselIndex];
             document.getElementById('carouselIndexText').innerText = currentCarouselIndex + 1;
         }
 
         function backToHome() {
-            document.getElementById('articlePage').classList.replace('block', 'hidden');
-            document.getElementById('homePage').classList.replace('hidden', 'block');
+            document.getElementById('articlePage').classList.add('hidden');
+            document.getElementById('homePage').classList.remove('hidden');
             renderPosts();
         }
 
@@ -595,7 +937,6 @@
             if (!post) return;
 
             editingPostId = id;
-            
             document.getElementById('postTitle').value = post.title;
             document.getElementById('postAuthor').value = post.author;
             document.getElementById('postIssue').value = post.issue;
@@ -615,7 +956,6 @@
             document.getElementById('panelTitle').querySelector('span').innerText = "編輯/修改現有文章內容";
             document.getElementById('submitBtnText').innerText = "確認儲存修改";
             document.getElementById('cancelEditBtn').classList.remove('hidden');
-            
             window.scrollTo({ top: document.getElementById('adminPanel').offsetTop - 80, behavior: 'smooth' });
         }
 
@@ -627,7 +967,6 @@
             document.getElementById('postCategory').value = '';
             document.getElementById('postContent').value = '';
             clearImageInput();
-
             document.getElementById('panelTitle').querySelector('span').innerText = "發布新電子報文章";
             document.getElementById('submitBtnText').innerText = "立即發布文章";
             document.getElementById('cancelEditBtn').classList.add('hidden');
@@ -757,44 +1096,36 @@
                 const pImages = post.images || (post.image ? [post.image] : []);
                 
                 const hasImgBadge = pImages.length > 0 
-                    ? `<span class="text-[10px] bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded flex items-center space-x-1">
-                        <i class="fa-solid fa-images"></i> <span>${pImages.length}</span>
-                       </span>` 
+                    ? `<span class="tag-info"><i class="fa-solid fa-images"></i><span>${pImages.length}</span></span>` 
                     : '';
 
                 const viewsHtml = isAdminMode 
-                    ? `<span class="text-xs text-indigo-500 font-medium bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md">
-                        <i class="fa-solid fa-eye"></i> ${post.views || 0} 次
-                       </span>` 
+                    ? `<span class="tag" style="color:var(--primary); background-color:var(--primary-light); font-weight:500;"><i class="fa-solid fa-eye"></i> ${post.views || 0} 次</span>` 
                     : '';
 
                 const adminControlsHtml = isAdminMode 
-                    ? `<div class="flex items-center space-x-2">
-                        <button onclick="event.stopPropagation(); startEditPost(${post.id})" class="text-xs text-amber-600 font-bold hover:text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-xl border border-amber-200/50 dark:border-amber-900/30 flex items-center space-x-1">
-                            <i class="fa-solid fa-pen"></i> <span>編輯</span>
-                        </button>
-                        <button onclick="event.stopPropagation(); deletePost(${post.id})" class="text-xs text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-3 py-2 rounded-xl flex items-center">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                    ? `<div style="display:flex; gap:8px;">
+                        <button onclick="event.stopPropagation(); startEditPost(${post.id})" class="btn" style="color:var(--amber); background-color:var(--amber-light); font-weight:bold; padding:6px 12px; border-radius:8px;"><i class="fa-solid fa-pen"></i><span>編輯</span></button>
+                        <button onclick="event.stopPropagation(); deletePost(${post.id})" class="btn" style="color:var(--rose); background-color:var(--rose-light); padding:6px 12px; border-radius:8px;"><i class="fa-solid fa-trash-can"></i></button>
                        </div>` 
                     : '';
 
                 return `
-                    <article onclick="navigateToArticle(${post.id})" class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm active:scale-[0.99] md:hover:scale-100 transition-all duration-200 cursor-pointer select-none flex flex-col justify-between">
+                    <article onclick="navigateToArticle(${post.id})" class="post-card">
                         <div>
-                            <div class="flex flex-wrap gap-1.5 mb-2 items-center">
-                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" class="text-[10px] md:text-xs font-bold px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded border border-indigo-100 dark:border-indigo-900/40">${post.issue}</span>
-                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" class="text-[10px] md:text-xs font-bold px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded border border-amber-100 dark:border-amber-900/40">${post.category}</span>
-                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" class="text-[10px] md:text-xs text-gray-400 font-medium">作者:${post.author}</span>
+                            <div class="card-tags">
+                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" class="tag tag-issue">${post.issue}</span>
+                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" class="tag tag-category">${post.category}</span>
+                                <span onclick="event.stopPropagation(); filterByTag(this.innerText)" style="font-size:11px; color:var(--text-light)">作者:${post.author}</span>
                                 ${hasImgBadge}
                                 ${viewsHtml}
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1.5 leading-snug transition-colors">${post.title}</h3>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm leading-relaxed">${truncatedContent} <span class="text-indigo-500 text-xs font-bold ml-0.5">進入閱讀 →</span></p>
+                            <h3 class="card-title">${post.title}</h3>
+                            <p class="card-body">${truncatedContent} <span style="color:var(--primary); font-weight:bold; cursor:pointer;">進入閱讀 →</span></p>
                         </div>
                         
-                        <div class="flex items-center justify-between border-t border-gray-50 dark:border-gray-750 mt-3.5 pt-2.5">
-                            <span class="text-[10px] text-gray-400 dark:text-gray-500"><i class="fa-regular fa-clock"></i> ${post.date}</span>
+                        <div class="card-footer">
+                            <span><i class="fa-regular fa-clock"></i> ${post.date}</span>
                             ${adminControlsHtml}
                         </div>
                     </article>
@@ -812,24 +1143,39 @@
             }
         }
 
+        function updateYear() {
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        }
+
         function saveToLocalStorage() {
             localStorage.setItem(SECURE_STORAGE_KEY, JSON.stringify(posts));
         }
 
-        // 1. 載入頁首
-    fetch('header.html')
-        .then(response => response.text())
-        .then(data => {
-            const container = document.getElementById('header-container');
+// ==========================================
+// 1. 載入頁首（融合「更多」自動收納邏輯）
+// ==========================================
+fetch('header.html')
+    .then(response => response.text())
+    .then(data => {
+        const container = document.getElementById('header-container');
+        if (container) {
             container.innerHTML = data;
-            setupHeaderMenu(); // 載入後才綁定選單
-        });
+            setupHeaderMenu(); // 🛠️ 載入完成後，啟動選單核心與自動收納功能
+        }
+    })
+    .catch(err => console.error("頁首載入失敗:", err));
 
-    // 2. 載入頁尾並處理年份
-    fetch('footer.html')
-        .then(response => response.text())
-        .then(data => {
-            const footerContainer = document.getElementById('global-footer');
+// ==========================================
+// 2. 載入頁尾並處理年份（維持原樣）
+// ==========================================
+fetch('footer.html')
+    .then(response => response.text())
+    .then(data => {
+        const footerContainer = document.getElementById('global-footer');
+        if (footerContainer) {
             footerContainer.innerHTML = data;
             
             // 頁尾載入完成後，更新年份
@@ -837,26 +1183,104 @@
             if (yearSpan) {
                 yearSpan.textContent = new Date().getFullYear();
             }
-        });
+        }
+    })
+    .catch(err => console.error("頁尾載入失敗:", err));
 
-    // 3. 定義 Header 選單邏輯
-    function setupHeaderMenu() {
-        const toggleButton = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
+// ==========================================
+// 3. 定義 Header 選單邏輯（升級版演算法）
+// ==========================================
+function setupHeaderMenu() {
+    const toggleButton = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.header-nav-links');
 
-        if (toggleButton && navLinks) {
-            toggleButton.addEventListener('click', (e) => {
-                navLinks.classList.toggle('active');
-                e.stopPropagation();
-            });
+    // --- (A) 手機版漢堡選單開關邏輯 ---
+    if (toggleButton && navLinks) {
+        // 使用 onclick 確保不重複綁定事件
+        toggleButton.onclick = function(e) {
+            navLinks.classList.toggle('active');
+            e.stopPropagation();
+        };
 
-            document.addEventListener('click', (e) => {
-                if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
-                    navLinks.classList.remove('active');
-                }
-            });
+        document.onclick = function(e) {
+            if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                navLinks.classList.remove('active');
+            }
+        };
+    }
+
+    // --- (B) 智能偵測寬度：過長項目收進「更多」演算法 ---
+    const mainNav = document.querySelector('.header-nav-links'); // 抓取主導覽列容器
+    if (!mainNav) return;
+
+    // 1. 動態建立「更多」下拉選單結構（如果 header.html 裡面還沒有的話，JS 會自動補上）
+    let moreMenu = document.getElementById('more-menu');
+    let overflowLinks = document.getElementById('overflow-links');
+    
+    if (!moreMenu) {
+        moreMenu = document.createElement('div');
+        moreMenu.id = 'more-menu';
+        moreMenu.className = 'more-dropdown';
+        moreMenu.innerHTML = `
+            <a href="#" class="more-toggle" onclick="return false;">更多 ▾</a>
+            <div class="more-dropdown-content" id="overflow-links"></div>
+        `;
+        mainNav.appendChild(moreMenu);
+        overflowLinks = document.getElementById('overflow-links');
+    }
+
+    // 2. 找出所有原本的連結項目（排除掉「更多」按鈕本身）
+    // 💡 這裡會抓取 nav 裡面所有的 <a> 標籤作為選單項目
+    const allLinks = Array.from(mainNav.children).filter(el => el !== moreMenu && el.tagName === 'A');
+
+    // 3. 核心計算函式
+    function adjustNavItems() {
+        // 📱 如果是手機版（寬度 <= 768px），停止收納演算法，將所有項目還原給漢堡選單垂直排列
+        if (window.innerWidth <= 768) {
+            allLinks.forEach(item => mainNav.insertBefore(item, moreMenu));
+            moreMenu.style.display = 'none';
+            return;
+        }
+
+        // 💻 電腦版自動收納計算
+        moreMenu.style.display = 'none'; // 先隱藏「更多」
+        overflowLinks.innerHTML = '';    // 清空收納盒
+        allLinks.forEach(item => mainNav.insertBefore(item, moreMenu)); // 先把所有項目放回主列以便測量真實寬度
+
+        let navContainerWidth = mainNav.offsetWidth;
+        let totalWidth = 0;
+        let isOverflow = false;
+        const moreBtnWidth = 90; // 預留給「更多 ▾」按鈕出現時的寬度緩衝
+
+        for (let i = 0; i < allLinks.length; i++) {
+            const item = allLinks[i];
+
+            // 如果前面已經爆滿了，後面的項目直接丟進「更多」收納盒
+            if (isOverflow) {
+                overflowLinks.appendChild(item);
+                continue;
+            }
+
+            // 累加當前項目的寬度（包含外距）
+            const itemStyle = window.getComputedStyle(item);
+            const marginLeft = parseFloat(itemStyle.marginLeft) || 0;
+            const marginRight = parseFloat(itemStyle.marginRight) || 0;
+            totalWidth += item.offsetWidth + marginLeft + marginRight;
+
+            // 💡 關鍵判斷：如果目前的總寬度加上「更多」按鈕寬度超過了導覽列總寬
+            if (totalWidth + moreBtnWidth > navContainerWidth) {
+                isOverflow = true;
+                moreMenu.style.display = 'inline-block'; // 顯現「更多」
+                overflowLinks.appendChild(item);         // 將當前這個放進收納盒
+            }
         }
     }
+
+    // 4. 初始化執行，並綁定視窗縮放事件
+    adjustNavItems();
+    window.removeEventListener('resize', adjustNavItems); // 防重複綁定
+    window.addEventListener('resize', adjustNavItems);
+}
     </script>
 </body>
 </html>

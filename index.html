@@ -501,7 +501,7 @@ fetch('footer.html')
 // ==========================================
 function setupHeaderMenu() {
     const toggleButton = document.querySelector('.menu-toggle');
-    const navLinks = document.querySelector('.nav-links');
+    const navLinks = document.querySelector('.header-nav-links');
 
     // --- (A) 手機版漢堡選單開關邏輯 ---
     if (toggleButton && navLinks) {
@@ -519,7 +519,7 @@ function setupHeaderMenu() {
     }
 
     // --- (B) 智能偵測寬度：過長項目收進「更多」演算法 ---
-    const mainNav = document.querySelector('.nav-links'); // 抓取主導覽列容器
+    const mainNav = document.querySelector('.header-nav-links'); // 抓取主導覽列容器
     if (!mainNav) return;
 
     // 1. 動態建立「更多」下拉選單結構（如果 header.html 裡面還沒有的話，JS 會自動補上）

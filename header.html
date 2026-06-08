@@ -1,6 +1,6 @@
 <style>
     /* 頁首基本設定 */
-    .navbar {
+    .header-navbar {
         width: 100%;
         background-color: #ffffff;
         border-bottom: 1px solid #EAEAEA;
@@ -8,7 +8,7 @@
         z-index: 9000;      /* 確保 Header 在最上層 */
     }
 
-    .navbar-container {
+    .header-navbar-container {
         max-width: 1600px;
         margin: 0 auto;     /* 置中 */
         display: flex;
@@ -17,28 +17,28 @@
         padding: 0px 50px;
     }
 
-    .logo-area {
+    .header-logo-area {
         display: flex;
         align-items: center;
         gap: 20px;
     }
 
-    .logo-icon img {
+    .header-logo-icon img {
         max-height: 80px;
         width: auto;
     }
 
-    .logo-link:hover {
+    .header-logo-link:hover {
     cursor: pointer;
     opacity: 0.8; /* 加點小互動，滑過時稍微變淡，讓使用者知道這是可點擊的 */
     transition: opacity 0.2s;
 }
-    .nav-links {
+    .header-nav-links {
         display: flex;
         gap: 35px;
     }
 
-    .nav-links a {
+    .header-nav-links a {
         text-decoration: none;
         color: #333333;
         font-size: 1.25rem;
@@ -46,7 +46,7 @@
         transition: color 0.2s;
     }
 
-    .nav-links a:hover { color: #1465A3; }
+    .header-nav-links a:hover { color: #1465A3; }
 
     .menu-toggle { display: none; background: none; border: none; font-size: 2rem; padding: 5px 10px;}
 
@@ -96,8 +96,8 @@
 
     /* 手機版斷點 */
     @media (max-width: 768px) {
-        .navbar-container { padding: 10px 10px; }
-        .logo-area {
+        .header-navbar-container { padding: 10px 10px; }
+        .header-logo-area {
         width: 100%;
         display: flex;
         justify-content: space-between; /* 讓 Logo 在左，按鈕在右 */
@@ -113,7 +113,7 @@
         border: none !important;
         cursor: pointer !important;}
 
-        .nav-links {
+        .header-nav-links {
             display: none; /* 預設隱藏 */
             flex-direction: column;
             position: absolute;
@@ -131,24 +131,24 @@
     color: #1465A3; /* 滑鼠滑過時變色 */
     cursor: pointer; /* 確保游標顯示為手指指標 */
 }
-        .nav-links.active {
+        .header-nav-links.active {
             display: flex; /* 按下後顯示 */
         }
     }
 </style>
 
-<header class="navbar">
-    <div class="navbar-container">
-        <div class="logo-area">
+<header class="header-navbar">
+    <div class="header-navbar-container">
+        <div class="header-logo-area">
             <a href="index.html" class="logo-link" aria-label="回到首頁">
-            <div class="logo-icon">
+            <div class="header-logo-icon">
                 <img src="images/logo-rectangular.png" alt="空間客舍 Logo" oncontextmenu="return false;" ondragstart="return false;">
             </div>
             </a>
             <button class="menu-toggle" aria-label="打開選單">☰</button>
         </div>
         
-        <nav class="nav-links">
+        <nav class="header-nav-links">
             <a href="index.html">自主企劃</a>
             <a href="https://linktr.ee/Slowpace_studio" target="_blank" rel="noopener noreferrer">活動報名</a>
             <a href="month.html">客舍時間表</a>
