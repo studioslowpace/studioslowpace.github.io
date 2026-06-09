@@ -72,8 +72,9 @@
 
     /* 之前的橢圓形設定 */
     border: var(--oval-border-width) solid var(--white);
-    width: 600px;  /* 調整寬度 */
-    height: 230px; /* 調整高度 */
+width: 100%;               /* 在手機版預設撐滿父容器 */
+    max-width: 600px;          /* 最大只放大到原本的 600px，防止在大螢幕上過大 */
+    aspect-ratio: 600 / 230;   /* ⚡ 核心：鎖定寬高比，寬度縮小時，高度會自動等比例縮小 */
     border-radius: 90% / 100%;
 }
 
@@ -340,7 +341,7 @@
    top: auto !important;
     left: auto !important;
     font-size: 24px !important; /* 手機版標題字體稍微縮小 */
-    margin: 0px -270px -20px 0px !important;
+    margin: 0px -220px -20px 0px !important;
     text-align: left; 
   }
   
@@ -349,7 +350,7 @@
        top: auto !important;
     left: auto !important;
     font-size: 20px !important;
-    margin: -10px -300px -220px 0px !important;
+    margin: -10px -250px -220px 0px !important;
     text-align: right; 
   }
 

@@ -681,12 +681,36 @@ window.submitAddMonth = function() {
     window.closeModal('monthModal');
 };
 
+window.submitChangePassword = function() {
+    // 1. 取得 HTML 裡對應的輸入框數值 (id: new-pwd-input)
+    const newPassword = document.getElementById('new-pwd-input').value.trim();
+
+    // 2. 驗證非空值
+    if (!newPassword) {
+        alert('請輸入新密碼！');
+        return;
+    }
+
+    // 3. 更新你的本地資料庫（假設管理員密碼存在 dbData.adminPassword 中，請根據你實際的結構調整）
+    if (!dbData.admin) {
+        dbData.admin = {}; // 確保 admin 物件存在
+    }
+    dbData.admin.password = newPassword;
+
+    // 4. 儲存資料並關閉彈窗
+    saveDB();
+    alert('管理員密碼修改成功！');
+    window.closeModal('passwordModal');
+};
+
+
 // --- 資料庫同步 ---
 async function saveDB() {
     await client.from(TABLE_NAME).update({
         calendar_events: dbData.events,
         calendar_months: dbData.months,
-        calendar_types: dbData.types
+        calendar_types: dbData.types,
+        calendar_password: dbData.admin?.password
     }).eq('id', 1);
     fetchData();
 }

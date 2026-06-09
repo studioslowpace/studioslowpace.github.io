@@ -68,7 +68,7 @@
             height: 60px; width: auto; object-fit: contain; cursor: pointer; transition: all 0.3s ease; user-select: none; border: 2px solid transparent; border-radius: 4px;
         }
         .logo-btn:hover { transform: scale(1.05); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        body.admin-mode .logo-btn { border-color: #ffa000; box-shadow: 0 0 12px rgba(255, 160, 0, 0.4); }
+
         
         #month-display { 
             font-size: 30px; font-weight: bold; color: var(--primary-blue); display: inline-block; margin-bottom: 12px; cursor: pointer; padding: 6px 12px; border-radius: 4px; transition: all 0.2s ease; user-select: none; 
@@ -81,7 +81,6 @@
         .legend-box { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 0 0; }
         
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--text-main); padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
-        body.admin-mode .legend-item { background: rgba(0, 0, 0, 0.02); box-shadow: inset 0 0 0 1px #e0e0e0; }
 
         .box { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
 
@@ -364,7 +363,7 @@
             <div class="title-area">
             <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
             <div class="title-text-group">
-                <h1 onclick="exportEventImage()" style="cursor: pointer;" title="點擊匯出宣傳圖片">
+                <h1>
     客棧時間表
 </h1>
                 <span id="month-display" onclick="openModal('switchMonthModal')">連線中...</span>
@@ -681,12 +680,35 @@ window.submitAddMonth = function() {
     window.closeModal('monthModal');
 };
 
+window.submitChangePassword = function() {
+    // 1. 取得 HTML 裡對應的輸入框數值 (id: new-pwd-input)
+    const newPassword = document.getElementById('new-pwd-input').value.trim();
+
+    // 2. 驗證非空值
+    if (!newPassword) {
+        alert('請輸入新密碼！');
+        return;
+    }
+
+    // 3. 更新你的本地資料庫（假設管理員密碼存在 dbData.adminPassword 中，請根據你實際的結構調整）
+    if (!dbData.admin) {
+        dbData.admin = {}; // 確保 admin 物件存在
+    }
+    dbData.admin.password = newPassword;
+
+    // 4. 儲存資料並關閉彈窗
+    saveDB();
+    alert('管理員密碼修改成功！');
+    window.closeModal('passwordModal');
+};
+
 // --- 資料庫同步 ---
 async function saveDB() {
     await client.from(TABLE_NAME).update({
         calendar_events: dbData.events,
         calendar_months: dbData.months,
-        calendar_types: dbData.types
+        calendar_types: dbData.types,
+        calendar_password: dbData.admin?.password
     }).eq('id', 1);
     fetchData();
 }
