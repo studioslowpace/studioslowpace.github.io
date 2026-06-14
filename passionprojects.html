@@ -123,7 +123,7 @@
 
         <div class="grid-item">
             <a href="study.html" class="img-link">
-                <img src="images/study.jpg" alt="空間共學" oncontextmenu="return false;" ondragstart="return false;">
+                <img src="/images/study.jpg" alt="空間共學" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>空間共學</a>
             <p class="description">透過文本和兩隻腳去探索周遭空間
@@ -133,15 +133,15 @@
 
         <div class="grid-item">
             <a href="read.html" class="img-link">
-                <img src="images/read.jpg" alt="圍爐讀書" oncontextmenu="return false;" ondragstart="return false;">
+                <img src="/images/read.jpg" alt="圍爐讀書" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>圍爐讀書</a>
             <p class="description">圍爐共同學習</p>
         </div>
 
         <div class="grid-item">
-            <a href="walk.html" class="img-link">
-                <img src="images/walk.jpg" alt="喃喃渡步" oncontextmenu="return false;" ondragstart="return false;">
+            <a href="walk" class="img-link">
+                <img src="/images/walk.jpg" alt="喃喃渡步" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>喃喃渡步</a>
             <p class="description">提出一條思辨題目
@@ -151,7 +151,7 @@
 
         <div class="grid-item">
             <a href="talk.html" class="img-link">
-                <img src="images/talk.jpg" alt="來一場談話" oncontextmenu="return false;" ondragstart="return false;">
+                <img src="/images/talk.jpg" alt="來一場談話" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>來一場談話</a>
             <p class="description">可以是一本書、一篇文、<br>一首詩、一段文字、一齣戲、<br>一首歌、一個故事、一個理由…
@@ -160,7 +160,7 @@
 
         <div class="grid-item">
             <a href="https://docs.google.com/forms/d/e/1FAIpQLScy6-MEExoI7nLnd8cQq6DHyGg_ekePknS35lv3brzVgTbXog/viewform" class="img-link" target="_blank" rel="noopener noreferrer">
-                <img src="images/story.jpg" alt="故事時間" oncontextmenu="return false;" ondragstart="return false;">
+                <img src="/images/story.jpg" alt="故事時間" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>故事時間</a>
             <p class="description">以明信片的方式分享故事</p>
@@ -168,7 +168,7 @@
 
         <div class="grid-item">
             <a href="https://linktr.ee/Slowpace_studio?utm_source=linktree_profile_share&ltsid=53ad2931-15a3-4c19-856e-9c90179ded10" class="img-link" target="_blank" rel="noopener noreferrer">
-                <img src="images/song.jpg" alt="空間歌單" oncontextmenu="return false;" ondragstart="return false;">
+                <img src="/images/song.jpg" alt="空間歌單" oncontextmenu="return false;" ondragstart="return false;">
             </a>
             <a>空間歌單</a>
             <p class="description">以音樂歌單作為媒介
@@ -184,7 +184,7 @@
         // ==========================================
 // 載入頁首並處理年份（維持原樣）
 // ==========================================  
-fetch('header.html')
+fetch('/header.html')
     .then(response => response.text())
     .then(data => {
         const container = document.getElementById('header-container');
@@ -284,7 +284,7 @@ fetch('header.html')
 // ==========================================
 // 載入頁尾並處理年份（維持原樣）
 // ==========================================
-    fetch('footer.html')
+    fetch('/footer.html')
     .then(response => response.text())
     .then(data => {
         const footerContainer = document.getElementById('global-footer');

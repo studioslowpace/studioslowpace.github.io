@@ -112,10 +112,11 @@
         /* ─── ➕ 獨立的「新增展覽」專用按鈕樣式 ─── */
         .study-global-add-wrap {
             display: none; /* 🔒 預設隱藏：只有管理員登入後才會顯示 */
-            justify-content: flex-start;
+            justify-content: center;
             margin: 30px auto 10px;
             width: 100%;
             max-width: 1500px;
+
         }
         .btn-global-add {
             display: inline-flex;
@@ -147,7 +148,7 @@
             margin-bottom: 60px;
             background-color: #ffffff;
             box-shadow: 0 2px 15px rgba(0,0,0,0.02);
-            border: 1px solid #f0f0f0;
+
         }
 
         .chapter-header-wrap {
@@ -161,10 +162,11 @@
             transition: background-color 0.4s ease;
         }
         .chapter-title h2 { font-size: 26px; color: #2c2c2c; font-weight: 500; margin: 0; }
-
+        
+        /*「隔開資料」的線 */
         .inner-item-divider {
             border: 0;
-            border-top: 2px dashed #eee;
+            border-top: 4px solid #aecfe5;
             margin: 40px 0;
         }
 
@@ -283,7 +285,7 @@
 
     <section class="hero-section">
         <button class="hero-logo-btn" id="secretAdminLogo" title="管理員登入">
-            <img src="images/logo-small2.png" alt="Logo" oncontextmenu="return false;" ondragstart="return false;">
+            <img src="/images/logo-small2.png" alt="Logo" oncontextmenu="return false;" ondragstart="return false;">
         </button>
         <div class="hero-content">
             <h1>空間共學</h1>
@@ -293,7 +295,7 @@
 
     <div class="study-global-add-wrap" id="studyGlobalAddBlock">
         <button class="btn-global-add" onclick="window.openCreateModal()">
-            <span>➕ 新增展覽與活動項目</span>
+            <span>新增展覽與活動項目</span>
         </button>
     </div>
 
@@ -375,6 +377,8 @@
             </form>
         </div>
     </div>
+
+    <footer id="global-footer" class="custom-footer"></footer>
 
     <script>
         // 初始化 Supabase 雲端環境
@@ -475,7 +479,7 @@
         // 📦 3. 非同步載入外部 header.html
         async function loadExternalHeader() {
             try {
-                const response = await fetch('header.html');
+                const response = await fetch('/header.html');
                 if (!response.ok) throw new Error('無法尋找到外部 header.html 檔案');
                 
                 const htmlText = await response.text();
@@ -800,6 +804,26 @@
             loadExternalHeader();       
             window.fetchAndRenderChapters(); 
         });
+
+        // ==========================================
+// 載入頁尾並處理年份（維持原樣）
+// ==========================================
+    fetch('/footer.html')
+    .then(response => response.text())
+    .then(data => {
+        const footerContainer = document.getElementById('global-footer');
+        if (footerContainer) {
+            footerContainer.innerHTML = data;
+            
+            // 頁尾載入完成後，更新年份
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        }
+    })
+    .catch(err => console.error("頁尾載入失敗:", err));
+
     </script>
 </body>
 </html>

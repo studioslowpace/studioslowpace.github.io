@@ -1,7 +1,3 @@
-<link rel="icon" sizes="192x192" href="/images/logo-small2.png" type="image/x-icon">
-  <link rel="shortcut icon" href="/images/logo-small2.png" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/images/logo-small2.png" type="image/x-icon">
-
 <style>
     /* ==========================================================================
        頁首基本設定
@@ -140,9 +136,10 @@
 
     /* 預設訪客狀態：圖片半透明 */
   #auth-btn #auth-btn-img {
-      width: 40px;
+      width: 32px;
       height: auto;
-
+      transition: all 0.3s ease;
+      opacity: 0.4;
   }
   /* 當按鈕加上 .logged-in 類別時（管理員登入），自動變亮並發光 */
   #auth-btn.logged-in #auth-btn-img {
@@ -209,14 +206,14 @@
 <header class="header-navbar">
     <div class="header-navbar-container">
         <div class="header-logo-area">
-            <a href="/" class="header-logo-link" aria-label="回到首頁">
+            <a href="index.html" class="header-logo-link" aria-label="回到首頁">
                 <div class="header-logo-icon">
-                    <img src="/images/logo-word.png" alt="空間客舍 Logo" oncontextmenu="return false;" ondragstart="return false;">
+                    <img src="images/logo-word.png" alt="空間客舍 Logo" oncontextmenu="return false;" ondragstart="return false;">
                 </div>
             </a>
             
 <button id="auth-btn" class="admin-icon-btn" onclick="handleHeaderAuthAction()" title="管理員登入">
-    <img id="auth-btn-img" src="/images/logo-small2.png" alt="管理員模式">
+    <img id="auth-btn-img" src="images/logo-small2.png" alt="管理員模式">
 </button>
             
             <button class="menu-toggle" aria-label="打開選單">☰</button>

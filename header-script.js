@@ -1,7 +1,7 @@
 // ==========================================
 // 載入頁首並處理年份（維持原樣）
 // ==========================================  
-fetch('header.html')
+fetch('/header.html')
     .then(response => response.text())
     .then(data => {
         const container = document.getElementById('header-container');
@@ -101,7 +101,7 @@ fetch('header.html')
 // ==========================================
 // 載入頁尾並處理年份（維持原樣）
 // ==========================================
-    fetch('footer.html')
+    fetch('/footer.html')
     .then(response => response.text())
     .then(data => {
         const footerContainer = document.getElementById('global-footer');
