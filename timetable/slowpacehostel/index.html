@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客舍時間表</title>
+    <title>客棧時間表</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
 
@@ -62,13 +62,13 @@
             display: flex; align-items: center; gap: 15px; justify-content: flex-end; flex-shrink: 0; 
         }
         .title-text-group { text-align: right; }
-        .title-area h1 { margin: 0 12px 8px 0; font-size: 48px; color: var(--primary-blue); letter-spacing: 2px; font-weight: bold; }
+        .title-area h1 { margin: 0 12px 8px 0; font-size: 48px; color: var(--danger-red); letter-spacing: 2px; font-weight: bold; }
         
         .logo-btn {
             height: 60px; width: auto; object-fit: contain; cursor: pointer; transition: all 0.3s ease; user-select: none; border: 2px solid transparent; border-radius: 4px;
         }
         .logo-btn:hover { transform: scale(1.05); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-   
+
         
         #month-display { 
             font-size: 30px; font-weight: bold; color: var(--primary-blue); display: inline-block; margin-bottom: 12px; cursor: pointer; padding: 6px 12px; border-radius: 4px; transition: all 0.2s ease; user-select: none; 
@@ -81,7 +81,6 @@
         .legend-box { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 0 0; }
         
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--text-main); padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
-    
 
         .box { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
 
@@ -362,10 +361,10 @@
             <div id="legend-list" class="legend-box"></div>
 
             <div class="title-area">
-            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
+            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="/images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
             <div class="title-text-group">
-                <h1 onclick="exportEventImage()" style="cursor: pointer;" title="點擊匯出宣傳圖片">
-    客舍時間表
+                <h1>
+    客棧時間表
 </h1>
                 <span id="month-display" onclick="openModal('switchMonthModal')">連線中...</span>
             </div>
@@ -508,7 +507,7 @@
 // --- 設定 ---
 const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co';
 const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
-const TABLE_NAME = 'events'; // ⚠️ 請務必填入你在 Supabase 的 Table 名稱
+const TABLE_NAME = 'events2'; // ⚠️ 請務必填入你在 Supabase 的 Table 名稱
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
 const holidays = ["2026-01-01", "2026-02-17", "2026-02-18", "2026-02-19", "2026-04-03", "2026-04-04", "2026-04-06", "2026-04-07", "2026-05-01", "2026-05-25", "2026-06-19", "2026-07-01", "2026-09-26", "2026-10-01", "2026-10-19", "2026-12-25", "2026-12-26"];
@@ -702,7 +701,6 @@ window.submitChangePassword = function() {
     alert('管理員密碼修改成功！');
     window.closeModal('passwordModal');
 };
-
 
 // --- 資料庫同步 ---
 async function saveDB() {
@@ -1211,7 +1209,7 @@ window.closeModal = (id) => document.getElementById(id).classList.remove('active
 document.addEventListener('DOMContentLoaded', () => {
     
     // 第一步：先載入 Header
-    fetch('header.html')
+    fetch('/header.html')
         .then(response => response.text())
         .then(data => {
             const container = document.getElementById('header-container');
@@ -1228,9 +1226,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchData(); // 萬一 header 壞了，保底還是要讓日曆出來
         });
 
-
     // 2. 載入頁尾並處理年份（這個維持不變）
-    fetch('footer.html')
+    fetch('/footer.html')
         .then(response => response.text())
         .then(data => {
             const footerContainer = document.getElementById('global-footer');
@@ -1334,7 +1331,6 @@ function setupHeaderMenu() {
     window.removeEventListener('resize', adjustNavItems); // 防重複綁定
     window.addEventListener('resize', adjustNavItems);
 }
-
 </script>
 </body>
 </html>

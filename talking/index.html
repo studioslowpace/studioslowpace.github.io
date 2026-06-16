@@ -216,7 +216,7 @@
                 <div id="add-modal" class="modal-overlay">
                     <div class="modal-box">
                         <h3 style="margin-top:0; color:#2c3e2f; border-bottom:1px solid #eee; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>➕ 加入全新談話資料</span>
+                            <span>加入全新談話資料</span>
                             <span style="cursor:pointer; font-size:20px; color:#aaa;" onclick="toggleAddModal(false)">×</span>
                         </h3>
                         
@@ -321,7 +321,7 @@
     // ==========================================================================
     // 【2. 異步非同步載入頁首與頁尾】
     // ==========================================================================
-    fetch('header.html')
+    fetch('/header.html')
         .then(response => response.text())
         .then(data => {
             const container = document.getElementById('header-container');
@@ -333,7 +333,7 @@
         })
         .catch(err => console.error("頁首載入失敗:", err));
 
-    fetch('footer.html')
+    fetch('/footer.html')
         .then(response => response.text())
         .then(data => {
             const footerContainer = document.getElementById('global-footer');
@@ -737,7 +737,7 @@
     // ==========================================
 // 載入頁尾並處理年份（維持原樣）
 // ==========================================
-    fetch('footer.html')
+    fetch('/footer.html')
     .then(response => response.text())
     .then(data => {
         const footerContainer = document.getElementById('global-footer');

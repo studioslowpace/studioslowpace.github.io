@@ -4,276 +4,1076 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>客舍萬事屋 - 技能交換平台</title>
-    <!-- Tailwind CSS, Lucide Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入 Supabase CDN -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
+    
+<style>
+        /* ==========================================
+           1. 全域與基礎排版樣式 (Global & Base)
+           ========================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans CJK TC", sans-serif;
             background-color: #fdfbf7;
+            min-height: 100vh;
+            color: #3A2E2B;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 3rem;
+        }
+        .hidden {
+            display: none !important;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .toast-popup {
-            animation: fadeInUp 0.3s ease-out forwards, fadeOutDown 0.3s ease-in 2s forwards;
+
+        /* ==========================================
+           2. 提示彈窗樣式 (Toast)
+           ========================================== */
+        .toast-notification {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(28, 25, 23, 0.9);
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            text-align: center;
+            border: 1px solid rgba(68, 64, 60, 0.5);
         }
-        @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        @keyframes fadeOutDown { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 20px); } }
+
+        /* ==========================================
+           3. 最高權限管理端樣式 (Admin Navbar)
+           ========================================== */
+        .admin-nav {
+            background-color: #ffffff;
+            border-bottom: 1px solid #fef3c7;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            z-index: 50;
+        }
+        .admin-nav-container {
+            max-width: 56rem;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        @media (min-width: 768px) {
+            .admin-nav-container { padding: 1.5rem; }
+        }
+        .admin-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 1rem;
+        }
+        .admin-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .admin-title-icon {
+            color: #d97706;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .admin-main-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .btn-admin-close-nav {
+            color: #9ca3af;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-admin-close-nav:hover { color: #4b5563; }
+        .admin-close-icon { width: 1.25rem; height: 1.25rem; }
+        
+        .admin-logout-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        @media (min-width: 768px) {
+            .admin-logout-row { flex-direction: row; align-items: center; }
+        }
+        .admin-hint-text {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        @media (min-width: 768px) {
+            .admin-hint-text { max-width: 28rem; }
+        }
+        .admin-password-code {
+            background-color: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            color: #b45309;
+        }
+        .admin-input-group-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1 1 0%;
+            width: 100%;
+            max-width: 24rem;
+        }
+        .admin-password-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+        }
+        .admin-password-input:focus { outline: none; border-color: #f59e0b; }
+        
+        .btn-admin-login {
+            padding: 0.5rem 1rem;
+            background-color: #d97706;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.75rem;
+            border-radius: 0.75rem;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-admin-login:hover { background-color: #b45309; }
+        
+        .admin-login-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .admin-login-row { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+        }
+        .admin-success-badge {
+            background-color: #ecfdf5;
+            color: #065f46;
+            font-size: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .admin-success-text { font-weight: 700; }
+        .admin-success-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+        
+        .admin-logout-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid #f3f4f6;
+            width: 100%;
+        }
+        @media (min-width: 768px) { .admin-logout-wrapper { width: auto; } }
+        
+        .btn-admin-logout {
+            padding: 0.5rem 0.75rem;
+            background-color: #fef2f2;
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-admin-logout:hover { background-color: #dc2626; color: #ffffff; }
+
+        /* ==========================================
+           4. 頁首與導覽區塊 (Header)
+           ========================================== */
+        .header-bar {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #fef3c7;
+            padding: 0.75rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+        .header-container {
+            max-width: 56rem;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-logo-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .header-logo-img {
+            width: 2.5rem;
+            height: 2.5rem;
+            object-fit: cover;
+            transition: opacity 0.2s;
+        }
+        .header-logo-group:hover .header-logo-img { opacity: 0.8; }
+        .header-title-main {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1f2937;
+            letter-spacing: 0.05em;
+            display: block;
+        }
+        .header-title-sub {
+            font-size: 10px;
+            color: #d97706;
+            display: block;
+            margin-top: -0.125rem;
+        }
+        .header-action-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ==========================================
+           5. 按鈕基本樣式 (Buttons)
+           ========================================== */
+        .btn-base {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-stone { background-color: #1c1917; color: #ffffff; }
+        .btn-stone:hover { background-color: #0c0a09; }
+        .btn-orange { background-color: #ea580c; color: #ffffff; }
+        .btn-orange:hover { background-color: #c2410c; }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #ea580c;
+            background-color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #fef3c7;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { color: #c2410c; }
+        .btn-back-icon { width: 1rem; height: 1rem; }
+
+        /* ==========================================
+           6. 主要版面結構與主橫幅 (Layout & Banner)
+           ========================================== */
+        .main-layout {
+            width: 100%;
+            max-width: 56rem;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 0 1rem;
+            flex: 1 1 0%;
+        }
+        @media (min-width: 768px) {
+            .main-layout { padding-left: 1.5rem; padding-right: 1.5rem; }
+        }
+        .single-layout {
+            width: 100%;
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 0 1rem;
+            flex: 1 1 0%;
+        }
+        .layout-spacing {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .admin-status-badge {
+            text-align: center;
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            font-size: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* 橫幅大圖 */
+        .hero-banner {
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            background: linear-gradient(to bottom right, #fde68a, #ffedd5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        @media (min-width: 768px) { .hero-banner { padding: 2rem; } }
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.05em;
+            color: #451a03;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .hero-desc-wrapper {
+            font-size: 0.75rem;
+            color: #78350f;
+            line-height: 1.625;
+            letter-spacing: 0.05em;
+            max-width: 48rem;
+        }
+        @media (min-width: 768px) { .hero-desc-wrapper { font-size: 0.875rem; } }
+
+        /* ==========================================
+           7. 標籤分頁與資訊看板 (Tabs & Leaderboard)
+           ========================================== */
+        .tabs-row {
+            display: flex;
+            border-bottom: 1px solid #fde68a;
+            font-size: 0.75rem;
+            font-weight: 700;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        @media (min-width: 768px) { .tabs-row { font-size: 0.875rem; } }
+        .tab-btn {
+            padding: 0.625rem 1rem;
+            color: #9ca3af;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #4b5563; }
+        .tab-active-orange {
+            color: #ea580c;
+            border-bottom: 2px solid #f97316;
+        }
+        .tab-btn-flex {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* 積分排行榜 */
+        .leaderboard-panel {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+            background-color: rgba(254, 243, 199, 0.6);
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #fde68a;
+        }
+        @media (min-width: 768px) { .leaderboard-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        
+        .search-box-card {
+            background-color: #ffffff;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #fde68a;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        @media (min-width: 768px) { .search-box-card { grid-column: span 1 / span 1; } }
+        
+        .search-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .search-icon { width: 0.875rem; height: 0.875rem; }
+        .search-hint { font-size: 11px; color: #9ca3af; margin-bottom: 0.75rem; }
+        .search-input {
+            width: 100%;
+            padding: 0.5rem;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .search-input:focus { outline: none; border-color: #b45309; }
+        .btn-search {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.375rem 0;
+            background-color: #b45309;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-search:hover { background-color: #92400e; }
+
+        .leaderboard-list-card {
+            background-color: #ffffff;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #fde68a;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        @media (min-width: 768px) { .leaderboard-list-card { grid-column: span 2 / span 2; } }
+        .leaderboard-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #78350f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .leaderboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* ==========================================
+           8. 卡片網格與元件 (Cards Grid)
+           ========================================== */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) { .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+        /* ==========================================
+           9. 彈窗模組通用樣式 (Modals)
+           ========================================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            width: 100%;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .max-w-sm { max-width: 24rem; }
+        .max-w-md { max-width: 28rem; }
+        .max-h-scroll { max-height: 90vh; overflow-y: auto; }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .modal-title-emerald { color: #065f46; }
+        .modal-title-icon { width: 1rem; height: 1rem; color: #ea580c; }
+        .btn-modal-close {
+            color: #9ca3af;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-modal-close:hover { color: #4b5563; }
+        .modal-close-icon { width: 1.25rem; height: 1.25rem; }
+
+        /* 表單與輸入框 */
+        .form-spacing {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .form-spacing-lg {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .form-row-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+        .input-block-bg {
+            background-color: rgba(254, 243, 199, 0.5);
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid #fde68a;
+        }
+        .input-block-stone {
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid #e5e7eb;
+        }
+        .input-block-orange {
+            background-color: #fff7ed;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid #ffedd5;
+        }
+        .input-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+        .input-label-orange { color: #9a3412; }
+        .avatar-preview-circle {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background-color: #fff7ed;
+            border: 2px solid #fbe58a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.875rem;
+            cursor: pointer;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .avatar-preview-stone {
+            background-color: #ffffff;
+            border-color: #a8a29e;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 0.625rem;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+        }
+        .input-field:focus { outline: none; border-color: #ea580c; }
+        .input-field-stone:focus { outline: none; border-color: #1c1917; }
+        .input-field-textarea { resize: none; }
+        
+        .input-password-special {
+            width: 100%;
+            padding: 0.625rem;
+            background-color: #ffffff;
+            border: 1px solid #fed7aa;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+        }
+        .input-password-special:focus { outline: none; border-color: #ea580c; }
+
+        /* 彈窗按鈕群組 */
+        .modal-text-desc { font-size: 0.75rem; color: #6b7280; }
+        .modal-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 12rem;
+            overflow-y: auto;
+            padding: 0.25rem 0;
+        }
+        .modal-footer-actions {
+            padding-top: 0.5rem;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-modal-cancel {
+            flex: 1 1 0%;
+            padding: 0.5rem 0;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-modal-confirm-emerald {
+            flex: 1 1 0%;
+            padding: 0.5rem 0;
+            background-color: #059669;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-modal-confirm-emerald:hover { background-color: #047857; }
+        
+        .btn-form-submit-orange {
+            width: 100%;
+            padding: 0.625rem 0;
+            background-color: #ea580c;
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-form-submit-orange:hover { background-color: #c2410c; }
+        
+        .btn-form-submit-stone {
+            width: 100%;
+            padding: 0.625rem 0;
+            background-color: #1c1917;
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-form-submit-stone:hover { background-color: #0c0a09; }
+
+/* ==========================================
+   11. 精準對齊圖片規格的卡片樣式
+   ========================================== */
+/* 核心卡片容器：純白背景、精準的柔和圓角與邊框線條 */
+.task-card {
+    background-color: #ffffff;
+    border: 1.5px solid #fffbeb; /* 非常淡的琥珀黃邊框線 */
+    border-radius: 1.5rem;       /* 大圓角，完美貼合圖片外觀 */
+    padding: 1.75rem;            /* 舒適的內距留白 */
+    box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02); /* 微妙的溫暖陰影 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* 頭像與標題橫向排版 */
+.task-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* 頭像外圈 */
+.avatar-circle-orange {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background-color: #fffbeb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* 標題與副標題字型配置 */
+.task-card-title {
+    font-size: 1rem;
+    font-weight: 800; /* 加粗字體 */
+    color: #1e293b;   /* 深色優雅字體 */
+    margin: 0;
+    line-height: 1.3;
+}
+.task-card-subtitle {
+    font-size: 0.6rem;
+    color: #94a3b8;   /* 淺灰色字體 */
+    margin-top: 0.25rem;
+}
+
+/* 限制條件標籤 (例如：體力勞動、基礎畫畫能力吧~) */
+.tag-orange {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #c2410c;
+    background-color: #fff7ed;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px; /* 全圓角膠囊狀 */
+    margin-top: 0.25rem;
+}
+
+/* 委託詳細說明內文 */
+.task-card-description {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #334155;
+    line-height: 1.6;
+    margin: 0.5rem 0 0.25rem 0;
+    white-space: pre-line;
+}
+
+/* 底部資訊分隔線 */
+.task-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px dashed #f1f5f9; /* 細緻的灰虛線 */
+}
+
+/* 報酬與時間文字 */
+.reward-info-text {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 500;
+    flex: 1;
+    padding-right: 0.5rem;
+}
+.reward-highlight {
+    color: #c2410c; /* 溫暖的橘褐色 */
+    font-weight: 700;
+}
+
+/* 右下角「接受委託」按鈕：大圓角、滿版橘色 */
+.btn-card-orange {
+    background-color: #ea580c;
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.875rem; /* 精準對齊圖片中的按鈕圓角 */
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.2);
+    transition: background-color 0.2s;
+}
+.btn-card-orange:hover {
+    background-color: #c2410c;
+}
+
+/* 圓滿解決狀態徽章 */
+.badge-status-success {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #047857;
+    background-color: #ecfdf5;
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.status-success-subtitle {
+    font-size: 0.75rem;
+    color: #059669;
+    font-weight: 500;
+}
+
+/* 管理端刪除按鈕定位 */
+.card-admin-tools {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 10;
+}
     </style>
 </head>
-<body class="min-h-screen text-[#3A2E2B] flex flex-col pb-12">
+<body>
 
-    <div id="toast-message" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 bg-stone-900/90 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-lg z-50 text-center border border-stone-700/50">
+    <div id="toast-message" class="hidden toast-notification">
         📋 聯絡資訊已複製到您的剪貼簿！
     </div>
 
-    <!-- 頂部管理員控制列 -->
-    <div id="admin-navbar" class="hidden bg-white border-b border-amber-100 shadow-md w-full z-50 transition-all duration-300">
-        <div class="max-w-4xl mx-auto p-4 md:p-6">
-            <div class="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="shield" class="text-amber-600 w-5 h-5"></i>
-                    <h2 class="text-base font-bold text-gray-800">萬事屋全域管理端 (最高權限)</h2>
+    <div id="admin-navbar" class="hidden admin-nav">
+        <div class="admin-nav-container">
+            <div class="admin-title-row">
+                <div class="admin-title-group">
+                    <i data-lucide="shield" class="admin-title-icon"></i>
+                    <h2 class="admin-main-title">萬事屋全域管理端 (最高權限)</h2>
                 </div>
-                <button onclick="toggleAdminNavbar()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="toggleAdminNavbar()" class="btn-admin-close-nav">
+                    <i data-lucide="x" class="admin-close-icon"></i>
+                </button>
             </div>
-            <div id="admin-logged-out" class="flex flex-col md:flex-row md:items-center gap-3">
-                <p class="text-xs text-gray-400 md:max-w-md">萬事屋主理人專用登入密碼：<code class="bg-gray-100 px-1 py-0.5 rounded text-amber-700">admin123</code></p>
-                <div class="flex gap-2 flex-1 max-w-sm">
-                    <input type="password" id="admin-password-input" placeholder="輸入管理密碼" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-amber-500 text-xs tracking-widest">
-                    <button onclick="handleAdminLogin()" class="px-4 py-2 bg-amber-600 text-white font-bold text-xs rounded-xl hover:bg-amber-700 whitespace-nowrap">認證登入</button>
+            
+            <div id="admin-logged-out" class="admin-logout-row">
+                <p class="admin-hint-text">
+                    萬事屋主理人專用登入密碼：<code class="admin-password-code">admin123</code>
+                </p>
+                <div class="admin-input-group-wrapper">
+                    <input type="password" id="admin-password-input" placeholder="輸入管理密碼" class="admin-password-input">
+                    <button onclick="handleAdminLogin()" class="btn-admin-login">認證登入</button>
                 </div>
             </div>
-            <div id="admin-logged-in" class="hidden flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div class="bg-emerald-50 text-emerald-800 text-xs p-3 rounded-xl flex items-center space-x-2">
-                    <i data-lucide="check-circle" class="w-4 h-4 flex-shrink-0"></i>
-                    <span class="font-bold">主理人模式已啟用：您不受個案密碼限制，可任意刪除/變更狀態。</span>
+            
+            <div id="admin-logged-in" class="hidden admin-login-row">
+                <div class="admin-success-badge">
+                    <i data-lucide="check-circle" class="admin-success-icon"></i>
+                    <span class="admin-success-text">主理人模式已啟用：您不受個案密碼限制，可任意刪除/變更狀態。</span>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-3 rounded-2xl border border-gray-100 w-full md:w-auto">
-                    <button onclick="handleAdminLogout()" class="px-3 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all">登出主理人</button>
+                <div class="admin-logout-wrapper">
+                    <button onclick="handleAdminLogout()" class="btn-admin-logout">登出主理人</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <header id="main-header" class="w-full bg-white/80 backdrop-blur-md border-b border-amber-100 py-3 px-4 sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div onclick="toggleAdminNavbar()" class="flex items-center space-x-3 cursor-pointer group select-none">
-                <img src="https://static.wixstatic.com/media/fc4bd9_7b52415be7aa42219d5b7a68fc82e136~mv2.png" alt="Logo" class="w-10 h-10 object-cover group-hover:opacity-80 transition-all" />
+    <header id="main-header" class="header-bar">
+        <div class="header-container">
+            <div onclick="toggleAdminNavbar()" class="header-logo-group">
+                <img src="https://static.wixstatic.com/media/fc4bd9_7b52415be7aa42219d5b7a68fc82e136~mv2.png" alt="Logo" class="header-logo-img" />
                 <div>
-                    <span class="font-bold tracking-wider text-gray-800 text-sm block">客舍萬事屋</span>
-                    <span class="text-[10px] text-amber-600 block -mt-0.5">Yorozuya Inn App</span>
+                    <span class="header-title-main">客舍萬事屋</span>
+                    <span class="header-title-sub">Yorozuya Inn App</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <button id="header-skill-btn" onclick="openSkillModal()" class="hidden text-xs bg-stone-800 text-white font-bold px-4 py-2 rounded-xl shadow-sm hover:bg-stone-900 transition-all">+ 新增技能人才</button>
-                <button id="header-upload-btn" onclick="openUploadModal()" class="text-xs bg-orange-600 text-white font-bold px-4 py-2 rounded-xl shadow-sm hover:bg-orange-700 transition-all">+ 發布新委託</button>
+            <div class="header-action-group">
+                <button id="header-skill-btn" onclick="openSkillModal()" class="hidden btn-base btn-stone">+ 新增技能人才</button>
+                <button id="header-upload-btn" onclick="openUploadModal()" class="btn-base btn-orange">+ 發布新委託</button>
             </div>
         </div>
     </header>
 
-    <main id="main-content-layout" class="w-full max-w-4xl mx-auto px-4 md:px-6 pt-6 flex-1">
-        <div id="global-admin-badge" class="hidden text-center bg-amber-100 border border-amber-200 text-amber-800 text-xs py-2 rounded-xl font-bold mb-6 animate-pulse">🔑 主理人權限運作中 — 全域管理功能已解鎖</div>
+    <main id="main-content-layout" class="main-layout">
+        <div id="global-admin-badge" class="hidden admin-status-badge">🔑 主理人權限運作中 — 全域管理功能已解鎖</div>
         
-        <div class="space-y-6">
-            <div class="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-amber-200 to-orange-100 relative overflow-hidden shadow-sm">
-                <h1 class="text-2xl font-bold mb-3 tracking-wide text-amber-950 flex items-center gap-2">🏮<span>客舍萬事屋</span></h1>
-                <div class="text-xs md:text-sm text-amber-900/90 leading-relaxed tracking-wide space-y-3 max-w-3xl">
+        <div class="layout-spacing">
+            <div class="hero-banner">
+                <h1 class="hero-title">🏮<span>客舍萬事屋</span></h1>
+                <div class="hero-desc-wrapper">
                     <p>生活中總會遇到各種奇難雜務。受到日本「萬事屋」啟發，分享自己的專長，完成任務可以獲得**萬事分**獎勵，讓技能分享成為一種循環的力量！</p>
                 </div>
             </div>
 
-            <div class="flex border-b border-amber-200 text-xs md:text-sm font-bold overflow-x-auto no-scrollbar whitespace-nowrap">
-                <button id="tab-active" onclick="switchTab('active')" class="px-4 md:px-5 py-2.5 text-orange-600 border-b-2 border-orange-500 transition-all">等待幫助的委託</button>
-                <button id="tab-completed" onclick="switchTab('completed')" class="px-4 md:px-5 py-2.5 text-gray-400 hover:text-gray-600 transition-all">已完成的委託</button>
-                <button id="tab-skills" onclick="switchTab('skills')" class="px-4 md:px-5 py-2.5 text-gray-400 hover:text-gray-600 transition-all flex items-center gap-1"><span>✨ 鄰里名冊與積分榜</span></button>
+            <div class="tabs-row">
+                <button id="tab-active" onclick="switchTab('active')" class="tab-btn tab-active-orange">等待幫助的委託</button>
+                <button id="tab-completed" onclick="switchTab('completed')" class="tab-btn">已完成的委託</button>
+                <button id="tab-skills" onclick="switchTab('skills')" class="tab-btn tab-btn-flex"><span>✨ 鄰里名冊與積分榜</span></button>
             </div>
 
-            <!-- 萬事分查分區與英雄榜 -->
-            <div id="skills-leaderboard-section" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 bg-amber-50/60 p-4 rounded-2xl border border-amber-100">
-                <div class="md:col-span-1 bg-white p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
+            <div id="skills-leaderboard-section" class="hidden leaderboard-panel">
+                <div class="search-box-card">
                     <div>
-                        <h4 class="text-xs font-bold text-amber-800 mb-1 flex items-center gap-1"><i data-lucide="search" class="w-3.5 h-3.5"></i><span>個人萬事分快速查詢</span></h4>
-                        <p class="text-[11px] text-gray-400 mb-3">輸入您接單時填寫的聯絡資訊(如IG/Line)</p>
-                        <input type="text" id="search-point-input" placeholder="例如：@yorozuya_inn" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-amber-500">
+                        <h4 class="search-title">
+                            <i data-lucide="search" class="search-icon"></i>
+                            <span>個人萬事分快速查詢</span>
+                        </h4>
+                        <p class="search-hint">輸入您接單時填寫的聯絡資訊(如IG/Line)</p>
+                        <input type="text" id="search-point-input" placeholder="example" class="search-input">
                     </div>
-                    <button onclick="queryPersonalPoints()" class="w-full mt-2 py-1.5 bg-amber-700 text-white text-xs font-bold rounded-lg hover:bg-amber-800">查詢我的分數</button>
+                    <button onclick="queryPersonalPoints()" class="btn-search">查詢我的分數</button>
                 </div>
-                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-amber-200 shadow-sm">
-                    <h4 class="text-xs font-bold text-amber-900 mb-2 flex items-center gap-1">🏆 <span>萬事屋榮譽英雄榜 (Top 3)</span></h4>
-                    <div id="leaderboard-target" class="space-y-2 text-xs"></div>
+                <div class="leaderboard-list-card">
+                    <h4 class="leaderboard-title">🏆 <span>萬事屋榮譽英雄榜 (Top 3)</span></h4>
+                    <div id="leaderboard-target" class="leaderboard-container"></div>
                 </div>
             </div>
 
-            <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="posts-container" class="card-grid"></div>
         </div>
     </main>
 
-    <!-- 單一委託案詳細內頁 -->
-    <main id="single-post-layout" class="hidden w-full max-w-2xl mx-auto px-4 pt-6 flex-1">
-        <div class="mb-4">
-            <button onclick="backToHomeList()" class="inline-flex items-center space-x-2 text-xs font-bold text-orange-600 hover:text-orange-700 bg-white px-4 py-2 rounded-xl border border-amber-100 shadow-sm transition-all">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+    <main id="single-post-layout" class="hidden single-layout">
+        <div style="margin-bottom: 1rem;">
+            <button onclick="backToHomeList()" class="btn-back">
+                <i data-lucide="arrow-left" class="btn-back-icon"></i>
                 <span>返回看板首頁</span>
             </button>
         </div>
         <div id="single-post-render-target"></div>
     </main>
 
-    <!-- 接單填寫資料彈窗 -->
-    <div id="join-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 shadow-xl text-sm">
-            <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2"><i data-lucide="shield-alert" class="w-4 h-4 text-orange-600"></i><span>填寫您的資料</span></h3>
-                <button onclick="closeJoinModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="join-modal" class="hidden modal-overlay">
+        <div class="modal-content max-w-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i data-lucide="shield-alert" class="modal-title-icon"></i>
+                    <span>填寫您的資料</span>
+                </h3>
+                <button onclick="closeJoinModal()" class="btn-modal-close">
+                    <i data-lucide="x" class="modal-close-icon"></i>
+                </button>
             </div>
-            <form id="join-form" onsubmit="handleJoinSubmit(event)" class="space-y-3">
+            <form id="join-form" onsubmit="handleJoinSubmit(event)" class="form-spacing">
                 <input type="hidden" id="join-post-id">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">您的姓名 / 稱呼</label>
-                    <input type="text" id="join-name" required placeholder="例如：新八" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500">
+                    <label class="input-label">您的姓名 / 稱呼</label>
+                    <input type="text" id="join-name" required class="input-field">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">您的聯絡方式 / IG 帳號 (以此累計萬事分)</label>
-                    <input type="text" id="join-ig" required placeholder="例如：@yorozuya_inn" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500">
+                    <label class="input-label">您的聯絡方式</label>
+                    <input type="text" id="join-ig" required class="input-field">
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-orange-600 text-white font-bold rounded-xl shadow-md hover:bg-orange-700 transition-all">確認接下此委託</button>
+                <button type="submit" class="btn-form-submit-orange">確認接下此委託</button>
             </form>
         </div>
     </div>
 
-    <!-- 選擇誰完成委託的結案彈窗 -->
-    <div id="complete-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 shadow-xl text-sm">
-            <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                <h3 class="text-base font-bold text-emerald-800 flex items-center gap-1">✨ <span>圓滿結案與發放萬事分</span></h3>
-                <button onclick="closeCompleteModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="complete-modal" class="hidden modal-overlay">
+        <div class="modal-content max-w-sm">
+            <div class="modal-header">
+                <h3 class="modal-title modal-title-emerald">✨ <span>圓滿結案與發放萬事分</span></h3>
+                <button onclick="closeCompleteModal()" class="btn-modal-close">
+                    <i data-lucide="x" class="modal-close-icon"></i>
+                </button>
             </div>
-            <div class="space-y-3">
-                <p class="text-xs text-gray-500">請選出本次協助您完成委託的鄰里人英雄，該英雄將獲得 **1 點萬事分**！</p>
+            <div class="form-spacing">
+                <p class="modal-text-desc">請選出本次協助您完成委託的鄰里人英雄。</p>
                 <input type="hidden" id="complete-post-id">
-                <div id="heroes-select-container" class="space-y-2 max-h-48 overflow-y-auto py-1"></div>
-                <div class="pt-2 border-t border-gray-100 flex gap-2">
-                    <button onclick="closeCompleteModal()" class="flex-1 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl">取消</button>
-                    <button onclick="submitCompleteTask()" class="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md">確認結案並送出分數</button>
+                <div id="heroes-select-container" class="modal-list-container"></div>
+                <div class="modal-footer-actions">
+                    <button onclick="closeCompleteModal()" class="btn-modal-cancel">取消</button>
+                    <button onclick="submitCompleteTask()" class="btn-modal-confirm-emerald">確認結案並送出分數</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 發布新委託彈窗 -->
-    <div id="upload-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl text-sm max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-800">發布新委託</h3>
-                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="upload-modal" class="hidden modal-overlay">
+        <div class="modal-content max-w-md max-h-scroll no-scrollbar">
+            <div class="modal-header">
+                <h3 class="modal-title">發布新委託</h3>
+                <button onclick="closeUploadModal()" class="btn-modal-close">
+                    <i data-lucide="x" class="modal-close-icon"></i>
+                </button>
             </div>
-            <form id="post-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                <div class="bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
-                    <label class="block text-xs font-bold text-gray-500 mb-2">委託人標誌</label>
-                    <div class="flex items-center space-x-4">
-                        <div onclick="toggleEmojiBank('post')" id="current-avatar-preview" class="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-400 flex items-center justify-center text-3xl cursor-pointer shadow-sm">🙋‍♂️</div>
-                        <div class="text-xs text-gray-400"><p class="font-bold text-gray-600">這是您在公告上顯示的圖示</p></div>
+            <form id="post-form" onsubmit="handleFormSubmit(event)" class="form-spacing-lg">
+                <div class="input-block-bg">
+                    <label class="input-label">委託人標誌</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div onclick="toggleEmojiBank('post')" id="current-avatar-preview" class="avatar-preview-circle">🙋‍♂️</div>
                     </div>
                     <input type="hidden" id="selected-emoji" value="🙋‍♂️">
-                    <div id="emoji-bank-post" class="hidden mt-3 pt-3 border-t border-gray-200/60">
-                        <div class="grid grid-cols-6 gap-2 text-center text-2xl">
-                            <span onclick="selectEmoji('🙋‍♂️', 'post', this)" class="cursor-pointer p-1 rounded-xl bg-amber-100 border border-amber-300">🙋‍♂️</span>
-                            <span onclick="selectEmoji('🙋‍♀️', 'post', this)" class="cursor-pointer p-1 rounded-xl">🙋‍♀️</span>
-                            <span onclick="selectEmoji('🧑‍💻', 'post', this)" class="cursor-pointer p-1 rounded-xl">🧑‍💻</span>
-                            <span onclick="selectEmoji('👩‍🎨', 'post', this)" class="cursor-pointer p-1 rounded-xl">👩‍🎨</span>
-                            <span onclick="selectEmoji('🐱', 'post', this)" class="cursor-pointer p-1 rounded-xl">🐱</span>
-                            <span onclick="selectEmoji('🦊', 'post', this)" class="cursor-pointer p-1 rounded-xl">🦊</span>
-                        </div>
-                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">委託的事情</label>
-                    <input type="text" id="taskTitleInput" required placeholder="例如：尋找擅長日語對話的朋友練習" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500">
+                    <label class="input-label">委託的事情</label>
+                    <input type="text" id="taskTitleInput" required class="input-field">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">您的稱呼</label><input type="text" id="clientNameInput" required placeholder="例如：K" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">您的聯絡方式</label><input type="text" id="clientContactInput" required placeholder="例如：IG@slowpace_studio" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500"></div>
+                <div class="form-row-grid">
+                    <div><label class="input-label">您的稱呼</label><input type="text" id="clientNameInput" required class="input-field"></div>
+                    <div><label class="input-label">您的聯絡方式</label><input type="text" id="clientContactInput" required class="input-field"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">限制條件 / 標籤</label><input type="text" id="taskTagInput" required placeholder="例如：限今天" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">報酬</label><input type="text" id="rewardInput" required placeholder="例如：$50" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500"></div>
+                <div class="form-row-grid">
+                    <div><label class="input-label">限制條件</label><input type="text" id="taskTagInput" required class="input-field"></div>
+                    <div><label class="input-label">報酬</label><input type="text" id="rewardInput" required class="input-field"></div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">委託的詳細說明與細節...</label>
-                    <textarea id="taskDetailsInput" required rows="3" placeholder="請詳細描述事情經過與你需要什麼幫助..." class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-orange-500"></textarea>
+                    <label class="input-label">委託的詳細說明</label>
+                    <textarea id="taskDetailsInput" required rows="3" class="input-field input-field-textarea"></textarea>
                 </div>
-                <div class="bg-orange-50 p-3 rounded-2xl border border-orange-100">
-                    <label class="block text-xs font-bold text-orange-800 mb-1">設定此委託的「管理密碼」 (必填)</label>
-                    <input type="password" id="postPasswordInput" required placeholder="請輸入自訂密碼以利日後結案/看名單" class="w-full p-2.5 bg-white border border-orange-200 rounded-xl focus:outline-none focus:border-orange-500 text-xs">
+                <div class="input-block-orange">
+                    <label class="input-label input-label-orange">設定管理密碼</label>
+                    <input type="password" id="postPasswordInput" required class="input-password-special">
                 </div>
-                <button type="submit" class="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-md hover:bg-orange-700 transition-all">發佈並上傳至萬事屋</button>
+                <button type="submit" class="btn-form-submit-orange">發佈並上傳至萬事屋</button>
             </form>
         </div>
     </div>
 
-    <!-- 建立技能彈窗 -->
-    <div id="skill-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl text-sm">
-            <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-800">建立鄰里人技能表</h3>
-                <button onclick="closeSkillModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="skill-modal" class="hidden modal-overlay">
+        <div class="modal-content max-w-md">
+            <div class="modal-header">
+                <h3 class="modal-title">建立鄰里人技能表</h3>
+                <button onclick="closeSkillModal()" class="btn-modal-close">
+                    <i data-lucide="x" class="modal-close-icon"></i>
+                </button>
             </div>
-            <form id="skill-form" onsubmit="handleSkillSubmit(event)" class="space-y-4">
-                <div class="bg-stone-50 p-3 rounded-2xl border border-stone-200">
-                    <label class="block text-xs font-bold text-stone-500 mb-2">鄰里人代表的圖像</label>
-                    <div class="flex items-center space-x-4">
-                        <div onclick="toggleEmojiBank('skill')" id="skill-avatar-preview" class="w-14 h-14 rounded-full bg-white border-2 border-stone-400 flex items-center justify-center text-3xl cursor-pointer shadow-sm">🧑‍🎨</div>
+            <form id="skill-form" onsubmit="handleSkillSubmit(event)" class="form-spacing-lg">
+                <div class="input-block-stone">
+                    <label class="input-label">鄰里人代表的圖像</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div onclick="toggleEmojiBank('skill')" id="skill-avatar-preview" class="avatar-preview-circle avatar-preview-stone">🧑‍🎨</div>
                     </div>
                     <input type="hidden" id="skill-selected-emoji" value="🧑‍🎨">
-                    <div id="emoji-bank-skill" class="hidden mt-3 pt-3 border-t border-stone-200">
-                        <div class="grid grid-cols-6 gap-2 text-center text-2xl">
-                            <span onclick="selectEmoji('👩‍🎨', 'skill', this)" class="cursor-pointer p-1 rounded-xl bg-stone-100 border border-stone-300">👩‍🎨</span>
-                            <span onclick="selectEmoji('🧑‍💻', 'skill', this)" class="cursor-pointer p-1 rounded-xl">🧑‍💻</span>
-                            <span onclick="selectEmoji('📸', 'skill', this)" class="cursor-pointer p-1 rounded-xl">📸</span>
-                            <span onclick="selectEmoji('✍️', 'skill', this)" class="cursor-pointer p-1 rounded-xl">✍️</span>
-                        </div>
-                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">鄰里人的姓名 / 代號</label>
-                    <input type="text" id="skillNameInput" required placeholder="例如：小美" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-stone-500">
+                    <label class="input-label">鄰里人的姓名</label>
+                    <input type="text" id="skillNameInput" required class="input-field input-field-stone">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">技能標籤</label><input type="text" id="skillTagInput" required placeholder="例如：插畫設計" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-stone-500"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">聯絡方法</label><input type="text" id="skillContactInput" required placeholder="例如：@yorozuya_inn" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-stone-500"></div>
+                <div class="form-row-grid">
+                    <div><label class="input-label">技能標籤</label><input type="text" id="skillTagInput" required class="input-field input-field-stone"></div>
+                    <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone"></div>
                 </div>
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">個人專長與經歷詳細介紹</label><textarea id="skillDescInput" required rows="3" placeholder="描述他的背景..." class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-stone-500"></textarea></div>
-                <button type="submit" class="w-full py-3 bg-stone-800 text-white font-bold rounded-xl shadow-md hover:bg-stone-900 transition-all">新增至鄰里人技能名冊</button>
+                <div>
+                    <label class="input-label">個人專長介紹</label>
+                    <textarea id="skillDescInput" required rows="3" class="input-field input-field-stone input-field-textarea"></textarea>
+                </div>
+                <button type="submit" class="btn-form-submit-stone">新增至鄰里人技能名冊</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Supabase 金鑰與連線初始化資料
         const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co';
         const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
         const TABLE_NAME = 'skills';
         const POSTS_TABLE = 'posts';
         
         const client = supabase.createClient(supabaseUrl, supabaseKey);
-        const defaultPassword = "admin123";
+        const defaultPassword = "slow2024"; // 全域管理端固定登入密碼
         
-        let posts = []; 
-        let skills = []; 
-        let isAdmin = false; 
-        let currentViewingPostId = null; 
-        let currentTab = 'active'; 
-        let unlockedPosts = {}; // 記錄目前頁面有哪些委託案已被使用者解鎖輸入密碼了
+        let posts = [];                 // 存放從資料庫撈出來的所有委託案件
+        let skills = [];                // 存放所有鄰里人技能檔案
+        let isAdmin = false;            // 全域管理員登入狀態
+        let currentViewingPostId = null;// 當前正在瀏覽的詳細案件 ID（null 代表在首頁）
+        let currentTab = 'active';      // 當前頁籤狀態：active / completed / skills
+        let unlockedPosts = {};         // 記錄目前瀏覽器中，已被使用者成功輸入個案密碼解鎖的案件
 
+        // 網頁載入完成後的初始化程序
         window.onload = function() {
             fetchPostsFromSupabase();
             fetchSkillsFromSupabase(); 
             setupRandomDefaultAvatar();
         };
 
+        // 從 Supabase 撈取委託單資料
         async function fetchPostsFromSupabase() {
             try {
                 const { data, error } = await client.from(POSTS_TABLE).select('*').order('created_at', { ascending: false });
@@ -283,6 +1083,7 @@
             } catch (err) { console.error("讀取委託失敗:", err.message); }
         }
 
+        // 從 Supabase 撈取鄰里人技能資料
         async function fetchSkillsFromSupabase() {
             try {
                 const { data, error } = await client.from(TABLE_NAME).select('*').order('created_at', { ascending: false });
@@ -292,11 +1093,13 @@
             } catch (err) { console.error("讀取技能名冊失敗:", err.message); }
         }
 
+        // 依據當前狀態重繪畫面
         function refreshView() { 
             if (currentViewingPostId !== null) { renderSinglePostView(currentViewingPostId); } 
             else { renderPosts(); } 
         }
 
+        // 計算每位鄰里人獲得的總萬事分
         function countAllPoints() {
             const scores = {};
             posts.forEach(post => {
@@ -312,6 +1115,7 @@
             return scores;
         }
 
+        // 快速查詢個人累積點數
         function queryPersonalPoints() {
             const input = document.getElementById('search-point-input').value.trim();
             if(!input) { alert("請輸入聯絡資訊再查詢喔！"); return; }
@@ -324,164 +1128,177 @@
             }
         }
 
-        function switchTab(tabName) {
-            currentTab = tabName;
-            ['tab-active', 'tab-completed', 'tab-skills'].forEach(t => {
-                const el = document.getElementById(t);
-                if(el) el.className = "px-4 md:px-5 py-2.5 text-gray-400 hover:text-gray-600 transition-all";
-            });
-            const activeClass = "px-4 md:px-5 py-2.5 text-orange-600 border-b-2 border-orange-500 transition-all";
-            const skillClass = "px-4 md:px-5 py-2.5 text-amber-800 border-b-2 border-amber-700 transition-all flex items-center gap-1";
+ // 頁籤切換控制邏輯
+function switchTab(tabName) {
+    currentTab = tabName;
+    
+    ['tab-active', 'tab-completed', 'tab-skills'].forEach(t => {
+        const el = document.getElementById(t);
+        if(el) el.className = "tab-btn";
+    });
+    
+    if(tabName === 'active') document.getElementById('tab-active').className = "tab-btn tab-active-orange";
+    if(tabName === 'completed') document.getElementById('tab-completed').className = "tab-btn tab-active-orange";
+    // 拔除原本的 flex items-center gap-1，改用 CSS 定義好的 .tab-btn-flex
+    if(tabName === 'skills') document.getElementById('tab-skills').className = "tab-btn tab-active-orange tab-btn-flex";
+    
+    const lbSection = document.getElementById('skills-leaderboard-section');
+    if (tabName === 'skills') {
+        lbSection?.classList.remove('hidden');
+        if (isAdmin) {
+            document.getElementById('header-skill-btn')?.classList.remove('hidden');
+            document.getElementById('header-upload-btn')?.classList.add('hidden');
+        }
+    } else {
+        lbSection?.classList.add('hidden');
+        document.getElementById('header-skill-btn')?.classList.add('hidden');
+        document.getElementById('header-upload-btn')?.classList.remove('hidden');
+    }
+    renderPosts();
+}
+
+// 主列表渲染主程式
+function renderPosts() {
+    const container = document.getElementById('posts-container');
+    if(!container) return;
+    container.innerHTML = '';
+
+    const allScores = countAllPoints();
+
+    if (currentTab === 'skills') {
+        const leaderboardTarget = document.getElementById('leaderboard-target');
+        if(leaderboardTarget) {
+            const sortedHeroes = Object.keys(allScores)
+                .map(k => ({ contact: k, ...allScores[k] }))
+                .sort((a,b) => b.points - a.points)
+                .slice(0, 3);
             
-            if(tabName === 'active') document.getElementById('tab-active').className = activeClass;
-            if(tabName === 'completed') document.getElementById('tab-completed').className = activeClass;
-            if(tabName === 'skills') document.getElementById('tab-skills').className = skillClass;
-            
-            const lbSection = document.getElementById('skills-leaderboard-section');
-            if (tabName === 'skills') {
-                lbSection?.classList.remove('hidden');
-                if (isAdmin) {
-                    document.getElementById('header-skill-btn')?.classList.remove('hidden');
-                    document.getElementById('header-upload-btn')?.classList.add('hidden');
-                }
+            if(sortedHeroes.length === 0) {
+                // 去格式化：改為自訂的榜單空狀態文字樣式 class
+                leaderboardTarget.innerHTML = `<p class="leaderboard-empty-text">尚無得點紀錄，等待第一位英雄誕生！</p>`;
             } else {
-                lbSection?.classList.add('hidden');
-                document.getElementById('header-skill-btn')?.classList.add('hidden');
-                document.getElementById('header-upload-btn')?.classList.remove('hidden');
+                const medals = ['🥇', '🥈', '🥉'];
+                // 去格式化：改用 .leaderboard-item 區塊，內含排行文字與積分
+                leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
+                    <div class="leaderboard-item">
+                        <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> (${h.contact})</span>
+                        <span class="leaderboard-item-points">🪙 ${h.points} 分</span>
+                    </div>
+                `).join('');
             }
-            renderPosts();
         }
 
-        function renderPosts() {
-            const container = document.getElementById('posts-container');
-            if(!container) return;
-            container.innerHTML = '';
-
-            const allScores = countAllPoints();
-
-            if (currentTab === 'skills') {
-                const leaderboardTarget = document.getElementById('leaderboard-target');
-                if(leaderboardTarget) {
-                    const sortedHeroes = Object.keys(allScores)
-                        .map(k => ({ contact: k, ...allScores[k] }))
-                        .sort((a,b) => b.points - a.points)
-                        .slice(0, 3);
-                    
-                    if(sortedHeroes.length === 0) {
-                        leaderboardTarget.innerHTML = `<p class="text-gray-400 text-[11px]">尚無得點紀錄，等待第一位英雄誕生！</p>`;
-                    } else {
-                        const medals = ['🥇', '🥈', '🥉'];
-                        leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
-                            <div class="flex justify-between items-center bg-amber-50/50 px-3 py-1 rounded-lg">
-                                <span>${medals[i]} <strong>${h.name}</strong> (${h.contact})</span>
-                                <span class="font-bold text-amber-700">🪙 ${h.points} 分</span>
-                            </div>
-                        `).join('');
-                    }
-                }
-
-                if (skills.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-gray-400 py-8 text-center col-span-3">目前尚無登記鄰里人技能。</p>';
-                    return;
-                }
-                skills.forEach(skill => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white rounded-2xl p-5 shadow-sm border border-stone-200 hover:shadow-md transition-all flex flex-col justify-between relative";
-                    const adminTools = isAdmin ? `
-                        <div class="absolute top-4 right-4 flex gap-1">
-                            <button onclick="deleteSkill('${skill.id}')" class="bg-red-50 text-red-600 w-6 h-6 flex items-center justify-center rounded-md text-xs">🗑️</button>
-                        </div>` : '';
-                    
-                    const myPoint = allScores[skill.contact?.trim()]?.points || 0;
-
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center space-x-3 mb-3">
-                                <div class="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-lg flex-shrink-0">${skill.emoji || '🧑‍🎨'}</div>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="text-base font-bold text-stone-900">${skill.name}</h3>
-                                        <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">🪙 萬事分: ${myPoint}</span>
-                                    </div>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium">${skill.skilltag || ''}</span>
-                                </div>
-                            </div>
-                            ${adminTools}
-                            <p class="text-xs leading-relaxed text-gray-600 my-2 whitespace-pre-line">${skill.description}</p>
-                        </div>
-                        <div class="pt-3 mt-2 border-t border-stone-50 flex justify-between items-center text-xs">
-                            <span class="text-gray-400 truncate block">管道: <strong class="text-stone-700">${skill.contact}</strong></span>
-                            <button onclick="copyContactInfo('${skill.contact}')" class="text-[11px] bg-amber-700 text-white px-3 py-1 rounded-lg font-bold">📋 複製資料</button>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-                return;
-            }
-
-            const isCompletedTarget = (currentTab === 'completed');
-            const filteredPosts = posts.filter(post => {
-                const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-                return !!compVal === isCompletedTarget;
-            });
+        if (skills.length === 0) {
+            // 去格式化：使用自訂無資料提示樣式
+            container.innerHTML = '<p class="container-empty-hint">目前尚無登記鄰里人技能。</p>';
+            return;
+        }
+        
+        skills.forEach(skill => {
+            const card = document.createElement('div');
+            // 去格式化：將鄰里人技能同樣包裝成「白色卡片樣式」
+            card.className = "task-card";
+            const adminTools = isAdmin ? `
+                <div class="card-admin-tools">
+                    <button onclick="deleteSkill('${skill.id}')" class="btn-card-delete">🗑️</button>
+                </div>` : '';
             
-            if (filteredPosts.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400 py-8 text-center col-span-3">此分類目前沒有委託案件。</p>';
-                return;
-            }
+            const myPoint = allScores[skill.contact?.trim()]?.points || 0;
 
-            filteredPosts.forEach(post => {
-                const hList = post.heroeslist || [];
-                const count = hList.length;
-                const card = document.createElement('div');
-                
-                const bgClor = post.cardbgcolor || 'bg-amber-50';
-                const cEmoji = post.clientemoji || '🙋‍♂️';
-                const tTitle = post.tasktitle || '';
-                const cName = post.clientname || '';
-                const tTag = post.tasktag || '';
-                const tDetails = post.taskdetails || '';
-                const rwd = post.reward || '';
-                const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-
-                card.className = `bg-white rounded-2xl p-5 shadow-sm border border-amber-100/70 hover:shadow-md hover:border-amber-200 transition-all flex flex-col justify-between relative cursor-pointer group`;
-                
-                // 修正：點擊卡片直接進入詳情頁，不再驗證密碼
-                card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
-
-                let adminActionHtml = '';
-                if (isAdmin) {
-                    adminActionHtml += `<button onclick="deletePost('${post.id}')" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition-all shadow-sm">🗑️</button>`;
-                }
-
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex items-center space-x-3 w-full">
-                                <div class="w-10 h-10 rounded-full ${bgClor} flex items-center justify-center text-lg flex-shrink-0">${cEmoji}</div>
-                                <div class="pr-2 w-full">
-                                    <h3 class="text-base font-bold text-gray-800 group-hover:text-orange-600 transition-colors line-clamp-2">${tTitle}</h3>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">委託人：${cName} • ${count}人已接單</p>
-                                </div>
+            card.innerHTML = `
+                <div>
+                    <div class="task-card-header">
+                        <div class="avatar-circle-stone">${skill.emoji || '🧑‍🎨'}</div>
+                        <div>
+                            <div class="title-with-badge">
+                                <h3 class="task-card-title">${skill.name}</h3>
+                                <span class="point-badge">🪙 萬事分: ${myPoint}</span>
                             </div>
+                            <span class="tag-stone">${skill.skilltag || ''}</span>
                         </div>
-                        <div class="absolute top-4 right-4 flex space-x-1 z-10">${adminActionHtml}</div>
-                        <div class="mb-2"><span class="text-[10px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-medium">${tTag}</span></div>
-                        <p class="text-sm text-gray-600 my-2 line-clamp-3 whitespace-pre-line">${tDetails}</p>
                     </div>
-                    <div class="pt-3 mt-2 border-t border-gray-50 flex justify-between items-center">
-                        <div class="text-[11px] text-gray-400"><span class="font-medium text-amber-700">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span></div>
-                        ${isComp 
-                            ? `<span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg flex flex-col items-end"><span>圓滿解決 🏮</span><span class="text-[9px] text-emerald-600 font-normal">貢獻者: ${post.completed_by_name || '無'}</span></span>`
-                            : `<button onclick="openJoinModal('${post.id}')" class="text-xs bg-orange-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-all">接受委託</button>`
-                        }
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-            setTimeout(() => { lucide.createIcons(); }, 100);
+                    ${adminTools}
+                    <p class="task-card-description">${skill.description}</p>
+                </div>
+                <div class="task-card-footer">
+                    <span class="contact-info-text">管道: <strong>${skill.contact}</strong></span>
+                    <button onclick="copyContactInfo('${skill.contact}')" class="btn-card-copy">📋 複製資料</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        return;
+    }
+
+    const isCompletedTarget = (currentTab === 'completed');
+    const filteredPosts = posts.filter(post => {
+        const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+        return !!compVal === isCompletedTarget;
+    });
+    
+    if (filteredPosts.length === 0) {
+        // 去格式化：使用自訂無資料提示樣式
+        container.innerHTML = '<p class="container-empty-hint">此分類目前沒有委託案件。</p>';
+        return;
+    }
+
+    filteredPosts.forEach(post => {
+        const hList = post.heroeslist || [];
+        const count = hList.length;
+        const card = document.createElement('div');
+        
+        const cEmoji = post.clientemoji || '🙋‍♂️';
+        const tTitle = post.tasktitle || '';
+        const cName = post.clientname || '';
+        const tTag = post.tasktag || '';
+        const tDetails = post.taskdetails || '';
+        const rwd = post.reward || '';
+        const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+
+        // 【核心修改】：全面換成自訂的白色卡片樣式 Class
+        card.className = "task-card clickable-group";
+        card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
+
+        let adminActionHtml = '';
+        if (isAdmin) {
+            // 去格式化：移除 bg-red-50 text-red-600 等 Tailwind
+            adminActionHtml += `<button onclick="deletePost('${post.id}')" class="btn-card-delete">🗑️</button>`;
         }
 
+        card.innerHTML = `
+            <div>
+                <div class="task-card-header">
+                    <div class="avatar-circle-orange">${cEmoji}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <h3 class="task-card-title text-ellipsis-2line">${tTitle}</h3>
+                        <p class="task-card-subtitle">委託人：${cName} • ${count}人已接單</p>
+                    </div>
+                </div>
+                <div class="card-admin-tools">${adminActionHtml}</div>
+                <div style="margin-bottom: 0.5rem;">
+                    <span class="tag-orange">${tTag}</span>
+                </div>
+                <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
+            </div>
+            <div class="task-card-footer">
+                <div class="reward-info-text">
+                    <span class="reward-highlight">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span>
+                </div>
+                ${isComp 
+                    ? `<span class="badge-status-success">
+                        <span class="status-success-title">圓滿解決 🏮</span>
+                        <span class="status-success-subtitle">貢獻者: ${post.completed_by_name || '無'}</span>
+                       </span>`
+                    : `<button onclick="openJoinModal('${post.id}')" class="btn-base btn-orange">接受委託</button>`
+                }
+            </div>
+        `;
+        container.appendChild(card);
+    });
+    setTimeout(() => { lucide.createIcons(); }, 100);
+}
+
+        // 導向至單一案件詳細內頁
         function goToPostDetail(postId) {
             currentViewingPostId = postId;
             document.getElementById('main-content-layout').classList.add('hidden');
@@ -492,6 +1309,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // 返回看板主頁列表
         function backToHomeList() {
             currentViewingPostId = null;
             document.getElementById('single-post-layout').classList.add('hidden');
@@ -499,7 +1317,7 @@
             switchTab(currentTab); 
         }
 
-        // 🧠 密碼驗證解鎖：在頁面即時解鎖名冊與結案功能
+        // 驗證個案自訂的管理密碼
         function verifyPostPasswordInline(postId) {
             const post = posts.find(p => String(p.id) === String(postId));
             if(!post) return;
@@ -513,6 +1331,7 @@
             }
         }
 
+        // 詳細內頁視圖渲染程式
         function renderSinglePostView(postId) {
             const post = posts.find(p => String(p.id) === String(postId));
             const targetDiv = document.getElementById('single-post-render-target');
@@ -528,7 +1347,6 @@
             const rwd = post.reward || '';
             const cContact = post.clientcontact || '無資料';
 
-            // 判斷當前使用者是否擁有查看此委託名冊與結案的權限 (主理人或已過關密碼)
             const hasAccess = isAdmin || unlockedPosts[postId] || !post.password;
 
             let actionButtonsHtml = '';
@@ -537,7 +1355,6 @@
             if (isComp) {
                 actionButtonsHtml = `<span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">已由 ${post.completed_by_name || '鄰里英雄'} 完成 🏮</span>`;
             } else {
-                // 如果有權限，詳細頁才會亮出結案給分按鈕
                 actionButtonsHtml = `
                     <div class="flex gap-2">
                         ${hasAccess ? `<button onclick="openCompleteModal('${post.id}')" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs hover:bg-emerald-700 shadow-sm">✔️ 結案給分</button>` : ''}
@@ -546,7 +1363,6 @@
                 `;
             }
 
-            // 根據權限渲染「名冊與管理區」
             if (hasAccess) {
                 let participantsListHtml = hList.length === 0 
                     ? `<p class="text-xs text-gray-400 py-4 col-span-2 text-center">目前尚無接單人，快來成為第一個吧！</p>`
@@ -566,7 +1382,6 @@
                     </div>
                 `;
             } else {
-                // 沒有密碼時，顯示鎖定區塊與密碼輸入介面
                 managementSectionHtml = `
                     <div class="pt-6 border-t border-gray-100 bg-stone-50/50 p-4 rounded-2xl border border-dashed border-stone-200 mt-4 text-center">
                         <div class="flex flex-col items-center justify-center space-y-2">
@@ -617,7 +1432,7 @@
             setTimeout(() => { lucide.createIcons(); }, 100);
         }
 
-        // 打開「結案給分」彈窗 (因為在詳細頁已經過第一關密碼，這邊做二次確保)
+        // 開啟結案彈窗程序
         function openCompleteModal(postId) {
             const post = posts.find(p => String(p.id) === String(postId));
             if(!post) return;
@@ -657,6 +1472,7 @@
 
         function closeCompleteModal() { document.getElementById('complete-modal').classList.add('hidden'); }
 
+        // 確認送出結案與發放萬事分
         async function submitCompleteTask() {
             const postId = document.getElementById('complete-post-id').value;
             const post = posts.find(p => String(p.id) === String(postId));
@@ -699,6 +1515,7 @@
             } catch (err) { alert("更新結案狀態失敗: " + err.message); }
         }
 
+        // 接單表單處理
         async function handleJoinSubmit(event) {
             event.preventDefault();
             const postId = document.getElementById('join-post-id').value;
@@ -721,6 +1538,7 @@
             } catch (err) { alert("接受委託失敗: " + err.message); }
         }
 
+        // 新增發布委託表單處理
         async function handleFormSubmit(event) {
             event.preventDefault();
             const bgColors = ['bg-amber-50', 'bg-orange-50', 'bg-yellow-50', 'bg-stone-100'];
@@ -748,6 +1566,7 @@
             } catch (err) { alert("發布新委託失敗: " + err.message); }
         }
 
+        // 新增鄰里人技能表單處理
         async function handleSkillSubmit(event) {
             event.preventDefault();
             const data = {
@@ -766,6 +1585,7 @@
             } catch (err) { alert("儲存技能失敗: " + err.message); }
         }
 
+        // 複製聯絡資訊
         function copyContactInfo(text) {
             if(!text) return;
             let cleanText = text.trim();
@@ -778,6 +1598,7 @@
             document.body.removeChild(textArea);
         }
 
+        // 自訂 Toast 氣泡提示
         function showToast(message) {
             const toast = document.getElementById('toast-message');
             if(!toast) return;
@@ -787,6 +1608,7 @@
             setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-popup'); }, 2300);
         }
 
+        // 永久刪除委託單
         async function deletePost(postId) { 
             if (confirm("確定要從資料庫中永久刪除此委託嗎？")) { 
                 try {
@@ -798,6 +1620,7 @@
             } 
         }
 
+        // 移除鄰里人檔案
         async function deleteSkill(skillId) { 
             if (confirm("確定要移除此鄰里人技能檔案嗎？")) { 
                 try {
@@ -808,6 +1631,7 @@
             } 
         }
 
+        // Emoji 選擇庫切換
         function toggleEmojiBank(mode) { document.getElementById(mode === 'post' ? 'emoji-bank-post' : 'emoji-bank-skill').classList.toggle('hidden'); }
         function selectEmoji(emoji, mode, element) {
             if (mode === 'post') {
@@ -819,6 +1643,7 @@
             }
             toggleEmojiBank(mode);
         }
+        // 生成隨機預設頭像
         function setupRandomDefaultAvatar() {
             const initialEmojis = ['🙋‍♂️', '🙋‍♀️', '🧑‍💻', '👩‍🎨', '🐱', '🦊'];
             const randomEmoji = initialEmojis[Math.floor(Math.random() * initialEmojis.length)];
@@ -826,6 +1651,7 @@
             if(document.getElementById('current-avatar-preview')) document.getElementById('current-avatar-preview').innerText = randomEmoji;
         }
         
+        // 主理人全域管理面板開關與認證
         function toggleAdminNavbar() { document.getElementById('admin-navbar')?.classList.toggle('hidden'); }
         function handleAdminLogin() { 
             const inputPwd = document.getElementById('admin-password-input').value; 
@@ -839,6 +1665,8 @@
             if (isAdmin) { loggedOut?.classList.add('hidden'); loggedIn?.classList.remove('hidden'); globalBadge?.classList.remove('hidden'); } 
             else { loggedOut?.classList.remove('hidden'); loggedIn?.classList.add('hidden'); globalBadge?.classList.add('hidden'); }
         }
+        
+        // 彈窗模組開啟/關閉控制
         function openJoinModal(postId) { document.getElementById('join-post-id').value = postId; document.getElementById('join-modal').classList.remove('hidden'); }
         function closeJoinModal() { document.getElementById('join-modal').classList.add('hidden'); document.getElementById('join-form').reset(); }
         function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
@@ -846,6 +1674,7 @@
         function openSkillModal() { document.getElementById('skill-modal').classList.remove('hidden'); }
         function closeSkillModal() { document.getElementById('skill-form').reset(); document.getElementById('skill-modal').classList.add('hidden'); }
 
+        // 時間轉換
         function calculateTimeAgo(timestamp) {
             if (!timestamp) return "剛剛";
             const diffMs = new Date() - new Date(timestamp);
