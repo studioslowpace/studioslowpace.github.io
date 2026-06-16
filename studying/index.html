@@ -20,7 +20,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: 'PingFang HK', 'Heiti TC', 'Microsoft JhengHei', serif;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             background-color: #ffffff; 
             color: #404040;            
             line-height: 1.8;
@@ -97,7 +97,7 @@
         }
 
         .hero-content h1 { font-size: 38px; margin: 0 0 15px 0; letter-spacing: 3px; font-weight: normal; }
-        .hero-content p { font-size: 15px; color: #fff5f0; margin: 0; text-align: left; }
+        .hero-content p { font-size: 15px; color: #fff5f0;letter-spacing: 1.2px; margin: 0; text-align: left; }
 
         /* ─── 登入狀態控制：讓所有登入按鈕（包含 Header 與 Hero 內）同步發光 ─── */
         .admin-icon-btn, .hero-logo-btn {
@@ -172,7 +172,7 @@
 
         /* 展覽資料區塊 */
         .exhibition-block {
-            display: flex; gap: 50px; margin-bottom: 30px; align-items: flex-start;
+            display: flex; gap: 50px; margin-bottom: 30px; align-items: flex-start; white-space: pre-wrap;
         }
         .exhibition-image { flex: 1; min-width: 320px; }
         .exhibition-image img { width: 100%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
@@ -269,13 +269,23 @@
 
         @media (max-width: 768px) {
             .hero-section { height: 240px; border-radius: 16px; }
-            .hero-content h1 { font-size: 22px; } .hero-content p { font-size: 12px; }
+            .hero-content h1 { font-size: 22px; margin: 0 0 5px 0;} .hero-content p { font-size: 12px; }
+            .hero-logo-btn img { width: 45px; height: 45px;  }
             .chapter-section { padding: 20px 10px; }
             .chapter-header-wrap { flex-direction: column; padding: 15px; align-items: flex-start; gap: 10px; }
             .exhibition-block { flex-direction: column; gap: 20px; }
             .exhibition-image { min-width: 100%; }
             .carousel-slide img { height: 340px; }
             .carousel-caption, .carousel-btn, .carousel-counter { opacity: 1; }
+            .hero-content { 
+                background-color: rgba(64, 64, 64, 0.95); /* 改為 rgba，最後的 0.75 是透明度 (75%) */ 
+                padding: 10px 60px;
+            position: absolute;
+            top: 0rem;    /* 距離上方邊距，可自行調整 */
+    left: 0rem;  /* 距離右方邊距，可自行調整 */
+    z-index: 10;  /* 確保不會被其他卡片遮擋 */
+width: 100%;}
+
         }
     </style>
 </head>

@@ -229,16 +229,18 @@
                         <label style="font-size:12px; color:#777; display:block; margin-top:5px;">活動內容描述：</label>
                         <textarea id="new-desc" class="editing-textarea" placeholder="請輸入活動的詳細內容介紹..."></textarea>
                         
-                        <label style="font-size:12px; color:#777; display:block; margin-top:5px;">相片提供方式：</label>
-                        <button class="admin-btn toggle-mode" id="btn-toggle-new-mode" onclick="toggleNewImageMode()">⚙️ 切換為：手動輸入相片路徑或 GitHub 連結</button>
-                        
-                        <div id="new-img-upload-wrapper">
-                            <input type="file" id="new-file" accept="image/*" onchange="handleNewImageUpload(event)">
-                            <span id="new-compress-status" class="compressing-status">⏳ 正在智能壓縮圖片...</span>
-                        </div>
-                        <div id="new-img-path-wrapper" style="display: none;">
-                            <input type="text" id="new-img-path" class="editing-input" placeholder="請輸入相片相對路徑或外部連結 (例如: images/photo.jpg)">
-                        </div>
+        <label style="font-size:12px; color:#2c3e2f; font-weight:bold; display:block; margin-top:15px; border-top:1px dashed #ddd; padding-top:10px;">相片提供方式（二選一）：</label>
+        
+        <div id="new-img-upload-wrapper" style="margin-top: 8px;">
+            <span style="font-size:12px; color:#555; display:block; margin-bottom:4px;">方式 A：直接上傳相片檔案</span>
+            <input type="file" id="new-file" accept="image/*" onchange="handleNewImageUpload(event)">
+            <span id="new-compress-status" class="compressing-status" style="display:none;">⏳ 正在智能壓縮圖片...</span>
+        </div>
+        
+        <div id="new-img-path-wrapper" style="margin-top: 12px;">
+            <span style="font-size:12px; color:#555; display:block; margin-bottom:4px;">方式 B：手動輸入相片路徑或 GitHub 連結</span>
+            <input type="text" id="new-img-path" class="editing-input" placeholder="請輸入相片相對路徑或外部連結 (例如: images/photo.jpg)">
+        </div>
                         
                         <img id="new-preview" class="upload-preview" style="display:none;" oncontextmenu="return false;" ondragstart="return false;">
 
@@ -267,17 +269,18 @@
                         <label style="font-size:12px; color:#777; display:block; margin-top:5px;">活動內容：</label>
                         <textarea id="edit-desc" class="editing-textarea"></textarea>
                         
-                        <label style="font-size:12px; color:#777; display:block; margin-top:5px;">相片提供方式：</label>
-                        <button class="admin-btn toggle-mode" id="btn-toggle-edit-mode" onclick="toggleEditImageModeFromModal()">⚙️ 切換為：手動輸入相片路徑 / GitHub 連結</button>
-                        
-                        <div id="edit-img-upload-wrapper">
-                            <input type="file" id="edit-file" accept="image/*" onchange="handleEditImageUpload(event)">
-                            <span id="edit-compress-status" class="compressing-status">⏳ 正在智能壓縮圖片...</span>
-                        </div>
-                        
-                        <div id="edit-img-path-wrapper" style="display: none;">
-                            <input type="text" id="edit-img-path" class="editing-input" placeholder="請輸入相片相對路徑或外部連結">
-                        </div>
+        <label style="font-size:12px; color:#2c3e2f; font-weight:bold; display:block; margin-top:15px; border-top:1px dashed #ddd; padding-top:10px;">相片提供方式（二選一 / 不更換請留空）：</label>
+        
+        <div id="edit-img-upload-wrapper" style="margin-top: 8px;">
+            <span style="font-size:12px; color:#555; display:block; margin-bottom:4px;">方式 A：選取新相片覆蓋</span>
+            <input type="file" id="edit-file" accept="image/*" onchange="handleEditImageUpload(event)">
+            <span id="edit-compress-status" class="compressing-status" style="display:none;">⏳ 正在智能壓縮圖片...</span>
+        </div>
+        
+        <div id="edit-img-path-wrapper" style="margin-top: 12px;">
+            <span style="font-size:12px; color:#555; display:block; margin-bottom:4px;">方式 B：手動修改相片路徑或網址</span>
+            <input type="text" id="edit-img-path" class="editing-input" placeholder="請輸入相片相對路徑或外部連結">
+        </div>
 
                         <img id="edit-preview" class="upload-preview" oncontextmenu="return false;" ondragstart="return false;">
 
@@ -314,9 +317,6 @@
     let talksData = [];                     
     let selectedCompressedFile = null;     
     let selectedNewCompressedFile = null;  
-    
-    let currentNewImageMode = 'upload'; 
-    let currentEditImageMode = 'upload'; 
 
     // ==========================================================================
     // 【2. 異步非同步載入頁首與頁尾】
@@ -379,7 +379,7 @@
         fetchTalks(); 
     });
 
- // 🔄 專門負責更新 Header 狀態的 UI 函式（只切換 Class，外觀完全由 header 的 CSS 決定）
+    // 🔄 專門負責更新 Header 狀態的 UI 函式（只切換 Class，外觀完全由 header 的 CSS 決定）
     function syncAdminUI() {
         if (!window.client || !window.client.auth) return;
         
@@ -523,10 +523,17 @@
         }
         document.getElementById('new-sort').value = maxOrder + 1;
         
-        currentNewImageMode = 'upload';
-        document.getElementById('new-img-upload-wrapper').style.display = 'block';
-        document.getElementById('new-img-path-wrapper').style.display = 'none';
-        document.getElementById('new-preview').style.display = 'none';
+        // 重置新增彈窗內的欄位與預覽狀態
+        document.getElementById('new-title').value = '';
+        document.getElementById('new-desc').value = '';
+        document.getElementById('new-img-path').value = '';
+        const fileInput = document.getElementById('new-file'); // 假設您的 HTML 上傳 input ID 是這個
+        if (fileInput) fileInput.value = '';
+        selectedNewCompressedFile = null;
+        
+        const preview = document.getElementById('new-preview');
+        if (preview) preview.style.display = 'none';
+
         toggleAddModal(true);
     }
 
@@ -555,13 +562,15 @@
         document.getElementById('edit-sort').value = talk.sort_order !== undefined && talk.sort_order !== null ? talk.sort_order : 0;
         document.getElementById('edit-desc').value = talk.description || '';
         document.getElementById('edit-img-path').value = talk.image_url;
-        document.getElementById('edit-preview').src = talk.image_url;
-        document.getElementById('edit-preview').style.display = 'block';
+        
+        const preview = document.getElementById('edit-preview');
+        if (preview) {
+            preview.src = talk.image_url;
+            preview.style.display = 'block';
+        }
 
-        currentEditImageMode = 'upload';
-        document.getElementById('edit-img-upload-wrapper').style.display = 'block';
-        document.getElementById('edit-img-path-wrapper').style.display = 'none';
-        document.getElementById('edit-file').value = '';
+        const fileInput = document.getElementById('edit-file');
+        if (fileInput) fileInput.value = '';
         selectedCompressedFile = null;
 
         toggleEditModal(true);
@@ -571,14 +580,15 @@
         const title = document.getElementById('new-title').value.trim();
         const desc = document.getElementById('new-desc').value.trim();
         const sortVal = parseInt(document.getElementById('new-sort').value);
+        const pathInput = document.getElementById('new-img-path').value.trim();
 
         if (isNaN(sortVal)) { alert('❌ 排序權重必須填入數字！'); return; }
         if (!title) { alert('❌ 請輸入活動標題！'); return; }
 
         let finalImageUrl = "";
 
-        if (currentNewImageMode === 'upload') {
-            if (!selectedNewCompressedFile) { alert('❌ 請選取並上傳一張相片！'); return; }
+        // 🧠 核心邏輯調整：優先檢查是否有選擇實體檔案
+        if (selectedNewCompressedFile) {
             const fileExt = selectedNewCompressedFile.name.split('.').pop() || 'jpg';
             const fileName = `talk_new_${Date.now()}.${fileExt}`;
             const { error: uploadError } = await window.client.storage
@@ -588,8 +598,8 @@
             const { data: { publicUrl } } = window.client.storage.from(window.STORAGE_BUCKET_NAME).getPublicUrl(fileName);
             finalImageUrl = publicUrl;
         } else {
-            const pathInput = document.getElementById('new-img-path').value.trim();
-            if (!pathInput) { alert('❌ 請輸入相片路徑或 GitHub 連結！'); return; }
+            // 如果沒選檔案，則直接抓取手動輸入的內容
+            if (!pathInput) { alert('❌ 請上傳相片或輸入相片路徑/GitHub 連結！'); return; }
             finalImageUrl = pathInput;
         }
 
@@ -611,25 +621,25 @@
         const newTitle = document.getElementById('edit-title').value.trim();
         const newDesc = document.getElementById('edit-desc').value.trim();
         const newSort = parseInt(document.getElementById('edit-sort').value);
+        const pathValue = document.getElementById('edit-img-path').value.trim();
+        
         let finalImageUrl = talksData.find(t => t.id === id).image_url;
 
         if (isNaN(newSort)) { alert('排序欄位必須填入數字！'); return; }
         if (!newTitle) { alert('標題不能為空！'); return; }
 
-        if (currentEditImageMode === 'upload') {
-            if (selectedCompressedFile) {
-                const fileExt = selectedCompressedFile.name.split('.').pop() || 'jpg';
-                const fileName = `talk_${id}_${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await window.client.storage
-                    .from(window.STORAGE_BUCKET_NAME).upload(fileName, selectedCompressedFile, { cacheControl: '3600', upsert: true });
+        // 🧠 核心邏輯調整：有選取新檔案就上傳，沒選就看手動輸入欄位是否有變更
+        if (selectedCompressedFile) {
+            const fileExt = selectedCompressedFile.name.split('.').pop() || 'jpg';
+            const fileName = `talk_${id}_${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await window.client.storage
+                .from(window.STORAGE_BUCKET_NAME).upload(fileName, selectedCompressedFile, { cacheControl: '3600', upsert: true });
 
-                if (uploadError) { alert('相片上傳失敗: ' + uploadError.message); return; }
-                const { data: { publicUrl } } = window.client.storage.from(window.STORAGE_BUCKET_NAME).getPublicUrl(fileName);
-                finalImageUrl = publicUrl;
-            }
+            if (uploadError) { alert('相片上傳失敗: ' + uploadError.message); return; }
+            const { data: { publicUrl } } = window.client.storage.from(window.STORAGE_BUCKET_NAME).getPublicUrl(fileName);
+            finalImageUrl = publicUrl;
         } else {
-            const pathValue = document.getElementById('edit-img-path').value.trim();
-            if (!pathValue) { alert('手動路徑不能為空！'); return; }
+            if (!pathValue) { alert('相片路徑不能為空！'); return; }
             finalImageUrl = pathValue;
         }
 
@@ -647,7 +657,6 @@
         }
     }
 
-    
     // ==========================================================================
     // 【7. Header 智慧導覽選單演算法】
     // ==========================================================================
@@ -733,25 +742,6 @@
         window.removeEventListener('resize', adjustNavItems);
         window.addEventListener('resize', adjustNavItems);
     }
-
-    // ==========================================
-// 載入頁尾並處理年份（維持原樣）
-// ==========================================
-    fetch('/footer.html')
-    .then(response => response.text())
-    .then(data => {
-        const footerContainer = document.getElementById('global-footer');
-        if (footerContainer) {
-            footerContainer.innerHTML = data;
-            
-            // 頁尾載入完成後，更新年份
-            const yearSpan = document.getElementById('current-year');
-            if (yearSpan) {
-                yearSpan.textContent = new Date().getFullYear();
-            }
-        }
-    })
-    .catch(err => console.error("頁尾載入失敗:", err));
 </script>
 </body>
 </html>

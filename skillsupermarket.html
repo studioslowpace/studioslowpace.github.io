@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客舍萬事屋 - 技能交換平台</title>
+    <title>客舍萬事屋 Slow Pace Skill Supermarker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -18,7 +18,7 @@
             padding: 0;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans CJK TC", sans-serif;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             background-color: #fdfbf7;
             min-height: 100vh;
             color: #3A2E2B;
@@ -220,37 +220,57 @@
             justify-content: space-between;
             align-items: center;
         }
-        .header-logo-group {
+        .banner-logo-group {
             display: flex;
             align-items: center;
             gap: 0.75rem;
             cursor: pointer;
             user-select: none;
         }
-        .header-logo-img {
-            width: 2.5rem;
-            height: 2.5rem;
+        .banner-logo-img {
+            width: 50px;
+            height: 50px;
             object-fit: cover;
             transition: opacity 0.2s;
         }
-        .header-logo-group:hover .header-logo-img { opacity: 0.8; }
-        .header-title-main {
+        .banner-logo-group:hover .banner-logo-img { opacity: 0.8; }
+        .banner-title-main {
             font-size: 0.875rem;
             font-weight: 700;
             color: #1f2937;
             letter-spacing: 0.05em;
             display: block;
         }
-        .header-title-sub {
-            font-size: 10px;
-            color: #d97706;
-            display: block;
-            margin-top: -0.125rem;
+
+        .hero-banner {
+            text-align: center;
         }
+
+        .hero-banner h1 {
+            font-size: 34px;
+            color: #4d361d;
+            display: block;
+            font-weight: bold;     /* 剛才加入的粗體 */
+            letter-spacing: 10px; /* 稍微放大字距，增加質感 */
+
+        }
+
+        .hero-title-sub {
+            font-size: 20px;
+            color: #4d361d;
+            display: block;
+            font-weight: bold;     /* 剛才加入的粗體 */
+            margin-top: -1.1rem;
+        }
+
         .header-action-group {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        .layout-action-row {
+            margin-left: auto;
         }
 
         /* ==========================================
@@ -295,7 +315,7 @@
             width: 100%;
             max-width: 56rem;
             margin: 0 auto;
-            padding: 1.5rem 1rem 0 1rem;
+            padding: 2rem 1rem 2rem 1rem;
             flex: 1 1 0%;
         }
         @media (min-width: 768px) {
@@ -327,30 +347,43 @@
         
         /* 橫幅大圖 */
         .hero-banner {
+            display: flex;          /* 啟用 Flexbox 排版，讓子元素預設橫向並列 */
+            flex-wrap: wrap;        /* 允許在小螢幕時自動折行，避免元件擠壓變形 */
+            align-items: center;    /* 讓 Logo、文字、按鈕在垂直方向上對齊置中 */
+justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分配空間 */
+            gap: 1.5rem;
             padding: 1.5rem;
             border-radius: 1.5rem;
             background: linear-gradient(to bottom right, #fde68a, #ffedd5);
             position: relative;
             overflow: hidden;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
         }
         @media (min-width: 768px) { .hero-banner { padding: 2rem; } }
         .hero-title {
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 0.75rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.05rem;
             color: #451a03;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
         .hero-desc-wrapper {
-            font-size: 0.75rem;
+            font-size: 1rem;
             color: #78350f;
             line-height: 1.625;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.12em;
             max-width: 48rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        .hero-desc-wrapper p2{
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
         }
         @media (min-width: 768px) { .hero-desc-wrapper { font-size: 0.875rem; } }
 
@@ -826,6 +859,8 @@
 </head>
 <body>
 
+      <div id="header-container"></div>    
+
     <div id="toast-message" class="hidden toast-notification">
         📋 聯絡資訊已複製到您的剪貼簿！
     </div>
@@ -864,31 +899,33 @@
         </div>
     </div>
 
-    <header id="main-header" class="header-bar">
-        <div class="header-container">
-            <div onclick="toggleAdminNavbar()" class="header-logo-group">
-                <img src="https://static.wixstatic.com/media/fc4bd9_7b52415be7aa42219d5b7a68fc82e136~mv2.png" alt="Logo" class="header-logo-img" />
-                <div>
-                    <span class="header-title-main">客舍萬事屋</span>
-                    <span class="header-title-sub">Yorozuya Inn App</span>
-                </div>
-            </div>
-            <div class="header-action-group">
-                <button id="header-skill-btn" onclick="openSkillModal()" class="hidden btn-base btn-stone">+ 新增技能人才</button>
-                <button id="header-upload-btn" onclick="openUploadModal()" class="btn-base btn-orange">+ 發布新委託</button>
-            </div>
-        </div>
-    </header>
-
     <main id="main-content-layout" class="main-layout">
         <div id="global-admin-badge" class="hidden admin-status-badge">🔑 主理人權限運作中 — 全域管理功能已解鎖</div>
         
         <div class="layout-spacing">
-            <div class="hero-banner">
-                <h1 class="hero-title">🏮<span>客舍萬事屋</span></h1>
-                <div class="hero-desc-wrapper">
-                    <p>生活中總會遇到各種奇難雜務。受到日本「萬事屋」啟發，分享自己的專長，完成任務可以獲得**萬事分**獎勵，讓技能分享成為一種循環的力量！</p>
-                </div>
+        
+        <div class="hero-banner">
+
+
+            <div onclick="toggleAdminNavbar()" class="banner-logo-group">
+                <img src="/images/logo-small2.png" alt="Logo" class="banner-logo-img" oncontextmenu="return false;" ondragstart="return false;" />
+                
+            </div>
+            <div>
+                <h1 class="hero-title">客舍萬事屋</h1>
+                <span class="hero-title-sub">Slow Pace Skill Supermarker</span>
+            </div>
+            
+            <div class="hero-desc-wrapper">
+                <p>生活中總會遇到各種奇難雜務。受到日本專門幫助人們解決生活難題的「萬事屋」所啟發，我們希望客舍能成為一個技能交換的平台，以「萬事分」作為代幣。需求技能的人也能同時分享自己的專長，讓技能分享成為一種循環的力量。</p>
+                <hr class="border-stone-200 my-4" />
+                <p2>在過去一年的運營中，我們意識到周圍的人擁有無限的潛力。有熱愛畫畫的人、創作歌詞的人、研究歷史和考古的人、攝影的人，甚至從事文字工作的朋友。這些來自不同背景的鄰里人，分享各自的經驗與見解，讓我們得以完整討論和互相啟發。轉念一想，技能分享不只是學術或領域上的專業，很多時候，各人的分享也可以是解決彼此生活中小難題。</p2>
+            </div>
+        </div>
+
+                    <div class="layout-action-row">
+            <button id="header-skill-btn" onclick="openSkillModal()" class="hidden btn-base btn-stone">+ 新增技能人才</button>
+            <button id="header-upload-btn" onclick="openUploadModal()" class="btn-base btn-orange">+ 發布新委託</button>
             </div>
 
             <div class="tabs-row">
@@ -1048,6 +1085,8 @@
             </form>
         </div>
     </div>
+
+      <footer id="global-footer" class="custom-footer"></footer>
 
     <script>
         // Supabase 金鑰與連線初始化資料
@@ -1686,6 +1725,125 @@ function renderPosts() {
             if (diffHours < 24) return `${diffHours} 小時前`;
             return `${diffDays} 天前`;
         }
+
+        // ==========================================
+// 載入頁首並處理年份（維持原樣）
+// ==========================================  
+fetch('/header.html')
+    .then(response => response.text())
+    .then(data => {
+        const container = document.getElementById('header-container');
+        if (container) {
+            container.innerHTML = data;
+            setupHeaderMenu(); // 🛠️ 載入完成後，啟動選單核心與自動收納功能
+        }
+    })
+    .catch(err => console.error("頁首載入失敗:", err));
+
+    // ==========================================================================
+    // 【7. Header 智慧導覽選單演算法】
+    // ==========================================================================
+    function setupHeaderMenu() {
+        const toggleButton = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.header-nav-links');
+
+        if (toggleButton && navLinks) {
+            toggleButton.onclick = function(e) {
+                navLinks.classList.toggle('active');
+                e.stopPropagation();
+            };
+
+            document.onclick = function(e) {
+                if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                    navLinks.classList.remove('active');
+                }
+            };
+        }
+
+        const mainNav = document.querySelector('.header-nav-links'); 
+        if (!mainNav) return;
+
+        let moreMenu = document.getElementById('more-menu');
+        let overflowLinks = document.getElementById('overflow-links');
+        
+        if (!moreMenu) {
+            moreMenu = document.createElement('div');
+            moreMenu.id = 'more-menu';
+            moreMenu.className = 'more-dropdown';
+            moreMenu.innerHTML = `
+                <a href="#" class="more-toggle" onclick="return false;">更多 ▾</a>
+                <div class="more-dropdown-content" id="overflow-links"></div>
+            `;
+            mainNav.appendChild(moreMenu);
+            overflowLinks = document.getElementById('overflow-links');
+        }
+
+        const allLinks = Array.from(mainNav.children).filter(el => el !== moreMenu && el.tagName === 'A');
+        const searchBtn = mainNav.querySelector('.search-icon-btn');
+
+        function adjustNavItems() {
+            if (window.innerWidth <= 768) {
+                allLinks.forEach(item => mainNav.insertBefore(item, moreMenu));
+                if (searchBtn) mainNav.appendChild(searchBtn);
+                moreMenu.style.display = 'none';
+                return;
+            }
+
+            moreMenu.style.display = 'none'; 
+            overflowLinks.innerHTML = '';    
+            allLinks.forEach(item => mainNav.insertBefore(item, moreMenu));
+            if (searchBtn) mainNav.appendChild(searchBtn);
+
+            let navContainerWidth = mainNav.offsetWidth;
+            let totalWidth = 0;
+            let isOverflow = false;
+            
+            const moreBtnWidth = 90; 
+            const searchBtnWidth = searchBtn ? (searchBtn.offsetWidth || 50) : 50;
+
+            for (let i = 0; i < allLinks.length; i++) {
+                const item = allLinks[i];
+                if (isOverflow) {
+                    overflowLinks.appendChild(item);
+                    continue;
+                }
+
+                const itemStyle = window.getComputedStyle(item);
+                const marginLeft = parseFloat(itemStyle.marginLeft) || 0;
+                const marginRight = parseFloat(itemStyle.marginRight) || 0;
+                totalWidth += item.offsetWidth + marginLeft + marginRight;
+
+                if (totalWidth + moreBtnWidth + searchBtnWidth > navContainerWidth) {
+                    isOverflow = true;
+                    moreMenu.style.display = 'inline-block';
+                    overflowLinks.appendChild(item);
+                }
+            }
+        }
+
+        adjustNavItems();
+        window.removeEventListener('resize', adjustNavItems);
+        window.addEventListener('resize', adjustNavItems);
+    }
+
+// ==========================================
+// 載入頁尾並處理年份（維持原樣）
+// ==========================================
+    fetch('/footer.html')
+    .then(response => response.text())
+    .then(data => {
+        const footerContainer = document.getElementById('global-footer');
+        if (footerContainer) {
+            footerContainer.innerHTML = data;
+            
+            // 頁尾載入完成後，更新年份
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        }
+    })
+    .catch(err => console.error("頁尾載入失敗:", err));
     </script>
 </body>
 </html>
