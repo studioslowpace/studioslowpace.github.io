@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Hockey - Ultimate Neon Edition</title>
+    <style>
+:root {
+	--title: "Air Hockey";
+	--blue: #00d4ff;
+	--red: #ff2d55;
+	--gold: #ffc940;
+	--bg: #04060a;
+	--panel: #080d14;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: var(--bg);
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	font-family: "Orbitron", monospace;
+	overflow-x: hidden;
+	cursor: none;
+	user-select: none;
+	padding: 20px 0;
+}
+
+html, body {
+	overscroll-behavior: none;
+}
+
+/* 包含遊戲和下方說明的總容器 */
+#main-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+	width: min(100vw, 1100px);
+}
+
+#outer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+	width: 100%;
+}
+
+#arena {
+	position: relative;
+	width: 100%;
+	max-width: 760px;
+	aspect-ratio: 760 / 520;
+	touch-action: none;
+}
+
+.screen {
+	cursor: default;
+}
+button {
+	cursor: pointer;
+}
+
+canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 18px;
+	box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2), 0 0 50px rgba(0, 212, 255, 0.1), 0 20px 70px rgba(0, 0, 0, 0.8);
+}
+
+/* ── 側邊數據面板 ── */
+.stat-panel {
+	width: 130px;
+	flex-shrink: 0;
+	padding: 16px 10px 12px;
+	background: var(--panel);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0;
+}
+
+#stat-left { border-radius: 16px 0 0 16px; border-right: none; }
+#stat-right { border-radius: 0 16px 16px 0; border-left: none; }
+
+.stat-time-box {
+	width: 100%;
+	text-align: center;
+	margin-bottom: 4px;
+}
+.stat-time-label {
+	font-size: 8px;
+	letter-spacing: 2px;
+	color: rgba(255, 255, 255, 0.25);
+}
+.stat-time-val {
+	font-family: "Orbitron", monospace;
+	font-weight: 700;
+	font-size: 14px;
+	color: var(--gold);
+	text-shadow: 0 0 10px rgba(255, 201, 64, 0.3);
+}
+
+.stat-name {
+	font-family: "Orbitron", monospace;
+	font-weight: 700;
+	font-size: 10px;
+	letter-spacing: 4px;
+	margin-bottom: 6px;
+	text-align: center;
+	width: 100%;
+}
+
+.stat-score {
+	font-family: "Orbitron", monospace;
+	font-weight: 900;
+	font-size: 52px;
+	line-height: 1;
+	margin-bottom: 6px;
+	text-align: center;
+	width: 100%;
+	letter-spacing: -2px;
+}
+
+.stat-divider {
+	width: 100%;
+	height: 1px;
+	background: rgba(255, 255, 255, 0.07);
+	margin: 6px 0 8px;
+}
+
+.stat-row {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 9px;
+}
+
+.stat-label {
+	font-size: 9px;
+	letter-spacing: 1.5px;
+	color: rgba(255, 255, 255, 0.3);
+	text-transform: uppercase;
+}
+
+.stat-val {
+	font-family: "Orbitron", monospace;
+	font-weight: 700;
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.75);
+}
+
+.stat-footer {
+	font-size: 9px;
+	letter-spacing: 1.5px;
+	color: rgba(255, 255, 255, 0.2);
+	text-align: center;
+	text-transform: uppercase;
+	margin-top: 2px;
+}
+
+#ui {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	border-radius: 18px;
+	overflow: hidden;
+}
+
+.screen {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s ease;
+	background: rgba(4, 6, 10, 0.85);
+	backdrop-filter: blur(12px);
+	border-radius: 18px;
+	z-index: 10;
+}
+.screen.on {
+	opacity: 1;
+	pointer-events: all;
+}
+
+/* ── 主選單 ── */
+.menu-inner {
+	text-align: center;
+	max-width: 520px;
+	padding: 20px;
+}
+.menu-logo {
+	font-weight: 900;
+	font-size: 52px;
+	line-height: 1;
+	color: #fff;
+	margin-bottom: 5px;
+}
+.menu-logo span {
+	color: var(--blue);
+	text-shadow: 0 0 30px var(--blue), 0 0 60px rgba(0, 212, 255, 0.4);
+}
+.menu-sub {
+	font-size: 11px;
+	letter-spacing: 6px;
+	color: var(--gold);
+	margin-bottom: 30px;
+	text-transform: uppercase;
+}
+
+.menu-btns {
+	display: flex;
+	gap: 16px;
+	justify-content: center;
+}
+
+/* ── 遊戲畫面下方：永遠可見的說明區塊 ── */
+.guide-box {
+	width: 100%;
+	max-width: 1020px; /* 貼合兩邊計分板總寬 */
+	background: rgba(8, 13, 20, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 14px;
+	padding: 16px 24px;
+	display: flex;
+	gap: 30px;
+	text-align: left;
+	box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+	cursor: default;
+}
+.guide-section {
+	flex: 1;
+}
+.guide-title {
+	font-size: 12px;
+	color: var(--blue);
+	letter-spacing: 2px;
+	margin-bottom: 6px;
+	font-weight: 700;
+}
+.guide-text {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.6);
+	line-height: 1.6;
+}
+.guide-text span {
+	color: #fff;
+	font-weight: 600;
+}
+
+/* ── 遊戲結束樣式 ── */
+.go-face {
+	font-size: 60px;
+	line-height: 1;
+	margin-bottom: 8px;
+	display: block;
+	animation: facePop 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes facePop {
+	0% { transform: scale(0); opacity: 0; }
+	65% { transform: scale(1.25); opacity: 1; }
+	100% { transform: scale(1); opacity: 1; }
+}
+.go-inner { text-align: center; }
+.go-who { font-size: 48px; font-weight: 900; line-height: 1; }
+.go-wins { font-size: 14px; letter-spacing: 6px; color: rgba(255, 255, 255, 0.6); margin-top: 5px; }
+.go-final { font-size: 28px; font-weight: 700; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin: 8px 0 2px; }
+.go-time { font-size: 12px; letter-spacing: 2px; color: rgba(255, 255, 255, 0.4); margin-bottom: 20px; }
+
+button {
+	padding: 13px 36px;
+	background: transparent;
+	border: 2px solid var(--blue);
+	color: var(--blue);
+	font-family: "Orbitron", monospace;
+	font-weight: 700;
+	font-size: 12px;
+	letter-spacing: 3px;
+	cursor: pointer;
+	clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+	transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+button:hover {
+	background: var(--blue);
+	color: #000;
+	box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+}
+button.btn-red {
+	border-color: var(--red);
+	color: var(--red);
+}
+button.btn-red:hover {
+	background: var(--red);
+	color: #000;
+	box-shadow: 0 0 30px rgba(255, 45, 85, 0.5);
+}
+
+#mute-btn {
+	position: absolute;
+	bottom: 12px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 10px;
+	color: rgba(255,255,255,0.2);
+	letter-spacing: 2px;
+}
+
+@media (max-width: 1100px) {
+	#main-container { transform: scale(calc(100vw / 1100)); transform-origin: top center; }
+}
+    </style>
+</head>
+<body>
+
+<div id="main-container">
+	<div id="outer">
+		<div id="stat-left" class="stat-panel">
+			<div class="stat-time-box">
+				<div class="stat-time-label">TIME</div>
+				<div class="stat-time-val" id="time-p">00:00</div>
+			</div>
+			<div class="stat-divider"></div>
+			<div class="stat-name" id="p1-title" style="color:#00d4ff">PLAYER 1</div>
+			<div class="stat-score" id="score-p" style="color:#00d4ff;text-shadow:0 0 20px #00d4ff">0</div>
+			<div class="stat-divider"></div>
+			<div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-p-streak">0</span></div>
+			<div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-p-speed">0</span></div>
+			<div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-p-power">0</span></div>
+			<div class="stat-divider"></div>
+			<div class="stat-footer" id="p1-ctrl-hint">MOUSE / TOUCH</div>
+		</div>
+
+		<div id="arena">
+			<canvas id="c"></canvas>
+			<div id="mute-btn">PRESS S FOR SOUND</div>
+			
+			<div id="menu-screen" class="screen on">
+				<div class="menu-inner">
+					<div class="menu-logo">AIR <span>HOCKEY</span></div>
+					<div class="menu-sub">Neon Ultimate Edition</div>
+					<div class="menu-btns">
+						<button id="btn-1p">1 PLAYER (VS CPU)</button>
+						<button id="btn-2p" class="btn-red">2 PLAYERS (LOCAL)</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="gameover-screen" class="screen">
+				<div class="go-inner">
+					<div class="go-face" id="go-face">😄</div>
+					<div class="go-who" id="go-who">PLAYER 1 WINS</div>
+					<div class="go-wins">GAME · SET · MATCH</div>
+					<div class="go-final" id="go-final">7 – 3</div>
+					<div class="go-time" id="go-time">MATCH TIME: 00:00</div>
+					<button id="btn-again">MAIN MENU</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="stat-right" class="stat-panel">
+			<div class="stat-time-box">
+				<div class="stat-time-label">TIME</div>
+				<div class="stat-time-val" id="time-cpu">00:00</div>
+			</div>
+			<div class="stat-divider"></div>
+			<div class="stat-name" id="p2-title" style="color:#ff2d55">CPU</div>
+			<div class="stat-score" id="score-cpu" style="color:#ff2d55;text-shadow:0 0 20px #ff2d55">0</div>
+			<div class="stat-divider"></div>
+			<div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-cpu-streak">0</span></div>
+			<div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-cpu-speed">0</span></div>
+			<div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-cpu-power">0</span></div>
+			<div class="stat-divider"></div>
+			<div class="stat-footer" id="p2-ctrl-hint">AI OPPONENT</div>
+		</div>
+	</div>
+
+	<div class="guide-box">
+		<div class="guide-section">
+			<div class="guide-title">🎮 操作說明 (CONTROLS)</div>
+			<div class="guide-text">
+				<span>單人模式</span>：使用滑鼠/觸控控制左側發光藍色球棍。<br>
+				<span>雙人模式</span>：若使用行動裝置，可直接在螢幕<span>兩側觸控</span>操作；若在電腦端，<span>P1</span> 使用 <span>W/A/S/D</span> 鍵，<span>P2</span> 使用 <span>↑/↓/←/→</span> 方向鍵。按鍵盤 <span>[S]</span> 鍵可切換靜音。
+			</div>
+		</div>
+		<div class="guide-section">
+			<div class="guide-title">🏆 比賽規則 (RULES)</div>
+			<div class="guide-text">
+				率先獲得 <span>7 分</span> 的一方奪下勝利！每進 2 球，球速將會全面<span>永久加快</span>。<br>
+				當任何一方進入賽末點（聽牌）時，將會自動觸發極具視覺震撼的<span>關鍵慢動作 (Slo-mo) 鏡頭</span>！
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+const CV = document.getElementById("c");
+const G = CV.getContext("2d");
+CV.width = 760; CV.height = 520;
+const W = 760, H = 520;
+
+// ── 檢查裝置是否支援觸控 ──
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+
+// ── DOM 元件參照 ──
+const menuEl = document.getElementById("menu-screen");
+const gameoverEl = document.getElementById("gameover-screen");
+const goWho = document.getElementById("go-who");
+const goFinal = document.getElementById("go-final");
+const goTimeEl = document.getElementById("go-time");
+const p1Title = document.getElementById("p1-title");
+const p2Title = document.getElementById("p2-title");
+const p1CtrlHint = document.getElementById("p1-ctrl-hint");
+const p2CtrlHint = document.getElementById("p2-ctrl-hint");
+const timePEl = document.getElementById("time-p");
+const timeCpuEl = document.getElementById("time-cpu");
+
+// ── 模式選擇與重新開始 ──
+document.getElementById("btn-1p").onclick = () => selectMode("1P");
+document.getElementById("btn-2p").onclick = () => selectMode("2P");
+document.getElementById("btn-again").onclick = () => {
+	gameoverEl.classList.remove("on");
+	menuEl.classList.add("on");
+	state = "title";
+};
+
+const DOM = {
+	scoreP: document.getElementById("score-p"), scoreCPU: document.getElementById("score-cpu"),
+	pStreak: document.getElementById("stat-p-streak"), pSpeed: document.getElementById("stat-p-speed"), pPower: document.getElementById("stat-p-power"),
+	cpuStreak: document.getElementById("stat-cpu-streak"), cpuSpeed: document.getElementById("stat-cpu-speed"), cpuPower: document.getElementById("stat-cpu-power")
+};
+
+// ── 計時器變數 ──
+let gameTimeMs = 0; 
+
+// ── 音效系統 ──
+let audioCtx = null; let muted = true;
+function getAudio() {
+	if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	if (audioCtx.state === "suspended") audioCtx.resume();
+	return audioCtx;
+}
+function mkNoise(ctx, dur) {
+	const b = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+	const d = b.getChannelData(0);
+	for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+	const s = ctx.createBufferSource(); s.buffer = b; return s;
+}
+function playSound(type, speed = 1) {
+	if (muted) return; const ctx = getAudio(); const t = ctx.currentTime; const out = ctx.destination;
+	if (type === "hit") {
+		const n = mkNoise(ctx, 0.07); const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+		bp.frequency.value = 900 + speed * 180 + Math.random() * 400; bp.Q.value = 2 + Math.random() * 3;
+		const g = ctx.createGain(); g.gain.setValueAtTime(0.5 + Math.min(speed / 18, 0.35), t);
+		g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.07);
+	}
+	if (type === "wall") {
+		const n = mkNoise(ctx, 0.04); const hp = ctx.createBiquadFilter(); hp.type = "highpass";
+		hp.frequency.value = 1400 + Math.random() * 600; const g = ctx.createGain(); g.gain.setValueAtTime(0.28, t);
+		g.gain.exponentialRampToValueAtTime(0.001, t + 0.03); n.connect(hp); hp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.04);
+	}
+	if (type === "goal") {
+		const sub = ctx.createOscillator(), sg = ctx.createGain(); sub.type = "sine"; sub.frequency.setValueAtTime(60, t);
+		sub.frequency.exponentialRampToValueAtTime(28, t + 0.25); sg.gain.setValueAtTime(0.6, t); sg.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+		sub.connect(sg); sg.connect(out); sub.start(t); sub.stop(t + 0.3);
+		[[0, "sawtooth", 233], [0.01, "sawtooth", 220], [0.02, "sawtooth", 246]].forEach(([dt, wv, f]) => {
+			const o = ctx.createOscillator(), g = ctx.createGain(); o.type = wv; o.frequency.value = f;
+			g.gain.setValueAtTime(0.15, t + dt); g.gain.setValueAtTime(0.15, t + 0.5); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+			o.connect(g); g.connect(out); o.start(t + dt); o.stop(t + 0.71);
+		});
+	}
+	if (type === "victory") {
+		[[0, 392, 0.12], [0.13, 392, 0.12], [0.26, 392, 0.12], [0.39, 523, 0.45], [0.58, 494, 0.18], [0.77, 440, 0.18], [0.96, 523, 0.6]].forEach(([dt, f, dur]) => {
+			[-4, 0, 4].forEach((cents) => {
+				const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sawtooth"; o.frequency.value = f * Math.pow(2, cents / 1200);
+				const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800;
+				g.gain.setValueAtTime(0, t + dt); g.gain.linearRampToValueAtTime(0.08, t + dt + 0.02); g.gain.setValueAtTime(0.08, t + dt + dur - 0.03);
+				g.gain.exponentialRampToValueAtTime(0.001, t + dt + dur); o.connect(lp); lp.connect(g); g.connect(out); o.start(t + dt); o.stop(t + dt + dur + 0.01);
+			});
+		});
+	}
+	if (type === "speedup") {
+		const n = mkNoise(ctx, 0.4); const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 5;
+		bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(3000, t + 0.38);
+		const g = ctx.createGain(); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+		n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.4);
+	}
+	if (type === "slomo_in") {
+		const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(100, t);
+		o.frequency.exponentialRampToValueAtTime(36, t + 0.65); g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+		o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.7);
+	}
+}
+
+const muteBtn = document.getElementById("mute-btn");
+function updateMuteLabel() { muteBtn.innerHTML = muted ? "PRESS S FOR SOUND" : "PRESS S TO MUTE"; }
+function toggleMute() { muted = !muted; if (!muted) getAudio().resume(); updateMuteLabel(); }
+
+// ── 彩帶特效 ──
+const confetti = [];
+const CONF_COLORS = ["#00d4ff", "#ff2d55", "#ffc940", "#ffffff", "#a855f7"];
+function spawnConfetti() {
+	for (let i = 0; i < 160; i++) {
+		confetti.push({
+			x: Math.random() * W, y: -10 - Math.random() * 120, vx: (Math.random() - 0.5) * 5, vy: 2 + Math.random() * 4,
+			rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.22, w: 6 + Math.random() * 8, h: 3 + Math.random() * 4,
+			col: CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)], life: 1
+		});
+	}
+}
+function updateConfetti() {
+	for (let i = confetti.length - 1; i >= 0; i--) {
+		const c = confetti[i]; c.x += c.vx; c.y += c.vy; c.vy += 0.08; c.vx *= 0.99; c.rot += c.rotV;
+		if (c.y > H + 20) c.life -= 0.05; if (c.life <= 0) confetti.splice(i, 1);
+	}
+}
+function drawConfetti() {
+	confetti.forEach((c) => {
+		G.save(); G.globalAlpha = c.life; G.translate(c.x, c.y); G.rotate(c.rot); G.fillStyle = c.col; G.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); G.restore();
+	});
+}
+
+// ── 物理與遊戲常數（已降低速度，使其更流暢好控制） ──
+const TABLE_X = 30, TABLE_Y = 30, TABLE_W = W - 60, TABLE_H = H - 60;
+const CX = W / 2, CY = H / 2;
+const GOAL_W = 160, GOAL_DEPTH = 20;
+const GOAL_Y1 = CY - GOAL_W / 2, GOAL_Y2 = CY + GOAL_W / 2;
+const PUCK_R = 14, MALLET_R = 24;
+const MAX_SCORE = 7;
+const FRICTION = 0.996, WALL_BOUNCE = 0.82;
+
+// 調慢後的球速與 AI 反應
+const CPU_SPEED = 3.6, CPU_REACT = 0.55; 
+const KEY_SPEED = 6.2; // 鍵盤移動速度微調慢
+
+// ── 慢動作與核心狀態 ──
+let gameMode = "1P"; 
+let state = "title";
+let tick = 0;
+let score = { p: 0, cpu: 0 };
+let puck = { x: CX, y: CY, vx: 0, vy: 0, r: PUCK_R };
+const trail = [];
+let shakeAmt = 0, shakeX = 0, shakeY = 0;
+let puckSpeedMult = 1.0;
+let lastSpeedUpAt = 0;
+let speedUpMsg = ""; let speedUpTimer = 0;
+let goalFlash = 0, goalWho = ""; let goalMsgScale = 0;
+
+let sloMo = false; let sloMoAlpha = 0; let sloMoIntro = 0; let sloMoLabelTimer = 0;
+let confettiInterval = null;
+
+// 球棍物件
+const player = { x: TABLE_X + 130, y: CY, r: MALLET_R, pvx: 0, pvy: 0, hitCool: 0 };
+const cpu = { x: W - TABLE_X - 130, y: CY, r: MALLET_R, vx: 0, vy: 0, hitCool: 0 };
+
+const stats = {
+	p: { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 },
+	cpu: { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 }
+};
+
+const particles = [];
+function burst(x, y, col1, col2, n = 22) {
+	for (let i = 0; i < n; i++) {
+		const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5;
+		particles.push({
+			x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1,
+			col: Math.random() > 0.5 ? col1 : col2, size: 2 + Math.random() * 4,
+			glow: Math.random() > 0.4, gravity: 0.08 + Math.random() * 0.12
+		});
+	}
+}
+function sparkLine(x1, y1, x2, y2, col, n = 8) {
+	for (let i = 0; i < n; i++) {
+		const t = Math.random();
+		const x = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 10;
+		const y = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 10;
+		const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 3;
+		particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, col, size: 1.5 + Math.random() * 2, glow: true, gravity: 0.1 });
+	}
+}
+
+// ── 鍵盤輸入狀態 ──
+const keys = {
+	KeyW: false, KeyS: false, KeyA: false, KeyD: false,         
+	ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false 
+};
+
+document.addEventListener("keydown", (e) => {
+	if (e.code === "KeyS" && state === "title") return; 
+	if (e.code === "KeyS" && state !== "title" && !keys.hasOwnProperty("KeyS")) toggleMute();
+	if (e.code in keys) keys[e.code] = true;
+});
+document.addEventListener("keyup", (e) => {
+	if (e.code in keys) keys[e.code] = false;
+});
+
+// ── 滑鼠與多點觸控 ──
+let rawP1X = TABLE_X + 130, rawP1Y = CY;
+let rawP2X = W - TABLE_X - 130, rawP2Y = CY;
+
+function handlePointerInput(clientX, clientY, isP2Input) {
+	const r = CV.getBoundingClientRect();
+	const scaleX = W / r.width, scaleY = H / r.height;
+	const canvasX = (clientX - r.left) * scaleX;
+	const canvasY = (clientY - r.top) * scaleY;
+
+	if (!isP2Input) {
+		rawP1X = Math.min(Math.max(canvasX, TABLE_X + MALLET_R + 2), CX - 10);
+		rawP1Y = Math.min(Math.max(canvasY, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	} else {
+		rawP2X = Math.min(Math.max(canvasX, CX + 10), W - TABLE_X - MALLET_R - 2);
+		rawP2Y = Math.min(Math.max(canvasY, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	}
+}
+
+function onMouseMove(e) {
+	if (gameMode === "1P" || (gameMode === "2P" && !isTouchDevice)) {
+		handlePointerInput(e.clientX, e.clientY, false);
+	}
+}
+CV.addEventListener("mousemove", onMouseMove);
+document.addEventListener("mousemove", onMouseMove);
+
+function onTouchMove(e) {
+	e.preventDefault();
+	for (let i = 0; i < e.touches.length; i++) {
+		const touch = e.touches[i];
+		const r = CV.getBoundingClientRect();
+		const scaleX = W / r.width;
+		const canvasX = (touch.clientX - r.left) * scaleX;
+
+		if (gameMode === "1P") {
+			handlePointerInput(touch.clientX, touch.clientY, false);
+		} else if (gameMode === "2P" && isTouchDevice) {
+			if (canvasX < CX) {
+				handlePointerInput(touch.clientX, touch.clientY, false);
+			} else {
+				handlePointerInput(touch.clientX, touch.clientY, true);
+			}
+		}
+	}
+}
+CV.addEventListener("touchstart", onTouchMove, { passive: false });
+CV.addEventListener("touchmove", onTouchMove, { passive: false });
+
+// ── 時間格式化 ──
+function formatTime(ms) {
+	const totalSeconds = Math.floor(ms / 1000);
+	const mins = Math.floor(totalSeconds / 60);
+	const secs = totalSeconds % 60;
+	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// ── 模式選擇與重置 ──
+function selectMode(mode) {
+	gameMode = mode;
+	menuEl.classList.remove("on");
+	
+	if (gameMode === "1P") {
+		p1Title.textContent = "YOU"; p1CtrlHint.textContent = "MOUSE / TOUCH";
+		p2Title.textContent = "CPU"; p2CtrlHint.textContent = "AI OPPONENT";
+	} else {
+		p1Title.textContent = "PLAYER 1";
+		p2Title.textContent = "PLAYER 2";
+		if (isTouchDevice) {
+			p1CtrlHint.textContent = "TOUCH (LEFT)";
+			p2CtrlHint.textContent = "TOUCH (RIGHT)";
+		} else {
+			p1CtrlHint.textContent = "KEYBOARD (WASD)";
+			p2CtrlHint.textContent = "KEYBOARD (ARROWS)";
+		}
+	}
+	startGame();
+}
+
+function startGame() {
+	score.p = 0; score.cpu = 0;
+	gameTimeMs = 0; 
+	puckSpeedMult = 1.0; lastSpeedUpAt = 0;
+	speedUpMsg = ""; speedUpTimer = 0;
+	sloMo = false; sloMoAlpha = 0; sloMoIntro = 0; sloMoLabelTimer = 0;
+	stats.p = { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 };
+	stats.cpu = { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 };
+	confetti.length = 0; particles.length = 0;
+	if (confettiInterval) { clearInterval(confettiInterval); confettiInterval = null; }
+	resetRound("p");
+	state = "play";
+	gameoverEl.classList.remove("on");
+	updateStatDOM();
+}
+
+function resetRound(server) {
+	trail.length = 0; puck.x = CX; puck.y = CY; puck.vx = 0; puck.vy = 0;
+	player.x = TABLE_X + 130; player.y = CY; player.pvx = 0; player.pvy = 0;
+	cpu.x = W - TABLE_X - 130; cpu.y = CY; cpu.vx = 0; cpu.vy = 0;
+	rawP1X = player.x; rawP1Y = player.y; rawP2X = cpu.x; rawP2Y = cpu.y;
+	
+	const baseDir = server === "p" ? -1 : 1;
+	// 稍微調慢初始發球速度
+	puck.vx = baseDir * (3.2 + Math.random() * 1.2) * puckSpeedMult;
+	puck.vy = (Math.random() - 0.5) * 3 * puckSpeedMult;
+}
+
+function goalScored(who) {
+	if (state !== "play") return;
+	state = "goal_pause";
+	goalWho = who; goalFlash = 160; goalMsgScale = 0;
+	score[who]++;
+	stats[who].bestStreak = Math.max(stats[who].bestStreak, ++stats[who].streak);
+	stats[who === "p" ? "cpu" : "p"].streak = 0;
+	
+	const totalGoals = score.p + score.cpu;
+	if (totalGoals % 2 === 0 && totalGoals > lastSpeedUpAt) {
+		lastSpeedUpAt = totalGoals;
+		puckSpeedMult = Math.min(puckSpeedMult + 0.12, 1.8); // 略微調低加速幅度
+		playSound("speedup");
+		const msgs = ["SPEEDING UP!", "FASTER!!", "KICK IT UP!", "LIGHT SPEED!"];
+		speedUpMsg = msgs[Math.min(Math.floor(totalGoals / 2 - 1), msgs.length - 1)];
+		speedUpTimer = 130;
+	}
+
+	playSound("goal");
+	if (who === "p") burst(TABLE_X, CY, "#00d4ff", "#ffffff", 40);
+	else burst(W - TABLE_X, CY, "#ff2d55", "#ffffff", 40);
+	burst(puck.x, puck.y, "#ffc940", "#ffffff", 30);
+	shakeAmt = 8;
+	updateStatDOM();
+
+	const newP = score.p, newCPU = score.cpu;
+	if ((newP === MAX_SCORE - 1 || newCPU === MAX_SCORE - 1) && !sloMo) {
+		sloMo = true; sloMoIntro = 80; sloMoLabelTimer = 80 + 90;
+		playSound("slomo_in");
+	}
+
+	setTimeout(() => {
+		if (score.p >= MAX_SCORE || score.cpu >= MAX_SCORE) {
+			state = "over";
+			const p1Won = score.p >= MAX_SCORE;
+			if (gameMode === "1P") {
+				goWho.textContent = p1Won ? "YOU WIN" : "CPU WINS";
+			} else {
+				goWho.textContent = p1Won ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+			}
+			goWho.style.color = p1Won ? "#00d4ff" : "#ff2d55";
+			document.getElementById("go-face").textContent = p1Won ? "😄" : "😢";
+			goFinal.textContent = `${score.p} – ${score.cpu}`;
+			goTimeEl.textContent = `MATCH TIME: ${formatTime(gameTimeMs)}`;
+			
+			if (p1Won) { 
+				playSound("victory"); spawnConfetti(); 
+				confettiInterval = setInterval(spawnConfetti, 1400);
+			}
+			gameoverEl.classList.add("on");
+		} else {
+			state = "play";
+			resetRound(who === "p" ? "cpu" : "p");
+		}
+	}, 1400);
+}
+
+function updateStatDOM() {
+	DOM.scoreP.textContent = score.p; DOM.scoreCPU.textContent = score.cpu;
+	DOM.pStreak.textContent = stats.p.bestStreak; DOM.pSpeed.textContent = stats.p.topSpeed; DOM.pPower.textContent = stats.p.powerHits;
+	DOM.cpuStreak.textContent = stats.cpu.bestStreak; DOM.cpuSpeed.textContent = stats.cpu.topSpeed; DOM.cpuPower.textContent = stats.cpu.powerHits;
+}
+
+// ── 核心邏輯更新 ──
+function updateGame(ts = 1) {
+	if (state !== "play") return;
+
+	// === PLAYER 1 更新 ===
+	const prevP1X = player.x, prevP1Y = player.y;
+	if (gameMode === "2P" && !isTouchDevice) {
+		if (keys.KeyW) player.y -= KEY_SPEED * ts;
+		if (keys.KeyS) player.y += KEY_SPEED * ts;
+		if (keys.KeyA) player.x -= KEY_SPEED * ts;
+		if (keys.KeyD) player.x += KEY_SPEED * ts;
+		player.x = Math.min(Math.max(player.x, TABLE_X + MALLET_R + 2), CX - 10);
+		player.y = Math.min(Math.max(player.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	} else {
+		if (ts === 1) { player.x = rawP1X; player.y = rawP1Y; } 
+		else {
+			player.x += (rawP1X - player.x) * ts * 3; player.y += (rawP1Y - player.y) * ts * 3;
+			player.x = Math.min(Math.max(player.x, TABLE_X + MALLET_R + 2), CX - 10);
+			player.y = Math.min(Math.max(player.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+		}
+	}
+	player.pvx = player.x - prevP1X; player.pvy = player.y - prevP1Y;
+	if (player.hitCool > 0) player.hitCool--;
+
+	// === PLAYER 2 / CPU 更新 ===
+	const prevP2X = cpu.x, prevP2Y = cpu.y;
+	if (gameMode === "1P") {
+		const minX = CX + 10, maxX = W - TABLE_X - cpu.r - 2;
+		const minY = TABLE_Y + cpu.r + 2, maxY = TABLE_Y + TABLE_H - cpu.r - 2;
+		let tx = W - TABLE_X - 110, ty = CY;
+		
+		if (puck.x > CX && puck.vx > 0) {
+			const f = Math.max(1, (cpu.x - puck.x) / Math.max(0.5, puck.vx));
+			tx = Math.min(Math.max(puck.x + puck.vx * f * CPU_REACT, minX), maxX);
+			ty = Math.min(Math.max(puck.y + puck.vy * f * CPU_REACT, minY), maxY);
+		} else if (puck.x > CX) {
+			tx = Math.min(Math.max(puck.x - 8, minX), maxX - 30); ty = Math.min(Math.max(puck.y, minY), maxY);
+		} else {
+			ty = Math.min(Math.max(puck.y * 0.5 + CY * 0.5, minY), maxY);
+		}
+		const dx = tx - cpu.x, dy = ty - cpu.y, dist = Math.hypot(dx, dy);
+		if (dist > 0.1) {
+			const step = Math.min(dist, CPU_SPEED * ts);
+			cpu.x += (dx / dist) * step; cpu.y += (dy / dist) * step;
+		}
+		cpu.x = Math.min(Math.max(cpu.x, minX), maxX); cpu.y = Math.min(Math.max(cpu.y, minY), maxY);
+	} else {
+		if (isTouchDevice) {
+			if (ts === 1) { cpu.x = rawP2X; cpu.y = rawP2Y; }
+			else {
+				cpu.x += (rawP2X - cpu.x) * ts * 3; cpu.y += (rawP2Y - cpu.y) * ts * 3;
+				cpu.x = Math.min(Math.max(cpu.x, CX + 10), W - TABLE_X - MALLET_R - 2);
+				cpu.y = Math.min(Math.max(cpu.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+			}
+		} else {
+			if (keys.ArrowUp) cpu.y -= KEY_SPEED * ts;
+			if (keys.ArrowDown) cpu.y += KEY_SPEED * ts;
+			if (keys.ArrowLeft) cpu.x -= KEY_SPEED * ts;
+			if (keys.ArrowRight) cpu.x += KEY_SPEED * ts;
+			cpu.x = Math.min(Math.max(cpu.x, CX + 10), W - TABLE_X - MALLET_R - 2);
+			cpu.y = Math.min(Math.max(cpu.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+		}
+	}
+	cpu.vx = cpu.x - prevP2X; cpu.vy = cpu.y - prevP2Y;
+	if (cpu.hitCool > 0) cpu.hitCool--;
+
+	// === 球體物理運動 ===
+	const spd = Math.hypot(puck.vx, puck.vy);
+	trail.push({ x: puck.x, y: puck.y, spd });
+	if (trail.length > 14) trail.shift(); // 縮短拖尾讓視覺更乾淨
+
+	puck.x += puck.vx * ts; puck.y += puck.vy * ts;
+	puck.vx *= Math.pow(FRICTION, ts); puck.vy *= Math.pow(FRICTION, ts);
+
+	if (puck.y - puck.r < TABLE_Y) { puck.y = TABLE_Y + puck.r; puck.vy = Math.abs(puck.vy) * WALL_BOUNCE; sparkLine(puck.x - 20, TABLE_Y, puck.x + 20, TABLE_Y, "#00d4ff"); playSound("wall"); }
+	if (puck.y + puck.r > TABLE_Y + TABLE_H) { puck.y = TABLE_Y + TABLE_H - puck.r; puck.vy = -Math.abs(puck.vy) * WALL_BOUNCE; sparkLine(puck.x - 20, TABLE_Y + TABLE_H, puck.x + 20, TABLE_Y + TABLE_H, "#00d4ff"); playSound("wall"); }
+
+	if (puck.x - puck.r < TABLE_X) {
+		if (puck.y > GOAL_Y1 && puck.y < GOAL_Y2) return goalScored("cpu");
+		puck.x = TABLE_X + puck.r; puck.vx = Math.abs(puck.vx) * WALL_BOUNCE; sparkLine(TABLE_X, puck.y - 20, TABLE_X, puck.y + 20, "#ff2d55"); playSound("wall");
+	}
+	if (puck.x + puck.r > TABLE_X + TABLE_W) {
+		if (puck.y > GOAL_Y1 && puck.y < GOAL_Y2) return goalScored("p");
+		puck.x = TABLE_X + TABLE_W - puck.r; puck.vx = -Math.abs(puck.vx) * WALL_BOUNCE; sparkLine(TABLE_X + TABLE_W, puck.y - 20, TABLE_X + TABLE_W, puck.y + 20, "#ff2d55"); playSound("wall");
+	}
+
+	circleCollide(puck, player, true);
+	circleCollide(puck, cpu, false);
+}
+
+function circleCollide(pk, mallet, isP1) {
+	const dx = pk.x - mallet.x, dy = pk.y - mallet.y;
+	const dist = Math.hypot(dx, dy);
+	const minDist = pk.r + mallet.r;
+	if (dist >= minDist || dist < 0.01) return;
+
+	const targetCool = isP1 ? player : cpu;
+	if (targetCool.hitCool > 0) {
+		const nx2 = dx / dist, ny2 = dy / dist;
+		pk.x += nx2 * (minDist - dist); pk.y += ny2 * (minDist - dist); return;
+	}
+
+	const nx = dx / dist, ny = dy / dist;
+	pk.x += nx * (minDist - dist); pk.y += ny * (minDist - dist);
+
+	const mvx = isP1 ? player.pvx * 1.5 : mallet.vx; // 降低玩家揮桿的速度繼承
+	const mvy = isP1 ? player.pvy * 1.5 : mallet.vy;
+	const dot = (pk.vx - mvx) * nx + (pk.vy - mvy) * ny;
+
+	if (dot >= 0) return;
+	const rst = isP1 ? 1.15 : 1.05; // 略微調低碰撞彈力彈性
+	pk.vx += -(1 + rst) * dot * nx; pk.vy += -(1 + rst) * dot * ny;
+	
+	targetCool.hitCool = isP1 ? 6 : 20;
+	
+	const spd = Math.hypot(pk.vx, pk.vy);
+	playSound("hit", spd);
+
+	const who = isP1 ? "p" : "cpu";
+	const mph = Math.round(spd * 4);
+	if (mph > stats[who].topSpeed) stats[who].topSpeed = mph;
+	if (spd > 12) stats[who].powerHits++;
+	updateStatDOM();
+
+	if (spd > 3) {
+		const col = isP1 ? "#00d4ff" : "#ff2d55";
+		burst(pk.x, pk.y, col, "#ffffff", Math.floor(spd * 1.2));
+		if (spd > 17) shakeAmt = Math.max(shakeAmt, Math.min((spd - 17) * 0.4, 2.5));
+	}
+}
+
+function updateParticles() {
+	for (let i = particles.length - 1; i >= 0; i--) {
+		const p = particles[i]; p.x += p.vx; p.y += p.vy;
+		if (p.gravity) p.vy += p.gravity; p.life -= 0.016;
+		if (p.life <= 0) particles.splice(i, 1);
+	}
+}
+
+// ── 渲染 ──
+function drawTable() {
+	G.fillStyle = "#04060a"; G.fillRect(0, 0, W, H);
+	G.save(); G.strokeStyle = "rgba(255,255,255,0.02)"; G.lineWidth = 1;
+	for (let x = 0; x < W; x += 20) { G.beginPath(); G.moveTo(x, 0); G.lineTo(x, H); G.stroke(); }
+	for (let y = 0; y < H; y += 20) { G.beginPath(); G.moveTo(0, y); G.lineTo(W, y); G.stroke(); }
+	G.restore();
+
+	G.save(); G.shadowColor = "rgba(0, 212, 255, 0.15)"; G.shadowBlur = 10;
+	G.strokeStyle = "rgba(255,255,255,0.04)"; G.lineWidth = 4;
+	G.strokeRect(TABLE_X, TABLE_Y, TABLE_W, TABLE_H); G.restore();
+
+	G.save(); G.setLineDash([8, 8]); G.strokeStyle = "rgba(0, 212, 255, 0.15)"; G.lineWidth = 2;
+	G.beginPath(); G.moveTo(CX, TABLE_Y); G.lineTo(CX, TABLE_Y + TABLE_H); G.stroke(); G.restore();
+
+	G.save(); G.strokeStyle = "rgba(0, 212, 255, 0.15)"; G.lineWidth = 2;
+	G.beginPath(); G.arc(CX, CY, 70, 0, Math.PI * 2); G.stroke();
+	G.fillStyle = "#04060a"; G.beginPath(); G.arc(CX, CY, 6, 0, Math.PI * 2); G.fill(); G.restore();
+
+	drawGoalGlow(TABLE_X, CY, -GOAL_DEPTH, "#00d4ff");
+	drawGoalGlow(TABLE_X + TABLE_W, CY, GOAL_DEPTH, "#ff2d55");
+}
+
+function drawGoalGlow(x, y, depth, color) {
+	G.save(); G.shadowColor = color; G.shadowBlur = 15;
+	G.fillStyle = "rgba(4, 6, 10, 0.8)"; G.strokeStyle = color; G.lineWidth = 3;
+	G.beginPath(); G.moveTo(x, GOAL_Y1); G.lineTo(x + depth, GOAL_Y1); G.lineTo(x + depth, GOAL_Y2); G.lineTo(x, GOAL_Y2); G.stroke(); G.fill();
+	G.lineWidth = 1; G.strokeStyle = "rgba(255,255,255,0.2)"; G.beginPath(); G.moveTo(x, GOAL_Y1); G.lineTo(x, GOAL_Y2); G.stroke(); G.restore();
+}
+
+function drawTrail() {
+	if (state !== "play" && state !== "goal_pause") return;
+	G.save();
+	for (let i = 0; i < trail.length; i++) {
+		const p = trail[i]; const alpha = (i / trail.length) * 0.22;
+		G.globalAlpha = alpha; G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = p.spd * 0.6;
+		G.beginPath(); G.arc(p.x, p.y, puck.r * (0.4 + (i / trail.length) * 0.6), 0, Math.PI * 2); G.fill();
+	}
+	G.restore();
+}
+
+// 球棍渲染
+function drawMallet(m, color) {
+	G.save(); G.shadowColor = color; G.shadowBlur = 16;
+	G.fillStyle = "rgba(4, 6, 10, 0.9)"; G.strokeStyle = color; G.lineWidth = 4;
+	G.beginPath(); G.arc(m.x, m.y, m.r, 0, Math.PI * 2); G.fill(); G.stroke();
+	G.lineWidth = 2; G.strokeStyle = "rgba(255,255,255,0.3)"; G.beginPath(); G.arc(m.x, m.y, m.r * 0.55, 0, Math.PI * 2); G.stroke();
+	G.fillStyle = color; G.beginPath(); G.arc(m.x, m.y, m.r * 0.25, 0, Math.PI * 2); G.fill(); G.restore();
+}
+
+function drawParticles() {
+	G.save();
+	particles.forEach((p) => {
+		G.globalAlpha = p.life; G.fillStyle = p.col;
+		if (p.glow) { G.shadowColor = p.col; G.shadowBlur = p.size * 2.5; } else { G.shadowBlur = 0; }
+		G.beginPath(); G.arc(p.x, p.y, Math.max(0.1, p.size * p.life), 0, Math.PI * 2); G.fill();
+	});
+	G.restore();
+}
+
+function drawGoalFlash() {
+	if (goalFlash <= 0) return;
+	let alpha = goalFlash > 120 ? (160 - goalFlash) / 40 : goalFlash / 120;
+	const col = goalWho === "p" ? "0, 212, 255" : "255, 45, 85";
+	G.save(); G.fillStyle = `rgba(${col}, ${alpha * 0.18})`; G.fillRect(0, 0, W, H);
+	if (goalMsgScale < 1) goalMsgScale += 0.08;
+	let s = Math.sin(goalMsgScale * Math.PI * 0.5);
+	G.translate(W / 2, H / 2); G.scale(s, s); G.textAlign = "center"; G.textBaseline = "middle";
+	G.font = '900 44px "Orbitron"'; G.fillStyle = "#ffffff";
+	G.shadowColor = goalWho === "p" ? "#00d4ff" : "#ff2d55"; G.shadowBlur = 20;
+	
+	let txt = "";
+	if (gameMode === "1P") txt = goalWho === "p" ? "YOU GOAL!" : "CPU GOAL!";
+	else txt = goalWho === "p" ? "PLAYER 1 GOAL!" : "PLAYER 2 GOAL!";
+	G.fillText(txt, 0, -10); G.restore();
+}
+
+function drawSpeedUpMsg() {
+	if (speedUpTimer <= 0) return;
+	const t = speedUpTimer / 130;
+	const scale = t > 0.85 ? 0.5 + (1 - t) / 0.15 * 0.5 : 1;
+	const alpha = t < 0.25 ? t / 0.25 : 1;
+	G.save(); G.globalAlpha = alpha; G.textAlign = "center"; G.textBaseline = "middle";
+	G.font = '900 32px "Orbitron"'; G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = 15;
+	G.translate(W / 2, CY + 60); G.scale(scale, scale); G.fillText(speedUpMsg, 0, 0); G.restore();
+}
+
+let lastTime = performance.now();
+function loop(now) {
+	tick++;
+	let dt = now - lastTime; if (dt > 100) dt = 16.66; lastTime = now;
+
+	let timeScale = 1.0;
+	if (sloMo) {
+		if (sloMoIntro > 0) { sloMoIntro--; let t = 1 - (sloMoIntro / 80); timeScale = 1.0 - t * 0.72; } 
+		else { timeScale = 0.28; }
+		if (sloMoAlpha < 1) sloMoAlpha += 0.04;
+		if (sloMoLabelTimer > 0) sloMoLabelTimer--;
+	} else {
+		if (sloMoAlpha > 0) sloMoAlpha -= 0.04;
+	}
+
+	// ── 計時器核心更新 ──
+	if (state === "play") {
+		gameTimeMs += dt * timeScale;
+		const timeStr = formatTime(gameTimeMs);
+		timePEl.textContent = timeStr; timeCpuEl.textContent = timeStr;
+	}
+
+	// 畫面震動物理
+	if (shakeAmt > 0) {
+		shakeX = (Math.random() - 0.5) * shakeAmt; shakeY = (Math.random() - 0.5) * shakeAmt;
+		shakeAmt *= 0.92; if (shakeAmt < 0.05) { shakeAmt = 0; shakeX = 0; shakeY = 0; }
+	}
+
+	const substeps = 2;
+	for (let s = 0; s < substeps; s++) {
+		updateGame(timeScale / substeps);
+	}
+	updateParticles(); updateConfetti();
+
+	if (goalFlash > 0) goalFlash--;
+	if (speedUpTimer > 0) speedUpTimer--;
+
+	// ── 繪製流程 ──
+	G.clearRect(0, 0, W, H);
+	G.save();
+	if (shakeAmt > 0) G.translate(shakeX, shakeY);
+
+	drawTable();
+	drawTrail();
+	if (state === "play" || state === "goal_pause") {
+		G.save(); G.shadowColor = "#ffc940"; G.shadowBlur = 12; G.fillStyle = "#ffc940";
+		G.beginPath(); G.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2); G.fill(); G.restore();
+	}
+	drawMallet(player, "#00d4ff");
+	drawMallet(cpu, "#ff2d55");
+	drawParticles();
+	drawGoalFlash();
+	drawSpeedUpMsg();
+	drawConfetti();
+
+	// 賽末慢動作遮罩與 Game Point 渲染
+	if (sloMoAlpha > 0) {
+		G.save(); G.globalAlpha = sloMoAlpha * 0.12; G.fillStyle = "#ffc940"; G.fillRect(TABLE_X, TABLE_Y, TABLE_W, TABLE_H); G.restore();
+		if (sloMoLabelTimer > 0) {
+			const fadeIn = Math.min((170 - sloMoLabelTimer) / 20, 1);
+			const fadeOut = sloMoLabelTimer < 30 ? sloMoLabelTimer / 30 : 1;
+			const alpha = fadeIn * fadeOut * sloMoAlpha;
+			const pulse = 0.88 + Math.sin(tick * 0.12) * 0.12;
+			G.save(); G.globalAlpha = alpha * pulse; G.textAlign = "center"; G.font = '900 16px "Orbitron"';
+			G.fillStyle = "rgba(0,0,0,0.5)"; G.fillText("⚡  GAME POINT  ⚡", W / 2 + 1, TABLE_Y + TABLE_H * 0.12 + 1);
+			G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = 14; G.fillText("⚡  GAME POINT  ⚡", W / 2, TABLE_Y + TABLE_H * 0.12); G.restore();
+		}
+	}
+
+	G.restore();
+	requestAnimationFrame(loop);
+}
+
+requestAnimationFrame((now) => { lastTime = now; requestAnimationFrame(loop); });
+</script>
+</body>
+</html>

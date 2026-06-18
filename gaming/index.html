@@ -1,382 +1,360 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>復古經典遊戲機</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Air Hockey - Multi-Platform Edition</title>
     <style>
-                * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            height: 100%;
-        }
-        :root {
-            --bg-color: #0f111a;
-            --panel-color: #1a1c28;
-            --accent-color: #30354a;
-            --text-color: #ff5376;
-            
-            /* 貪食蛇/地雷共用基礎風格 */
-            --nokia-screen: #ffffff;
-            --nokia-pixel: #000000;
-            --nokia-green: #2ecc71; 
-            --nokia-blue: #00d2ff;  
-        }
+/* ==========================================================================
+   1. 核心變數與全域設定 (可在這裡直接改遊戲主題顏色)
+   ========================================================================== */
+:root {
+	--blue: #00d4ff;   /* 玩家1 / 藍色霓虹 */
+	--red: #ff2d55;    /* 玩家2 (AI) / 紅色霓虹 */
+	--gold: #ffc940;   /* 賽末點 / 點綴金色 */
+	--bg: #04060a;     /* 網頁極深底色 */
+	--panel: #080d14;  /* 數據面板背景色 */
+}
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
+}
 
-        body {
-            margin: 0;
-            padding: 10px;
-            background-color: transparent; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #fff;
-            
-            /* 修正後的 Flexbox 佈局設定 */
-            display: flex;
-            flex-direction: column;    /* 垂直排列：頁首 -> 內文 -> 頁尾 */
-            align-items: stretch;      /* 讓子元素預設水平撐滿，頁首就不會變 0 寬度了 */
-            justify-content: flex-start; /* 讓內容由上往下依序排列 */
-            min-height: 100vh;
-        }
+body {
+	background: var(--bg);
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center; /* 電腦版預設垂直水平居中 */
+	font-family: "Orbitron", "SF Pro Text", -apple-system, sans-serif;
+	overflow-x: hidden;      /* 防止左右出現滾動條 */
+	cursor: none;            /* 隱藏滑鼠游標，改用球棍代替 */
+	user-select: none;       /* 防止遊戲中意外選取到文字 */
+	padding: 20px;
+	overscroll-behavior: none; /* 停用手機瀏覽器的下拉重整功能 */
+}
 
-        .arcade-container {
-            width: 100%;
-            max-width: 520px; 
-            background: var(--panel-color);
-            padding: 15px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            border: 4px solid var(--accent-color);
-            
-            /* 關鍵：透過 margin: auto 讓遊戲機在垂直與水平方向都自動居中 */
-            margin: auto;
-        }
+html {
+	overscroll-behavior: none;
+}
 
-        .header h1 {
-            margin: 0 0 15px 0;
-            font-size: 20px;
-            color: #fff;
-            text-align: center;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
+/* ==========================================================================
+   2. 原本的電腦模式樣式 (Desktop-First 預設樣式)
+   ========================================================================== */
 
-        .lobby-controls {
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
+/* 總包裝容器 */
+#main-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	width: 100%;
+}
 
-        .game-select, .level-select {
-            flex: 1;
-            min-width: 110px;
-            padding: 8px 12px;
-            background: var(--bg-color);
-            color: #fff;
-            border: 2px solid var(--accent-color);
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
-            cursor: pointer;
-        }
+/* 遊戲核心排版：左右夾擊模式 */
+#game-layout {
+	display: flex;
+	flex-direction: row; /* 電腦版：數據與畫布橫向並排 */
+	align-items: center;
+	justify-content: center;
+	width: auto;
+}
 
-        .btn {
-            padding: 8px 16px;
-            background: var(--text-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-secondary { background: #4a4f66; }
+/* 遊戲核心畫布容器 */
+#arena {
+	position: relative;
+	width: 760px;        /* 電腦版固定寬度 */
+	height: 520px;       /* 電腦版固定高度 */
+	touch-action: none;  /* 停用瀏覽器預設的觸控行為(如拖曳滾動) */
+}
 
-        .stage-box {
-            position: relative;
-            width: 100%;
-            background: #000;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 3px solid #252836;
-            margin-bottom: 15px;
-        }
+canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 0;   /* 電腦版與兩側數據面板無縫接軌，不設圓角 */
+	box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
+	background: #04060a;
+}
 
-        /* 自動縮放的遊戲螢幕容器 */
-        .canvas-container {
-            position: relative;
-            width: 100%;
-            background: #bdbdbd;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-            overflow: hidden;
-        }
+/* 電腦版數據面板包裝（夾在畫布左右兩側） */
+.stat-wrapper {
+	display: flex;
+	flex-direction: column; /* 電腦版：左一棟、右一棟 */
+	width: 130px;           /* 固定寬度 */
+	height: 520px;          /* 與畫布同高 */
+}
 
-        /* Canvas 寬度最大 100%，高度自動等比例縮放 */
-        canvas {
-            display: block;
-            cursor: pointer;
-            background: #bdbdbd;
-            max-width: 100%;
-            height: auto !important; 
-            object-fit: contain;
-        }
+/* 個別數據面板 */
+.stat-panel {
+	flex: 1;
+	padding: 20px 12px;
+	background: var(--panel);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+}
 
-        .screen-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 17, 26, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            z-index: 100;
-            text-align: center;
-        }
+/* 讓左面板與右面板跟畫布完美密合的邊框處理 */
+#stat-left { 
+	border-radius: 16px 0 0 16px; /* 左側圓角 */
+	border-right: none; 
+}
+#stat-right { 
+	border-radius: 0 16px 16px 0; /* 右側圓角 */
+	border-left: none; 
+}
 
-        .overlay-title {
-            font-size: 24px;
-            color: var(--text-color);
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
+/* 面板內計時器 */
+.stat-time-box { text-align: center; }
+.stat-time-label { font-size: 8px; color: rgba(255, 255, 255, 0.25); letter-spacing: 1px; }
+.stat-time-val { font-size: 14px; color: var(--gold); font-weight: 700; margin-top: 2px; }
 
-        .overlay-desc {
-            font-size: 14px;
-            color: #ccc;
-            margin-bottom: 15px;
-        }
+/* 名字與分數 */
+.stat-name { font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-top: 8px; }
+.stat-score { font-size: 56px; font-weight: 900; line-height: 1; margin: 6px 0; }
 
-        .name-form {
-            width: 100%;
-            max-width: 260px;
-            margin-bottom: 20px;
-        }
-        .name-input {
-            width: 100%;
-            padding: 10px;
-            background: #252836;
-            border: 2px solid var(--accent-color);
-            color: #fff;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 16px;
-            outline: none;
-            margin-bottom: 10px;
-        }
+/* 分隔線 */
+.stat-divider { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.08); margin: 10px 0; }
 
-        .flex-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            max-width: 260px;
-        }
-        .flex-buttons .btn { flex: 1; padding: 10px; }
+/* 細項數據列 (連勝、最高速等) */
+.stat-row { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.stat-label { font-size: 9px; color: rgba(255, 255, 255, 0.3); }
+.stat-val { font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, 0.8); }
+.stat-footer { font-size: 8px; color: rgba(255, 255, 255, 0.15); margin-top: auto; }
 
-        .leaderboard-box {
-            width: 100%;
-            max-width: 280px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .leaderboard-title {
-            font-size: 14px;
-            color: var(--nokia-green);
-            font-weight: bold;
-            margin-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 4px;
-        }
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            font-family: monospace;
-            padding: 3px 0;
-            color: #ddd;
-        }
-        .leaderboard-item.top-rank { color: #ffeb3b; font-weight: bold; }
+/* UI 選單覆蓋層 (主選單 / 遊戲結束) */
+.screen {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+	background: rgba(4, 6, 10, 0.95);
+	backdrop-filter: blur(8px);
+	z-index: 10;
+}
+.screen.on { opacity: 1; pointer-events: all; } /* 當有 .on 類別時顯示 */
 
-        .mobile-gamepad {
-            background: rgba(0,0,0,0.15);
-            border-radius: 15px;
-            padding: 15px 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-        }
+.menu-inner { text-align: center; width: 85%; }
+.menu-logo { font-weight: 900; font-size: 48px; color: #fff; letter-spacing: 2px; }
+.menu-logo span { color: var(--blue); text-shadow: 0 0 20px var(--blue); }
+.menu-sub { font-size: 11px; color: var(--gold); letter-spacing: 3px; margin-bottom: 30px; }
+.menu-btns { display: flex; flex-direction: row; gap: 16px; justify-content: center; }
 
-        .d-pad-layout {
-            position: relative;
-            width: 120px;
-            height: 120px;
-        }
+/* 按鈕樣式 (帶有科幻感去角形狀) */
+button {
+	padding: 12px 30px;
+	background: transparent;
+	border: 2px solid var(--blue);
+	color: var(--blue);
+	font-family: "Orbitron", monospace;
+	font-weight: 700;
+	font-size: 12px;
+	letter-spacing: 1px;
+	clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+	transition: all 0.2s;
+	cursor: pointer;
+}
+button:hover { background: var(--blue); color: #000; box-shadow: 0 0 15px var(--blue); }
+button.btn-red { border-color: var(--red); color: var(--red); }
+button.btn-red:hover { background: var(--red); color: #000; box-shadow: 0 0 15px var(--red); }
 
-        .pad-arrow {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: #2b2f44;
-            border: 1px solid #3d4361;
-            color: #fff;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 0 #1b1e2b;
-        }
-        .pad-arrow:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 #1b1e2b;
-            background: var(--text-color);
-        }
+/* 靜音提示文字 */
+#mute-btn { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
 
-        .pad-arrow.up    { top: 0; left: 40px; }
-        .pad-arrow.left  { top: 40px; left: 0; }
-        .pad-arrow.right { top: 40px; right: 0; }
-        .pad-arrow.down  { bottom: 0; left: 40px; }
+/* 遊戲結束畫面內元件 */
+.go-inner { text-align: center; }
+.go-face { font-size: 52px; margin-bottom: 6px; }
+.go-who { font-size: 40px; font-weight: 900; }
+.go-wins { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
+.go-final { font-size: 28px; font-weight: 700; color: var(--gold); margin: 8px 0; }
+.go-time { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
 
-        .action-layout {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
+/* 底部說明欄（電腦版：大寬度、左右並排） */
+.guide-box {
+	width: 100%;
+	max-width: 1020px; /* 130 + 760 + 130 = 1020px 剛好對齊上方 */
+	background: rgba(8, 13, 20, 0.4);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 12px;
+	padding: 16px 24px;
+	display: flex;
+	flex-direction: row;
+	gap: 40px;
+}
+.guide-section { flex: 1; }
+.guide-title { font-size: 12px; color: var(--blue); font-weight: 700; margin-bottom: 4px; }
+.guide-text { font-size: 11px; color: rgba(255, 255, 255, 0.5); line-height: 1.5; }
+.guide-text span { color: #fff; }
 
-        .btn-action-circle {
-            width: 65px;
-            height: 65px;
-            background: var(--nokia-green);
-            color: #0f111a;
-            font-weight: bold;
-            font-size: 15px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #00aa88;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-action-circle:active { transform: translateY(4px); box-shadow: 0 1px 0 #00aa88; }
-        .btn-action-circle.flag-active { background: #ff9800; box-shadow: 0 5px 0 #b36b00; color: #fff; }
+/* ==========================================================================
+   3. 📱 手機/平板模式樣式轉換 (RWD Responsive)
+   當螢幕寬度小於 768px 時，下面的設定會自動「蓋過」上面的電腦版設定
+   ========================================================================== */
+@media (max-width: 768px) {
+	body {
+		padding: 8px;
+		justify-content: flex-start; /* 手機端從最上方開始排列 */
+	}
 
-        .live-score-bar {
-            width: 100%;
-            background: #151722;
-            padding: 6px 12px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #8f93a7;
-            font-family: monospace;
-        }
-        .live-score-bar span b { color: var(--nokia-green); }
+	/* 轉變：從橫向並排改成「完全垂直上下排列」 */
+	#game-layout {
+		flex-direction: column !important;
+		width: 100% !important;
+		gap: 8px;
+	}
+
+	/* 轉變：不再使用固定寬高，改用等比例縮放容器 */
+	#arena {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 760 / 520; /* 鎖定原始比例，讓 Canvas 完美縮放 */
+	}
+
+	canvas {
+		border-radius: 12px; /* 手機模式獨立出來，給予精緻圓角 */
+	}
+
+	/* 轉變：數據面板原本是左右夾擊，現在變成「最上方橫向並排」 */
+	.stat-wrapper {
+		flex-direction: row; /* 改為左右並排 */
+		width: 100%;
+		height: auto;        /* 高度自適應 */
+		gap: 6px;
+	}
+
+	.stat-panel {
+		padding: 8px 10px;
+		border-radius: 8px !important; /* 強制覆蓋原本的單邊圓角 */
+		border: 1px solid rgba(255, 255, 255, 0.05) !important;
+	}
+
+	/* 手機端微調字體，避免文字太大爆開 */
+	.stat-time-val { font-size: 11px; }
+	.stat-name { font-size: 9px; margin-top: 2px; }
+	.stat-score { font-size: 28px; margin: 2px 0; } /* 大幅縮小分數，更適合手機 */
+	.stat-divider { margin: 4px 0; }
+	.stat-row { margin-bottom: 2px; }
+	.stat-label, .stat-val { font-size: 8px; }
+	.stat-footer { display: none; } /* 手機端隱藏不必要的頁尾提示 */
+
+	/* 選單介面在手機上的大小微調 */
+	.menu-logo { font-size: 28px; }
+	.menu-sub { font-size: 8px; margin-bottom: 16px; }
+	.menu-btns { flex-direction: column; width: 100%; gap: 10px; } /* 按鈕垂直排 */
+	button { width: 100%; max-width: 240px; padding: 10px 16px; font-size: 10px; }
+
+	.go-face { font-size: 36px; }
+	.go-who { font-size: 24px; }
+	.go-final { font-size: 20px; }
+	#mute-btn { font-size: 7px; bottom: 6px; }
+
+	/* 底部說明欄改為垂直排列 */
+	.guide-box {
+		flex-direction: column;
+		gap: 8px;
+		padding: 10px 14px;
+	}
+	.guide-title { font-size: 10px; }
+	.guide-text { font-size: 9px; }
+}
     </style>
 </head>
 <body>
 
-<div id="header-container" class="navbar-wrapper"></div>
+<div id="main-container">
+	
+	<div id="game-layout">
+		
+		<div class="stat-wrapper">
+			<div id="stat-left" class="stat-panel">
+				<div class="stat-time-box">
+					<div class="stat-time-label">TIME</div>
+					<div class="stat-time-val" id="time-p">00:00</div>
+				</div>
+				<div class="stat-divider"></div>
+				<div class="stat-name" id="p1-title" style="color:#00d4ff">PLAYER 1</div>
+				<div class="stat-score" id="score-p" style="color:#00d4ff;text-shadow:0 0 10px rgba(0,212,255,0.4)">0</div>
+				<div class="stat-divider"></div>
+				<div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-p-streak">0</span></div>
+				<div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-p-speed">0</span></div>
+				<div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-p-power">0</span></div>
+				<div class="stat-footer" id="p1-ctrl-hint">MOUSE/TOUCH</div>
+			</div>
 
-<div class="arcade-container">
-    <div class="header">
-        <h1>復古經典遊戲機</h1>
-    </div>
+			<div id="stat-right" class="stat-panel">
+				<div class="stat-time-box">
+					<div class="stat-time-label">TIME</div>
+					<div class="stat-time-val" id="time-cpu">00:00</div>
+				</div>
+				<div class="stat-divider"></div>
+				<div class="stat-name" id="p2-title" style="color:#ff2d55">CPU</div>
+				<div class="stat-score" id="score-cpu" style="color:#ff2d55;text-shadow:0 0 10px rgba(255,45,85,0.4)">0</div>
+				<div class="stat-divider"></div>
+				<div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-cpu-streak">0</span></div>
+				<div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-cpu-speed">0</span></div>
+				<div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-cpu-power">0</span></div>
+				<div class="stat-footer" id="p2-ctrl-hint">AI OPPONENT</div>
+			</div>
+		</div>
 
-    <div class="lobby-controls">
-        <select id="gameSelect" class="game-select">
-            <option value="stairs">小朋友下樓梯 (經典)</option>
-            <option value="snake">貪食蛇 (可穿牆)</option>
-            <option value="tetris">經典俄羅斯方塊</option>
-            <option value="mines">Windows 經典踩地雷</option>
-        </select>
-        <select id="levelSelect" class="level-select" style="display: none;">
-            <option value="easy">初級 (9x9, 10雷)</option>
-            <option value="medium">中級 (16x16, 40雷)</option>
-            <option value="hard">高級 (16x30, 99雷)</option>
-        </select>
-        <button id="lobbyStartBtn" class="btn">開始</button>
-    </div>
+		<div id="arena">
+			<canvas id="c"></canvas>
+			<div id="mute-btn">PRESS S FOR SOUND</div>
+			
+			<div id="menu-screen" class="screen on">
+				<div class="menu-inner">
+					<div class="menu-logo">AIR <span>HOCKEY</span></div>
+					<div class="menu-sub">Neon Ultimate Edition</div>
+					<div class="menu-btns">
+						<button id="btn-1p">1 PLAYER (VS CPU)</button>
+						<button id="btn-2p" class="btn-red">2 PLAYERS (LOCAL)</button>
+					</div>
+				</div>
+			</div>
 
-    <div class="live-score-bar">
-        <span>遊戲: <b id="gameNameText">-</b></span>
-        <span>得分/時間: <b id="liveScore">0000</b></span>
-    </div>
-    <div style="height: 8px;"></div>
+			<div id="gameover-screen" class="screen">
+				<div class="go-inner">
+					<div class="go-face" id="go-face">😄</div>
+					<div class="go-who" id="go-who">PLAYER 1 WINS</div>
+					<div class="go-wins">GAME · SET · MATCH</div>
+					<div class="go-final" id="go-final">7 – 3</div>
+					<div class="go-time" id="go-time">MATCH TIME: 00:00</div>
+					<button id="btn-again">MAIN MENU</button>
+				</div>
+			</div>
+		</div>
 
-    <div class="stage-box">
-        <div class="canvas-container">
-            <canvas id="gameCanvas" width="320" height="400"></canvas>
-        </div>
+	</div>
 
-        <div id="screenOverlay" class="screen-overlay">
-            <div id="overlayTitle" class="overlay-title">READY</div>
-            <div id="overlayDesc" class="overlay-desc">選擇遊戲後點擊開始</div>
-            
-            <div id="leaderboardSection" class="leaderboard-box">
-                <div class="leaderboard-title">🏆 本地前十高分排名</div>
-                <div id="leaderboardList"></div>
-            </div>
-
-            <div id="nameFormSection" class="name-form" style="display: none;">
-                <input type="text" id="playerNameInput" class="name-input" placeholder="輸入你的名字" maxlength="10">
-                <button id="saveScoreBtn" class="btn" style="width:100%;">儲存紀錄並結算</button>
-            </div>
-
-            <div id="actionButtonGroup" class="flex-buttons">
-                <button id="primaryOverlayBtn" class="btn">開始遊玩</button>
-                <button id="closeOverlayBtn" class="btn btn-secondary" style="display:none;">返回大廳</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="mobile-gamepad">
-        <div id="dPadWrapper" class="d-pad-layout">
-            <button class="pad-arrow up" data-dir="UP">▲</button>
-            <button class="pad-arrow left" data-dir="LEFT">◀</button>
-            <button class="pad-arrow right" data-dir="RIGHT">▶</button>
-            <button class="pad-arrow down" data-dir="DOWN">▼</button>
-        </div>
-        <div class="action-layout">
-            <div id="actionBtnWrapper" style="display: none;">
-                <button id="actionCircleBtn" class="btn-action-circle" data-dir="ROTATE">旋轉</button>
-            </div>
-            <button id="pauseGameBtn" class="btn btn-secondary" style="width:90px; padding:6px;">暫停/繼續</button>
-        </div>
-    </div>
+	<div class="guide-box">
+		<div class="guide-section">
+			<div class="guide-title">🎮 操作說明 (CONTROLS)</div>
+			<div class="guide-text">
+				<span>單人模式</span>：滑鼠或單指觸控控制左側發光藍色球棍。<br>
+				<span>雙人模式</span>：手機/平板直接在螢幕<span>左右兩側觸控</span>操作；電腦端 <span>P1</span> 使用 <span>WASD</span>，<span>P2</span> 使用 <span>↑↓←→</span> 方向鍵。按鍵盤 <span>[S]</span> 鍵可切換靜音。
+			</div>
+		</div>
+		<div class="guide-section">
+			<div class="guide-title">🏆 比賽規則 (RULES)</div>
+			<div class="guide-text">
+				率先獲得 <span>7 分</span> 者獲勝！每進 2 球，球速將全面加快。當進入聽牌（賽末點）時，將觸發<span>關鍵慢動作 (Slo-mo)</span>！
+			</div>
+		</div>
+	</div>
 </div>
 
-<footer id="global-footer" class="custom-footer"></footer>
-
 <script>
+<<<<<<< HEAD
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -1542,7 +1520,696 @@ function setupHeaderMenu() {
     adjustNavItems();
     window.removeEventListener('resize', adjustNavItems); // 防重複綁定
     window.addEventListener('resize', adjustNavItems);
+=======
+/* ==========================================================================
+   4. JavaScript 遊戲核心邏輯與 RWD 座標換算
+   ========================================================================== */
+const CV = document.getElementById("c");
+const G = CV.getContext("2d");
+
+// 這是遊戲內部「固定」的虛擬解析度，所有物理碰撞都以這個為準
+CV.width = 760; CV.height = 520;
+const W = 760, H = 520;
+
+// 偵測當前裝置是否支援觸控
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// DOM 元素獲取
+const menuEl = document.getElementById("menu-screen");
+const gameoverEl = document.getElementById("gameover-screen");
+const goWho = document.getElementById("go-who");
+const goFinal = document.getElementById("go-final");
+const goTimeEl = document.getElementById("go-time");
+const p1Title = document.getElementById("p1-title");
+const p2Title = document.getElementById("p2-title");
+const timePEl = document.getElementById("time-p");
+const timeCpuEl = document.getElementById("time-cpu");
+
+// 按紐事件綁定
+document.getElementById("btn-1p").onclick = () => selectMode("1P");
+document.getElementById("btn-2p").onclick = () => selectMode("2P");
+document.getElementById("btn-again").onclick = () => {
+	gameoverEl.classList.remove("on");
+	menuEl.classList.add("on");
+	state = "title";
+};
+
+// 數據更新專用的 DOM 快取物件
+const DOM = {
+	scoreP: document.getElementById("score-p"), scoreCPU: document.getElementById("score-cpu"),
+	pStreak: document.getElementById("stat-p-streak"), pSpeed: document.getElementById("stat-p-speed"), pPower: document.getElementById("stat-p-power"),
+	cpuStreak: document.getElementById("stat-cpu-streak"), cpuSpeed: document.getElementById("stat-cpu-speed"), cpuPower: document.getElementById("stat-cpu-power")
+};
+
+let gameTimeMs = 0; // 遊戲進行時間(毫秒)
+
+// ── 4.1 網頁無素材音效產生器 (Web Audio API) ──
+let audioCtx = null; let muted = true;
+function getAudio() {
+	if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	if (audioCtx.state === "suspended") audioCtx.resume();
+	return audioCtx;
+>>>>>>> 36c07030ed5ee46aeb8080c7d16b98c31a5ac6a5
 }
+function mkNoise(ctx, dur) {
+	const b = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate); const d = b.getChannelData(0);
+	for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+	const s = ctx.createBufferSource(); s.buffer = b; return s;
+}
+function playSound(type, speed = 1) {
+	if (muted) return; const ctx = getAudio(); const t = ctx.currentTime; const out = ctx.destination;
+	if (type === "hit") { // 擊球音效
+		const n = mkNoise(ctx, 0.07); const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+		bp.frequency.value = 900 + speed * 180 + Math.random() * 400; bp.Q.value = 2 + Math.random() * 3;
+		const g = ctx.createGain(); g.gain.setValueAtTime(0.5 + Math.min(speed / 18, 0.35), t);
+		g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.07);
+	}
+	if (type === "wall") { // 撞牆音效
+		const n = mkNoise(ctx, 0.04); const hp = ctx.createBiquadFilter(); hp.type = "highpass";
+		hp.frequency.value = 1400 + Math.random() * 600; const g = ctx.createGain(); g.gain.setValueAtTime(0.28, t);
+		g.gain.exponentialRampToValueAtTime(0.001, t + 0.03); n.connect(hp); hp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.04);
+	}
+	if (type === "goal") { // 進球得分音效
+		const sub = ctx.createOscillator(), sg = ctx.createGain(); sub.type = "sine"; sub.frequency.setValueAtTime(60, t);
+		sub.frequency.exponentialRampToValueAtTime(28, t + 0.25); sg.gain.setValueAtTime(0.6, t); sg.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+		sub.connect(sg); sg.connect(out); sub.start(t); sub.stop(t + 0.3);
+		[[0, "sawtooth", 233], [0.01, "sawtooth", 220], [0.02, "sawtooth", 246]].forEach(([dt, wv, f]) => {
+			const o = ctx.createOscillator(), g = ctx.createGain(); o.type = wv; o.frequency.value = f;
+			g.gain.setValueAtTime(0.15, t + dt); g.gain.setValueAtTime(0.15, t + 0.5); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+			o.connect(g); g.connect(out); o.start(t + dt); o.stop(t + 0.71);
+		});
+	}
+	if (type === "victory") { // 獲勝音效
+		[[0, 392, 0.12], [0.13, 392, 0.12], [0.26, 392, 0.12], [0.39, 523, 0.45], [0.58, 494, 0.18], [0.77, 440, 0.18], [0.96, 523, 0.6]].forEach(([dt, f, dur]) => {
+			[-4, 0, 4].forEach((cents) => {
+				const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sawtooth"; o.frequency.value = f * Math.pow(2, cents / 1200);
+				const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800;
+				g.gain.setValueAtTime(0, t + dt); g.gain.linearRampToValueAtTime(0.08, t + dt + 0.02); g.gain.setValueAtTime(0.08, t + dt + dur - 0.03);
+				g.gain.exponentialRampToValueAtTime(0.001, t + dt + dur); o.connect(lp); lp.connect(g); g.connect(out); o.start(t + dt); o.stop(t + dt + dur + 0.01);
+			});
+		});
+	}
+	if (type === "speedup") { // 加速音效
+		const n = mkNoise(ctx, 0.4); const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 5;
+		bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(3000, t + 0.38);
+		const g = ctx.createGain(); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+		n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.4);
+	}
+	if (type === "slomo_in") { // 進入賽末點慢動作音效
+		const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(100, t);
+		o.frequency.exponentialRampToValueAtTime(36, t + 0.65); g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+		o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.7);
+	}
+}
+
+const muteBtn = document.getElementById("mute-btn");
+function updateMuteLabel() { muteBtn.innerHTML = muted ? "PRESS S FOR SOUND" : "PRESS S TO MUTE"; }
+function toggleMute() { muted = !muted; if (!muted) getAudio().resume(); updateMuteLabel(); }
+
+// ── 4.2 獲勝慶祝彩帶特效 ──
+const confetti = [];
+const CONF_COLORS = ["#00d4ff", "#ff2d55", "#ffc940", "#ffffff"];
+function spawnConfetti() {
+	for (let i = 0; i < 100; i++) {
+		confetti.push({
+			x: Math.random() * W, y: -10 - Math.random() * 100, vx: (Math.random() - 0.5) * 5, vy: 2 + Math.random() * 4,
+			rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.22, w: 6 + Math.random() * 6, h: 3 + Math.random() * 3,
+			col: CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)], life: 1
+		});
+	}
+}
+function updateConfetti() {
+	for (let i = confetti.length - 1; i >= 0; i--) {
+		const c = confetti[i]; c.x += c.vx; c.y += c.vy; c.vy += 0.08; c.vx *= 0.99; c.rot += c.rotV;
+		if (c.y > H + 20) c.life -= 0.05; if (c.life <= 0) confetti.splice(i, 1);
+	}
+}
+function drawConfetti() {
+	confetti.forEach((c) => {
+		G.save(); G.globalAlpha = c.life; G.translate(c.x, c.y); G.rotate(c.rot); G.fillStyle = c.col; G.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); G.restore();
+	});
+}
+
+// ── 4.3 核心物理參數 (想改球棍/球大小，可以在這裡修改) ──
+const TABLE_X = 30, TABLE_Y = 30, TABLE_W = W - 60, TABLE_H = H - 60;
+const CX = W / 2, CY = H / 2;
+const GOAL_W = 160, GOAL_DEPTH = 20; // 球門寬度與深度
+const GOAL_Y1 = CY - GOAL_W / 2, GOAL_Y2 = CY + GOAL_W / 2;
+const PUCK_R = 14;     // 🌟 冰球半徑大小 (預設 14)
+const MALLET_R = 24;   // 🌟 球棍半徑大小 (預設 24)
+const MAX_SCORE = 7;   // 🌟 獲勝分數限制 (預設 7 分)
+const FRICTION = 0.996, WALL_BOUNCE = 0.82; // 桌子摩擦力與反彈係數
+
+const CPU_SPEED = 3.6, CPU_REACT = 0.55; // AI 的移動速度與靈敏度
+const KEY_SPEED = 6.2; // 雙人模式時，鍵盤操作的速度
+
+let gameMode = "1P"; 
+let state = "title";
+let tick = 0;
+let score = { p: 0, cpu: 0 };
+let puck = { x: CX, y: CY, vx: 0, vy: 0, r: PUCK_R };
+const trail = []; // 球的殘影陣列
+let shakeAmt = 0, shakeX = 0, shakeY = 0; // 畫面震動參數
+let puckSpeedMult = 1.0;
+let lastSpeedUpAt = 0;
+let speedUpMsg = ""; let speedUpTimer = 0;
+let goalFlash = 0, goalWho = ""; let goalMsgScale = 0;
+
+let sloMo = false; let sloMoAlpha = 0; let sloMoIntro = 0; let sloMoLabelTimer = 0;
+let confettiInterval = null;
+
+// 定義球棍物件
+const player = { x: TABLE_X + 130, y: CY, r: MALLET_R, pvx: 0, pvy: 0, hitCool: 0 };
+const cpu = { x: W - TABLE_X - 130, y: CY, r: MALLET_R, vx: 0, vy: 0, hitCool: 0 };
+
+// 統計數據紀錄
+const stats = {
+	p: { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 },
+	cpu: { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 }
+};
+
+// 粒子特效
+const particles = [];
+function burst(x, y, col1, col2, n = 15) {
+	for (let i = 0; i < n; i++) {
+		const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 4;
+		particles.push({
+			x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1,
+			col: Math.random() > 0.5 ? col1 : col2, size: 2 + Math.random() * 3,
+			glow: Math.random() > 0.4, gravity: 0.08 + Math.random() * 0.1
+		});
+	}
+}
+function sparkLine(x1, y1, x2, y2, col, n = 6) {
+	for (let i = 0; i < n; i++) {
+		const t = Math.random();
+		const x = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 8;
+		const y = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 8;
+		const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 2;
+		particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, col, size: 1.5 + Math.random() * 2, glow: true, gravity: 0.1 });
+	}
+}
+
+// 鍵盤狀態記錄
+const keys = {
+	KeyW: false, KeyS: false, KeyA: false, KeyD: false,         
+	ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false 
+};
+
+document.addEventListener("keydown", (e) => {
+	if (e.code === "KeyS" && state === "title") return; 
+	if (e.code === "KeyS" && state !== "title" && !keys.hasOwnProperty("KeyS")) toggleMute();
+	if (e.code in keys) keys[e.code] = true;
+});
+document.addEventListener("keyup", (e) => {
+	if (e.code in keys) keys[e.code] = false;
+});
+
+// 暫存的目標操作座標
+let rawP1X = TABLE_X + 130, rawP1Y = CY;
+let rawP2X = W - TABLE_X - 130, rawP2Y = CY;
+
+/* ==========================================================================
+   🌟 核心關鍵：RWD 座標換算函數
+   不論手機螢幕被壓縮到多小，都能將觸控像素點精確映射回 760x520 虛擬畫布中
+   ========================================================================== */
+function handlePointerInput(clientX, clientY, isP2Input) {
+	const r = CV.getBoundingClientRect(); // 取得畫布在網頁上的實際渲染像素寬高與位置
+	
+	// 計算縮放比例：(虛擬內部寬高 / 實際網頁渲染寬高)
+	const scaleX = W / r.width;
+	const scaleY = H / r.height;
+	
+	// 完美轉換成正確的虛擬內部座標
+	const canvasX = (clientX - r.left) * scaleX;
+	const canvasY = (clientY - r.top) * scaleY;
+
+	if (!isP2Input) {
+		// 限制 P1 只能在左半場
+		rawP1X = Math.min(Math.max(canvasX, TABLE_X + MALLET_R + 2), CX - 10);
+		rawP1Y = Math.min(Math.max(canvasY, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	} else {
+		// 限制 P2 只能在右半場
+		rawP2X = Math.min(Math.max(canvasX, CX + 10), W - TABLE_X - MALLET_R - 2);
+		rawP2Y = Math.min(Math.max(canvasY, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	}
+}
+
+// 滑鼠監聽
+function onMouseMove(e) {
+	if (gameMode === "1P" || (gameMode === "2P" && !isTouchDevice)) {
+		handlePointerInput(e.clientX, e.clientY, false);
+	}
+}
+document.addEventListener("mousemove", onMouseMove);
+
+// 觸控監聽 (支援多指同時操作)
+function onTouchMove(e) {
+	e.preventDefault(); // 防止手機畫面跟著手指被拖著跑
+	const r = CV.getBoundingClientRect();
+	const scaleX = W / r.width;
+
+	for (let i = 0; i < e.touches.length; i++) {
+		const touch = e.touches[i];
+		const canvasX = (touch.clientX - r.left) * scaleX;
+
+		if (gameMode === "1P") {
+			handlePointerInput(touch.clientX, touch.clientY, false);
+		} else if (gameMode === "2P" && isTouchDevice) {
+			// 依照觸控點在左半場或右半場，自動分派給 P1 或 P2 球棍
+			if (canvasX < CX) {
+				handlePointerInput(touch.clientX, touch.clientY, false);
+			} else {
+				handlePointerInput(touch.clientX, touch.clientY, true);
+			}
+		}
+	}
+}
+CV.addEventListener("touchstart", onTouchMove, { passive: false });
+CV.addEventListener("touchmove", onTouchMove, { passive: false });
+
+function formatTime(ms) {
+	const totalSeconds = Math.floor(ms / 1000);
+	const mins = Math.floor(totalSeconds / 60);
+	const secs = totalSeconds % 60;
+	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// 選擇遊戲模式
+function selectMode(mode) {
+	gameMode = mode;
+	menuEl.classList.remove("on");
+	
+	if (gameMode === "1P") {
+		p1Title.textContent = "YOU"; 
+		p2Title.textContent = "CPU"; 
+	} else {
+		p1Title.textContent = "PLAYER 1";
+		p2Title.textContent = "PLAYER 2";
+	}
+	startGame();
+}
+
+// 初始化開局
+function startGame() {
+	score.p = 0; score.cpu = 0;
+	gameTimeMs = 0; 
+	puckSpeedMult = 1.0; lastSpeedUpAt = 0;
+	speedUpMsg = ""; speedUpTimer = 0;
+	sloMo = false; sloMoAlpha = 0; sloMoIntro = 0; sloMoLabelTimer = 0;
+	stats.p = { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 };
+	stats.cpu = { goals: 0, streak: 0, bestStreak: 0, topSpeed: 0, powerHits: 0 };
+	confetti.length = 0; particles.length = 0;
+	if (confettiInterval) { clearInterval(confettiInterval); confettiInterval = null; }
+	resetRound("p");
+	state = "play";
+	gameoverEl.classList.remove("on");
+	updateStatDOM();
+}
+
+// 局與局之間重設球的位置
+function resetRound(server) {
+	trail.length = 0; puck.x = CX; puck.y = CY; puck.vx = 0; puck.vy = 0;
+	player.x = TABLE_X + 130; player.y = CY; player.pvx = 0; player.pvy = 0;
+	cpu.x = W - TABLE_X - 130; cpu.y = CY; cpu.vx = 0; cpu.vy = 0;
+	rawP1X = player.x; rawP1Y = player.y; rawP2X = cpu.x; rawP2Y = cpu.y;
+	
+	const baseDir = server === "p" ? -1 : 1;
+	puck.vx = baseDir * (3.2 + Math.random() * 1.2) * puckSpeedMult;
+	puck.vy = (Math.random() - 0.5) * 3 * puckSpeedMult;
+}
+
+// 進球處理
+function goalScored(who) {
+	if (state !== "play") return;
+	state = "goal_pause";
+	goalWho = who; goalFlash = 160; goalMsgScale = 0;
+	score[who]++;
+	stats[who].bestStreak = Math.max(stats[who].bestStreak, ++stats[who].streak);
+	stats[who === "p" ? "cpu" : "p"].streak = 0;
+	
+	// 每進 2 球加速
+	const totalGoals = score.p + score.cpu;
+	if (totalGoals % 2 === 0 && totalGoals > lastSpeedUpAt) {
+		lastSpeedUpAt = totalGoals;
+		puckSpeedMult = Math.min(puckSpeedMult + 0.12, 1.8);
+		playSound("speedup");
+		const msgs = ["SPEEDING UP!", "FASTER!!", "KICK IT UP!"];
+		speedUpMsg = msgs[Math.min(Math.floor(totalGoals / 2 - 1), msgs.length - 1)];
+		speedUpTimer = 130;
+	}
+
+	playSound("goal");
+	if (who === "p") burst(TABLE_X, CY, "#00d4ff", "#ffffff", 30);
+	else burst(W - TABLE_X, CY, "#ff2d55", "#ffffff", 30);
+	shakeAmt = 6;
+	updateStatDOM();
+
+	// 賽末點慢動作啟動條件
+	const newP = score.p, newCPU = score.cpu;
+	if ((newP === MAX_SCORE - 1 || newCPU === MAX_SCORE - 1) && !sloMo) {
+		sloMo = true; sloMoIntro = 80; sloMoLabelTimer = 80 + 90;
+		playSound("slomo_in");
+	}
+
+	setTimeout(() => {
+		if (score.p >= MAX_SCORE || score.cpu >= MAX_SCORE) {
+			state = "over";
+			const p1Won = score.p >= MAX_SCORE;
+			if (gameMode === "1P") {
+				goWho.textContent = p1Won ? "YOU WIN" : "CPU WINS";
+			} else {
+				goWho.textContent = p1Won ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+			}
+			goWho.style.color = p1Won ? "#00d4ff" : "#ff2d55";
+			document.getElementById("go-face").textContent = p1Won ? "😄" : "😢";
+			goFinal.textContent = `${score.p} – ${score.cpu}`;
+			goTimeEl.textContent = `MATCH TIME: ${formatTime(gameTimeMs)}`;
+			
+			if (p1Won) { 
+				playSound("victory"); spawnConfetti(); 
+				confettiInterval = setInterval(spawnConfetti, 1400);
+			}
+			gameoverEl.classList.add("on");
+		} else {
+			state = "play";
+			resetRound(who === "p" ? "cpu" : "p");
+		}
+	}, 1400);
+}
+
+function updateStatDOM() {
+	DOM.scoreP.textContent = score.p; DOM.scoreCPU.textContent = score.cpu;
+	DOM.pStreak.textContent = stats.p.bestStreak; DOM.pSpeed.textContent = stats.p.topSpeed; DOM.pPower.textContent = stats.p.powerHits;
+	DOM.cpuStreak.textContent = stats.cpu.bestStreak; DOM.cpuSpeed.textContent = stats.cpu.topSpeed; DOM.cpuPower.textContent = stats.cpu.powerHits;
+}
+
+// 核心遊戲引擎邏輯
+function updateGame(ts = 1) {
+	if (state !== "play") return;
+
+	// === PLAYER 1 移動控制 ===
+	const prevP1X = player.x, prevP1Y = player.y;
+	if (gameMode === "2P" && !isTouchDevice) {
+		if (keys.KeyW) player.y -= KEY_SPEED * ts;
+		if (keys.KeyS) player.y += KEY_SPEED * ts;
+		if (keys.KeyA) player.x -= KEY_SPEED * ts;
+		if (keys.KeyD) player.x += KEY_SPEED * ts;
+		player.x = Math.min(Math.max(player.x, TABLE_X + MALLET_R + 2), CX - 10);
+		player.y = Math.min(Math.max(player.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+	} else {
+		if (ts === 1) { player.x = rawP1X; player.y = rawP1Y; } 
+		else {
+			player.x += (rawP1X - player.x) * ts * 3; player.y += (rawP1Y - player.y) * ts * 3;
+			player.x = Math.min(Math.max(player.x, TABLE_X + MALLET_R + 2), CX - 10);
+			player.y = Math.min(Math.max(player.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+		}
+	}
+	player.pvx = player.x - prevP1X; player.pvy = player.y - prevP1Y;
+	if (player.hitCool > 0) player.hitCool--;
+
+	// === PLAYER 2 / CPU AI 移動控制 ===
+	const prevP2X = cpu.x, prevP2Y = cpu.y;
+	if (gameMode === "1P") {
+		const minX = CX + 10, maxX = W - TABLE_X - cpu.r - 2;
+		const minY = TABLE_Y + cpu.r + 2, maxY = TABLE_Y + TABLE_H - cpu.r - 2;
+		let tx = W - TABLE_X - 110, ty = CY;
+		
+		if (puck.x > CX && puck.vx > 0) {
+			const f = Math.max(1, (cpu.x - puck.x) / Math.max(0.5, puck.vx));
+			tx = Math.min(Math.max(puck.x + puck.vx * f * CPU_REACT, minX), maxX);
+			ty = Math.min(Math.max(puck.y + puck.vy * f * CPU_REACT, minY), maxY);
+		} else if (puck.x > CX) {
+			tx = Math.min(Math.max(puck.x - 8, minX), maxX - 30); ty = Math.min(Math.max(puck.y, minY), maxY);
+		} else {
+			ty = Math.min(Math.max(puck.y * 0.5 + CY * 0.5, minY), maxY);
+		}
+		const dx = tx - cpu.x, dy = ty - cpu.y, dist = Math.hypot(dx, dy);
+		if (dist > 0.1) {
+			const step = Math.min(dist, CPU_SPEED * ts);
+			cpu.x += (dx / dist) * step; cpu.y += (dy / dist) * step;
+		}
+		cpu.x = Math.min(Math.max(cpu.x, minX), maxX); cpu.y = Math.min(Math.max(cpu.y, minY), maxY);
+	} else {
+		if (isTouchDevice) {
+			if (ts === 1) { cpu.x = rawP2X; cpu.y = rawP2Y; }
+			else {
+				cpu.x += (rawP2X - cpu.x) * ts * 3; cpu.y += (rawP2Y - cpu.y) * ts * 3;
+				cpu.x = Math.min(Math.max(cpu.x, CX + 10), W - TABLE_X - MALLET_R - 2);
+				cpu.y = Math.min(Math.max(cpu.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+			}
+		} else {
+			if (keys.ArrowUp) cpu.y -= KEY_SPEED * ts;
+			if (keys.ArrowDown) cpu.y += KEY_SPEED * ts;
+			if (keys.ArrowLeft) cpu.x -= KEY_SPEED * ts;
+			if (keys.ArrowRight) cpu.x += KEY_SPEED * ts;
+			cpu.x = Math.min(Math.max(cpu.x, CX + 10), W - TABLE_X - MALLET_R - 2);
+			cpu.y = Math.min(Math.max(cpu.y, TABLE_Y + MALLET_R + 2), TABLE_Y + TABLE_H - MALLET_R - 2);
+		}
+	}
+	cpu.vx = cpu.x - prevP2X; cpu.vy = cpu.y - prevP2Y;
+	if (cpu.hitCool > 0) cpu.hitCool--;
+
+	// === 冰球物理與邊界碰撞 ===
+	const spd = Math.hypot(puck.vx, puck.vy);
+	trail.push({ x: puck.x, y: puck.y, spd });
+	if (trail.length > 12) trail.shift();
+
+	puck.x += puck.vx * ts; puck.y += puck.vy * ts;
+	puck.vx *= Math.pow(FRICTION, ts); puck.vy *= Math.pow(FRICTION, ts);
+
+	// 上下牆壁碰撞
+	if (puck.y - puck.r < TABLE_Y) { puck.y = TABLE_Y + puck.r; puck.vy = Math.abs(puck.vy) * WALL_BOUNCE; sparkLine(puck.x - 20, TABLE_Y, puck.x + 20, TABLE_Y, "#00d4ff"); playSound("wall"); }
+	if (puck.y + puck.r > TABLE_Y + TABLE_H) { puck.y = TABLE_Y + TABLE_H - puck.r; puck.vy = -Math.abs(puck.vy) * WALL_BOUNCE; sparkLine(puck.x - 20, TABLE_Y + TABLE_H, puck.x + 20, TABLE_Y + TABLE_H, "#00d4ff"); playSound("wall"); }
+
+	// 左邊牆壁與球門
+	if (puck.x - puck.r < TABLE_X) {
+		if (puck.y > GOAL_Y1 && puck.y < GOAL_Y2) return goalScored("cpu");
+		puck.x = TABLE_X + puck.r; puck.vx = Math.abs(puck.vx) * WALL_BOUNCE; sparkLine(TABLE_X, puck.y - 20, TABLE_X, puck.y + 20, "#ff2d55"); playSound("wall");
+	}
+	// 右邊牆壁與球門
+	if (puck.x + puck.r > TABLE_X + TABLE_W) {
+		if (puck.y > GOAL_Y1 && puck.y < GOAL_Y2) return goalScored("p");
+		puck.x = TABLE_X + TABLE_W - puck.r; puck.vx = -Math.abs(puck.vx) * WALL_BOUNCE; sparkLine(TABLE_X + TABLE_W, puck.y - 20, TABLE_X + TABLE_W, puck.y + 20, "#ff2d55"); playSound("wall");
+	}
+
+	// 檢查球棍與球的碰撞
+	circleCollide(puck, player, true);
+	circleCollide(puck, cpu, false);
+}
+
+// 圓形碰撞物理公式計算
+function circleCollide(pk, mallet, isP1) {
+	const dx = pk.x - mallet.x, dy = pk.y - mallet.y;
+	const dist = Math.hypot(dx, dy);
+	const minDist = pk.r + mallet.r;
+	if (dist >= minDist || dist < 0.01) return;
+
+	const targetCool = isP1 ? player : cpu;
+	if (targetCool.hitCool > 0) {
+		const nx2 = dx / dist, ny2 = dy / dist;
+		pk.x += nx2 * (minDist - dist); pk.y += ny2 * (minDist - dist); return;
+	}
+
+	const nx = dx / dist, ny = dy / dist;
+	pk.x += nx * (minDist - dist); pk.y += ny * (minDist - dist);
+
+	const mvx = isP1 ? player.pvx * 1.4 : mallet.vx; 
+	const mvy = isP1 ? player.pvy * 1.4 : mallet.vy;
+	const dot = (pk.vx - mvx) * nx + (pk.vy - mvy) * ny;
+
+	if (dot >= 0) return;
+	const rst = isP1 ? 1.15 : 1.05; 
+	pk.vx += -(1 + rst) * dot * nx; pk.vy += -(1 + rst) * dot * ny;
+	
+	targetCool.hitCool = isP1 ? 6 : 20;
+	
+	const spd = Math.hypot(pk.vx, pk.vy);
+	playSound("hit", spd);
+
+	const who = isP1 ? "p" : "cpu";
+	const mph = Math.round(spd * 4);
+	if (mph > stats[who].topSpeed) stats[who].topSpeed = mph;
+	if (spd > 12) stats[who].powerHits++;
+	updateStatDOM();
+
+	if (spd > 3) {
+		const col = isP1 ? "#00d4ff" : "#ff2d55";
+		burst(pk.x, pk.y, col, "#ffffff", Math.floor(spd));
+		if (spd > 17) shakeAmt = Math.max(shakeAmt, Math.min((spd - 17) * 0.4, 2.5));
+	}
+}
+
+function updateParticles() {
+	for (let i = particles.length - 1; i >= 0; i--) {
+		const p = particles[i]; p.x += p.vx; p.y += p.vy;
+		if (p.gravity) p.vy += p.gravity; p.life -= 0.016;
+		if (p.life <= 0) particles.splice(i, 1);
+	}
+}
+
+// ── 4.4 Canvas 畫面繪製 ──
+function drawTable() {
+	G.fillStyle = "#04060a"; G.fillRect(0, 0, W, H);
+	G.save(); G.strokeStyle = "rgba(255,255,255,0.02)"; G.lineWidth = 1;
+	for (let x = 0; x < W; x += 20) { G.beginPath(); G.moveTo(x, 0); G.lineTo(x, H); G.stroke(); }
+	for (let y = 0; y < H; y += 20) { G.beginPath(); G.moveTo(0, y); G.lineTo(W, y); G.stroke(); }
+	G.restore();
+
+	G.save(); G.shadowColor = "rgba(0, 212, 255, 0.15)"; G.shadowBlur = 10;
+	G.strokeStyle = "rgba(255,255,255,0.04)"; G.lineWidth = 4;
+	G.strokeRect(TABLE_X, TABLE_Y, TABLE_W, TABLE_H); G.restore();
+
+	G.save(); G.setLineDash([8, 8]); G.strokeStyle = "rgba(0, 212, 255, 0.15)"; G.lineWidth = 2;
+	G.beginPath(); G.moveTo(CX, TABLE_Y); G.lineTo(CX, TABLE_Y + TABLE_H); G.stroke(); G.restore();
+
+	G.save(); G.strokeStyle = "rgba(0, 212, 255, 0.15)"; G.lineWidth = 2;
+	G.beginPath(); G.arc(CX, CY, 70, 0, Math.PI * 2); G.stroke();
+	G.fillStyle = "#04060a"; G.beginPath(); G.arc(CX, CY, 6, 0, Math.PI * 2); G.fill(); G.restore();
+
+	drawGoalGlow(TABLE_X, CY, -GOAL_DEPTH, "#00d4ff");
+	drawGoalGlow(TABLE_X + TABLE_W, CY, GOAL_DEPTH, "#ff2d55");
+}
+
+function drawGoalGlow(x, y, depth, color) {
+	G.save(); G.shadowColor = color; G.shadowBlur = 15;
+	G.fillStyle = "rgba(4, 6, 10, 0.8)"; G.strokeStyle = color; G.lineWidth = 3;
+	G.beginPath(); G.moveTo(x, GOAL_Y1); G.lineTo(x + depth, GOAL_Y1); G.lineTo(x + depth, GOAL_Y2); G.lineTo(x, GOAL_Y2); G.stroke(); G.fill();
+	G.restore();
+}
+
+function drawTrail() {
+	if (state !== "play" && state !== "goal_pause") return;
+	G.save();
+	for (let i = 0; i < trail.length; i++) {
+		const p = trail[i]; const alpha = (i / trail.length) * 0.22;
+		G.globalAlpha = alpha; G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = p.spd * 0.6;
+		G.beginPath(); G.arc(p.x, p.y, puck.r * (0.4 + (i / trail.length) * 0.6), 0, Math.PI * 2); G.fill();
+	}
+	G.restore();
+}
+
+function drawMallet(m, color) {
+	G.save(); G.shadowColor = color; G.shadowBlur = 16;
+	G.fillStyle = "rgba(4, 6, 10, 0.9)"; G.strokeStyle = color; G.lineWidth = 4;
+	G.beginPath(); G.arc(m.x, m.y, m.r, 0, Math.PI * 2); G.fill(); G.stroke();
+	G.lineWidth = 2; G.strokeStyle = "rgba(255,255,255,0.3)"; G.beginPath(); G.arc(m.x, m.y, m.r * 0.55, 0, Math.PI * 2); G.stroke();
+	G.fillStyle = color; G.beginPath(); G.arc(m.x, m.y, m.r * 0.25, 0, Math.PI * 2); G.fill(); G.restore();
+}
+
+function drawParticles() {
+	G.save();
+	particles.forEach((p) => {
+		G.globalAlpha = p.life; G.fillStyle = p.col;
+		if (p.glow) { G.shadowColor = p.col; G.shadowBlur = p.size * 2.5; } else { G.shadowBlur = 0; }
+		G.beginPath(); G.arc(p.x, p.y, Math.max(0.1, p.size * p.life), 0, Math.PI * 2); G.fill();
+	});
+	G.restore();
+}
+
+function drawGoalFlash() {
+	if (goalFlash <= 0) return;
+	let alpha = goalFlash > 120 ? (160 - goalFlash) / 40 : goalFlash / 120;
+	const col = goalWho === "p" ? "0, 212, 255" : "255, 45, 85";
+	G.save(); G.fillStyle = `rgba(${col}, ${alpha * 0.18})`; G.fillRect(0, 0, W, H);
+	if (goalMsgScale < 1) goalMsgScale += 0.08;
+	let s = Math.sin(goalMsgScale * Math.PI * 0.5);
+	G.translate(W / 2, H / 2); G.scale(s, s); G.textAlign = "center"; G.textBaseline = "middle";
+	G.font = '900 38px "Orbitron"'; G.fillStyle = "#ffffff";
+	G.shadowColor = goalWho === "p" ? "#00d4ff" : "#ff2d55"; G.shadowBlur = 20;
+	
+	let txt = "";
+	if (gameMode === "1P") txt = goalWho === "p" ? "YOU GOAL!" : "CPU GOAL!";
+	else txt = goalWho === "p" ? "PLAYER 1 GOAL!" : "PLAYER 2 GOAL!";
+	G.fillText(txt, 0, -10); G.restore();
+}
+
+function drawSpeedUpMsg() {
+	if (speedUpTimer <= 0) return;
+	const t = speedUpTimer / 130;
+	const scale = t > 0.85 ? 0.5 + (1 - t) / 0.15 * 0.5 : 1;
+	const alpha = t < 0.25 ? t / 0.25 : 1;
+	G.save(); G.globalAlpha = alpha; G.textAlign = "center"; G.textBaseline = "middle";
+	G.font = '900 28px "Orbitron"'; G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = 15;
+	G.translate(W / 2, CY + 60); G.scale(scale, scale); G.fillText(speedUpMsg, 0, 0); G.restore();
+}
+
+// ── 4.5 主遊戲渲染與時間迴圈 (Game Loop) ──
+let lastTime = performance.now();
+function loop(now) {
+	tick++;
+	let dt = now - lastTime; if (dt > 100) dt = 16.66; lastTime = now;
+
+	// 處理聽牌慢動作時間縮放
+	let timeScale = 1.0;
+	if (sloMo) {
+		if (sloMoIntro > 0) { sloMoIntro--; let t = 1 - (sloMoIntro / 80); timeScale = 1.0 - t * 0.72; } 
+		else { timeScale = 0.28; }
+		if (sloMoAlpha < 1) sloMoAlpha += 0.04;
+		if (sloMoLabelTimer > 0) sloMoLabelTimer--;
+	} else {
+		if (sloMoAlpha > 0) sloMoAlpha -= 0.04;
+	}
+
+	if (state === "play") {
+		gameTimeMs += dt * timeScale;
+		const timeStr = formatTime(gameTimeMs);
+		timePEl.textContent = timeStr; timeCpuEl.textContent = timeStr;
+	}
+
+	// 處理畫面震動
+	if (shakeAmt > 0) {
+		shakeX = (Math.random() - 0.5) * shakeAmt; shakeY = (Math.random() - 0.5) * shakeAmt;
+		shakeAmt *= 0.92; if (shakeAmt < 0.05) { shakeAmt = 0; shakeX = 0; shakeY = 0; }
+	}
+
+	// 拆分次步數進行物理模擬，提升極速碰撞時的精確度，防止穿牆
+	const substeps = 2;
+	for (let s = 0; s < substeps; s++) {
+		updateGame(timeScale / substeps);
+	}
+	updateParticles(); updateConfetti();
+
+	if (goalFlash > 0) goalFlash--;
+	if (speedUpTimer > 0) speedUpTimer--;
+
+	G.clearRect(0, 0, W, H);
+	G.save();
+	if (shakeAmt > 0) G.translate(shakeX, shakeY);
+
+	drawTable();
+	drawTrail();
+	if (state === "play" || state === "goal_pause") {
+		G.save(); G.shadowColor = "#ffc940"; G.shadowBlur = 12; G.fillStyle = "#ffc940";
+		G.beginPath(); G.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2); G.fill(); G.restore();
+	}
+	drawMallet(player, "#00d4ff");
+	drawMallet(cpu, "#ff2d55");
+	drawParticles();
+	drawGoalFlash();
+	drawSpeedUpMsg();
+	drawConfetti();
+
+	// 賽末點金色警告濾鏡繪製
+	if (sloMoAlpha > 0) {
+		G.save(); G.globalAlpha = sloMoAlpha * 0.12; G.fillStyle = "#ffc940"; G.fillRect(TABLE_X, TABLE_Y, TABLE_W, TABLE_H); G.restore();
+		if (sloMoLabelTimer > 0) {
+			const fadeIn = Math.min((170 - sloMoLabelTimer) / 20, 1);
+			const fadeOut = sloMoLabelTimer < 30 ? sloMoLabelTimer / 30 : 1;
+			const alpha = fadeIn * fadeOut * sloMoAlpha;
+			const pulse = 0.88 + Math.sin(tick * 0.12) * 0.12;
+			G.save(); G.globalAlpha = alpha * pulse; G.textAlign = "center"; G.font = '900 14px "Orbitron"';
+			G.fillStyle = "rgba(0,0,0,0.5)"; G.fillText("⚡  GAME POINT  ⚡", W / 2 + 1, TABLE_Y + TABLE_H * 0.12 + 1);
+			G.fillStyle = "#ffc940"; G.shadowColor = "#ffc940"; G.shadowBlur = 14; G.fillText("⚡  GAME POINT  ⚡", W / 2, TABLE_Y + TABLE_H * 0.12); G.restore();
+		}
+	}
+
+	G.restore();
+	requestAnimationFrame(loop);
+}
+
+// 啟動遊戲引擎
+requestAnimationFrame((now) => { lastTime = now; requestAnimationFrame(loop); });
 </script>
 </body>
 </html>
