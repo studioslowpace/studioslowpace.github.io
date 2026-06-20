@@ -43,6 +43,8 @@
             font-size: 16px;
             color: #888;
             margin: 0;
+            line-height: 1.5;
+            letter-spacing: 1px;
         }
 
         .grid-container {
@@ -74,7 +76,7 @@
             text-underline-offset: 6px;  /* 數字越大，底線離字就越遠 */
             display: inline-block;        /* 讓上下間距 (margin) 可以正常生效 */
             margin: 15px 0;               /* 上下留出 15px 的間隔，左右為 0 */
-
+           letter-spacing: 2px;
         }
 
         /* 圓形容器：設定超出即裁切 */
@@ -109,8 +111,20 @@
             color: #666;
             line-height: 1.6;
             margin: 0;
-            white-space: pre-line;     
+            white-space: pre-line;  
+            letter-spacing: 1.2px;  
         }
+
+        .mobile-only {
+    display: none;
+}
+
+            /* 📱 RWD 手機板優化 */
+    @media (max-width: 600px) {
+        .mobile-only {
+        display: inline; /* 恢復換行功能 */
+    }
+    }
     </style>
 </head>
 <body>
@@ -120,7 +134,7 @@
     <div class="header">
         <h1>自主企劃</h1>
         <h2>Passion Project</h2>
-        <p>鄰里人的空間實驗 Experiments by Slow Pace Neighbour</p>
+        <p>鄰里人的空間實驗 <br class="mobile-only">Experiments by Slow Pace Neighbour</p>
     </div>
 
     <div class="grid-container">
