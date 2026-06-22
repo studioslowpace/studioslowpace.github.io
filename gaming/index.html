@@ -354,6 +354,1173 @@ button.btn-red:hover { background: var(--red); color: #000; box-shadow: 0 0 15px
 </div>
 
 <script>
+<<<<<<< HEAD
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const gameSelect = document.getElementById('gameSelect');
+    const levelSelect = document.getElementById('levelSelect');
+    const lobbyStartBtn = document.getElementById('lobbyStartBtn');
+    const liveScore = document.getElementById('liveScore');
+    const gameNameText = document.getElementById('gameNameText');
+    const screenOverlay = document.getElementById('screenOverlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayDesc = document.getElementById('overlayDesc');
+    const leaderboardSection = document.getElementById('leaderboardSection');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const nameFormSection = document.getElementById('nameFormSection');
+    const playerNameInput = document.getElementById('playerNameInput');
+    const saveScoreBtn = document.getElementById('saveScoreBtn');
+    const primaryOverlayBtn = document.getElementById('primaryOverlayBtn');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+    
+    const dPadWrapper = document.getElementById('dPadWrapper');
+    const actionBtnWrapper = document.getElementById('actionBtnWrapper');
+    const actionCircleBtn = document.getElementById('actionCircleBtn');
+    const pauseGameBtn = document.getElementById('pauseGameBtn');
+
+    let currentGame = 'stairs';
+    let gameState = 'lobby'; 
+    let score = 0;
+    let gameLoopId = null;
+    let lastTime = 0;
+    let cols = 20, rows = 25;
+    let gridW = 16, gridH = 16;
+
+    // --- 下樓梯 變數 ---
+    let player = { x: 150, y: 100, vx: 0, vy: 0, width: 14, height: 18, hp: 10, maxHp: 10, onPlat: null };
+    let platforms = [];
+    let platformSpeed = 1.2;
+    let spawnTimer = 0;
+    let keyState = { left: false, right: false };
+
+    // --- 蛇 變數 ---
+    let snake = [];
+    let snakeDir = { x: 1, y: 0 };
+    let nextDir = { x: 1, y: 0 };
+    let snakeSpeed = 140; 
+    let snakeMoveTimer = 0;
+    let foods = []; 
+    let foodSpawn10sTimer = 0;
+    let foodSpawn30sTimer = 0;
+    let flashToggle = true; 
+    let flashTimer = 0;
+    let tongueCycle = 0; 
+
+    // --- 俄羅斯方塊 變數 ---
+    let tetrisMatrix = [];
+    let playerPiece = null;
+    let tetrisDropTimer = 0;
+    let tetrisDropInterval = 800;
+    const TETRIS_SHAPES = {
+        'I': [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+        'L': [[0,0,2],[2,2,2],[0,0,0]],
+        'J': [[3,0,0],[3,3,3],[0,0,0]],
+        'O': [[4,4],[4,4]],
+        'Z': [[5,5,0],[0,5,5],[0,0,0]],
+        'S': [[0,6,6],[6,6,0],[0,0,0]],
+        'T': [[0,7,0],[7,7,7],[0,0,0]]
+    };
+    const TETRIS_COLORS = [null, '#00f0f0', '#f0a000', '#0000f0', '#f0f000', '#f00000', '#00f0f0', '#a000f0'];
+
+    // --- 踩地雷 變數 ---
+    let minesGrid = []; 
+    let totalMines = 10;
+    let isFlagMode = false;
+    let minesStatus = 'smile'; 
+    let mineCountRemaining = 10;
+    let minesTimeCounter = 0;
+    let minesTimerAccumulator = 0;
+    let firstClickSafe = true;
+
+    const MINE_NUM_COLORS = ['#0000ff', '#008000', '#ff0000', '#000080', '#800000', '#008080', '#000000', '#808080'];
+
+    function getLeaderboard(game) {
+        const key = `wix_arcade_${game}_leaderboard`;
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : [
+            {name: "王牌玩家", score: 120},
+            {name: "高玩老手", score: 80},
+            {name: "RetroGamer", score: 40}
+        ];
+    }
+
+    function saveToLeaderboard(game, name, newScore) {
+        let board = getLeaderboard(game);
+        let cleanedName = name.trim() || "無名英雄";
+        let existingIndex = board.findIndex(item => item.name === cleanedName);
+        if (existingIndex !== -1) {
+            if (newScore > board[existingIndex].score) board[existingIndex].score = newScore;
+        } else {
+            board.push({ name: cleanedName, score: newScore });
+        }
+        board.sort((a, b) => b.score - a.score);
+        localStorage.setItem(`wix_arcade_${game}_leaderboard`, JSON.stringify(board.slice(0, 10)));
+    }
+
+    function renderLeaderboardUI(game) {
+        const board = getLeaderboard(game);
+        leaderboardList.innerHTML = '';
+        board.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `leaderboard-item ${index < 3 ? 'top-rank' : ''}`;
+            div.innerHTML = `<span>${index + 1}. ${item.name}</span><span>${item.score} ${game==='stairs'?'層':'Pts'}</span>`;
+            leaderboardList.appendChild(div);
+        });
+    }
+
+    function initLayout() {
+        currentGame = gameSelect.value;
+        score = 0;
+        isFlagMode = false;
+        actionCircleBtn.classList.remove('flag-active');
+        
+        if (currentGame === 'stairs') {
+            levelSelect.style.display = 'none';
+            gameNameText.innerText = '下樓梯';
+            canvas.width = 320;
+            canvas.height = 400;
+            dPadWrapper.style.opacity = '1'; dPadWrapper.style.pointerEvents = 'auto';
+            actionBtnWrapper.style.display = 'none';
+            updateScoreUI();
+            initStairs();
+        } else if (currentGame === 'snake') {
+            levelSelect.style.display = 'none';
+            gameNameText.innerText = '貪食蛇';
+            canvas.width = 320;
+            canvas.height = 400;
+            cols = 20; rows = 25;
+            dPadWrapper.style.opacity = '1'; dPadWrapper.style.pointerEvents = 'auto';
+            actionBtnWrapper.style.display = 'none';
+            updateScoreUI();
+            initSnake();
+        } else if (currentGame === 'tetris') {
+            levelSelect.style.display = 'none';
+            gameNameText.innerText = '經典方塊';
+            canvas.width = 320;
+            canvas.height = 400;
+            cols = 10; rows = 20;
+            dPadWrapper.style.opacity = '1'; dPadWrapper.style.pointerEvents = 'auto';
+            actionBtnWrapper.style.display = 'block';
+            actionCircleBtn.innerText = '旋轉';
+            updateScoreUI();
+            initTetris();
+        } else if (currentGame === 'mines') {
+            levelSelect.style.display = 'inline-block';
+            gameNameText.innerText = '經典踩地雷';
+            
+            const lvl = levelSelect.value;
+            if (lvl === 'easy') {
+                cols = 9; rows = 9; totalMines = 10;
+            } else if (lvl === 'medium') {
+                cols = 16; rows = 16; totalMines = 40;
+            } else if (lvl === 'hard') {
+                cols = 30; rows = 16; totalMines = 99; 
+            }
+            
+            gridW = 20; 
+            gridH = 20;
+            
+            canvas.width = cols * gridW + 12;
+            canvas.height = rows * gridH + 62;
+
+            dPadWrapper.style.opacity = '0.3'; dPadWrapper.style.pointerEvents = 'none';
+            actionBtnWrapper.style.display = 'block';
+            actionCircleBtn.innerText = '🚩插旗';
+            
+            mineCountRemaining = totalMines;
+            minesTimeCounter = 0;
+            minesTimerAccumulator = 0;
+            minesStatus = 'smile';
+            firstClickSafe = true;
+            
+            liveScore.innerText = `雷:${mineCountRemaining} 時:${minesTimeCounter}`;
+            initMines();
+        }
+        gridW = (currentGame === 'mines') ? 20 : canvas.width / cols;
+        gridH = (currentGame === 'mines') ? 20 : canvas.height / rows;
+        draw();
+    }
+
+    // ==================== 小朋友下樓梯 核心邏輯 ====================
+    function initStairs() {
+        player = { x: 150, y: 80, vx: 0, vy: 0, width: 14, height: 18, hp: 10, maxHp: 10, onPlat: null };
+        platforms = [];
+        platformSpeed = 1.2;
+        score = 1;
+        // 初始生成一個安全的普通階梯在玩家下方
+        platforms.push({ x: 130, y: 160, width: 60, height: 8, type: 'normal', visited: true });
+        for(let i=0; i<4; i++) {
+            generatePlatform(230 + i * 70);
+        }
+    }
+
+    function generatePlatform(customY) {
+        const types = ['normal', 'normal', 'spring', 'conveyor-l', 'conveyor-r', 'flip', 'spikePlat'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const w = 55;
+        const h = 8;
+        const x = Math.random() * (canvas.width - w - 20) + 10;
+        const y = customY || canvas.height + 10;
+        platforms.push({ x, y, width: w, height: h, type, visited: false });
+    }
+
+    function updateStairs() {
+        // 玩家左右移動
+        if (keyState.left) player.vx = -3;
+        else if (keyState.right) player.vx = 3;
+        else player.vx = 0;
+
+        player.x += player.vx;
+        
+        // 邊界限制
+        if (player.x < 10) player.x = 10;
+        if (player.x > canvas.width - player.width - 10) player.x = canvas.width - player.width - 10;
+
+        // 重力與階梯連動
+        if (player.onPlat) {
+            player.vy = -platformSpeed; 
+            player.y = player.onPlat.y - player.height;
+            
+            // 傳送帶效果
+            if (player.onPlat.type === 'conveyor-l') player.x -= 1.5;
+            if (player.onPlat.type === 'conveyor-r') player.x += 1.5;
+
+            // 檢查是否走下階梯
+            if (player.x + player.width < player.onPlat.x || player.x > player.onPlat.x + player.onPlat.width) {
+                player.onPlat = null;
+            }
+        } else {
+            player.vy += 0.3; // 重力加速度
+            if (player.vy > 6) player.vy = 6;
+            player.y += player.vy;
+        }
+
+        // 階梯上移與碰撞偵測
+        player.onPlat = null;
+        platforms.forEach(plat => {
+            plat.y -= platformSpeed;
+
+            // 頂部碰撞（踩在上面）
+            if (player.vy >= 0 && 
+                player.x + player.width > plat.x && 
+                player.x < plat.x + plat.width &&
+                player.y + player.height >= plat.y && 
+                player.y + player.height <= plat.y + plat.height + player.vy + 1) {
+                
+                player.onPlat = plat;
+                player.vy = 0;
+
+                if (!plat.visited) {
+                    plat.visited = true;
+                    score++;
+                    updateScoreUI();
+                    
+                    // 根據層數提高速度
+                    if (score % 10 === 0 && platformSpeed < 3.5) {
+                        platformSpeed += 0.2;
+                    }
+
+                    // 特殊階梯效果
+                    if (plat.type === 'spring') {
+                        player.vy = -7;
+                        player.onPlat = null;
+                    } else if (plat.type === 'spikePlat') {
+                        player.hp -= 3;
+                    } else if (plat.type === 'flip') {
+                        setTimeout(() => { plat.type = 'broken'; }, 300);
+                    } else {
+                        if (player.hp < player.maxHp) player.hp = Math.min(player.maxHp, player.hp + 1);
+                    }
+                }
+            }
+        });
+
+        // 過濾掉頂部出界的階梯並生成新階梯
+        platforms = platforms.filter(plat => plat.y > 20 && plat.type !== 'broken');
+        if (platforms.length < 5) {
+            generatePlatform();
+        }
+
+        // 碰到頂部針刺
+        if (player.y <= 25) {
+            player.hp -= 4;
+            player.y = 35;
+            player.vy = 2; // 彈開
+            player.onPlat = null;
+        }
+
+        // 掉落到螢幕底部
+        if (player.y > canvas.height) {
+            triggerGameOver();
+        }
+
+        // 生命值扣光
+        if (player.hp <= 0) {
+            triggerGameOver();
+        }
+    }
+
+    // ==================== 貪食蛇 核心邏輯 ====================
+    function initSnake() {
+        snake = [{x: 8, y: 12}, {x: 7, y: 12}, {x: 6, y: 12}];
+        snakeDir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
+        snakeSpeed = 140; foods = [];
+        foodSpawn10sTimer = 0; foodSpawn30sTimer = 0; tongueCycle = 0;
+        spawnFood('normal'); 
+    }
+
+    function getRandomPos() {
+        let x = Math.floor(Math.random() * (cols - 2)) + 1;
+        let y = Math.floor(Math.random() * (rows - 2)) + 1;
+        return {x, y};
+    }
+
+    function spawnFood(type) {
+        let pos = getRandomPos();
+        let onSnake = true;
+        while(onSnake) {
+            onSnake = false;
+            for (let cell of snake) {
+                if (cell.x === pos.x && cell.y === pos.y) { pos = getRandomPos(); onSnake = true; break; }
+            }
+            for (let f of foods) {
+                if (f.x === pos.x && f.y === pos.y) { pos = getRandomPos(); onSnake = true; break; }
+            }
+        }
+        if (type === 'normal') foods.push({ x: pos.x, y: pos.y, type: 'normal' });
+        else if (type === 'big') foods.push({ x: pos.x, y: pos.y, type: 'big', timeLeft: 8000 });
+    }
+
+    function updateSnake(deltaTime) {
+        snakeDir = nextDir;
+        let head = { x: snake[0].x + snakeDir.x, y: snake[0].y + snakeDir.y };
+        
+        if (head.x <= 0) head.x = cols - 2;
+        else if (head.x >= cols - 1) head.x = 1;
+        if (head.y <= 0) head.y = rows - 2;
+        else if (head.y >= rows - 1) head.y = 1;
+
+        for (let cell of snake) { 
+            if (head.x === cell.x && head.y === cell.y) { triggerGameOver(); return; } 
+        }
+
+        snake.unshift(head);
+        let ate = false;
+        for (let i = 0; i < foods.length; i++) {
+            if (head.x === foods[i].x && head.y === foods[i].y) {
+                ate = true;
+                if (foods[i].type === 'normal') {
+                    score += 10;
+                    if (foods.filter(f => f.type === 'normal').length <= 1) spawnFood('normal');
+                } else if (foods[i].type === 'big') {
+                    score += 30; 
+                }
+                foods.splice(i, 1);
+                updateScoreUI();
+                if (snakeSpeed > 50) snakeSpeed -= 2;
+                break;
+            }
+        }
+        if (!ate) snake.pop();
+    }
+
+    // ==================== 俄羅斯方塊 核心邏輯 ====================
+    function initTetris() {
+        tetrisMatrix = Array.from({length: rows}, () => Array(cols).fill(0));
+        tetrisDropInterval = 800;
+        spawnTetrisPiece();
+    }
+
+    function spawnTetrisPiece() {
+        const types = 'ILJOZST';
+        const type = types[Math.floor(Math.random() * types.length)];
+        const matrix = TETRIS_SHAPES[type];
+        playerPiece = { matrix: matrix, pos: { x: Math.floor(cols / 2) - Math.floor(matrix[0].length / 2), y: 0 }, type: type };
+        if (collide(tetrisMatrix, playerPiece)) triggerGameOver();
+    }
+
+    function collide(arena, player) {
+        const [m, o] = [player.matrix, player.pos];
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < m[y].length; ++x) {
+                if (m[y][x] !== 0 && (arena[y + o.y] === undefined || arena[y + o.y][x + o.x] === undefined || arena[y + o.y][x + o.x] !== 0)) return true;
+            }
+        }
+        return false;
+    }
+
+    function merge(arena, player) {
+        player.matrix.forEach((row, y) => {
+            row.forEach((value, x) => { if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value; });
+        });
+    }
+
+    function tetrisDrop() {
+        playerPiece.pos.y++;
+        if (collide(tetrisMatrix, playerPiece)) {
+            playerPiece.pos.y--; merge(tetrisMatrix, playerPiece); arenaSweep(); spawnTetrisPiece();
+        }
+        tetrisDropTimer = 0;
+    }
+
+    function tetrisMove(dir) {
+        playerPiece.pos.x += dir;
+        if (collide(tetrisMatrix, playerPiece)) playerPiece.pos.x -= dir;
+    }
+
+    function rotateMatrix(matrix) {
+        for (let y = 0; y < matrix.length; ++y) {
+            for (let x = 0; x < y; ++x) [ matrix[x][y], matrix[y][x] ] = [ matrix[x][y], matrix[y][x] ];
+        }
+        matrix.forEach(row => row.reverse());
+    }
+
+    function playerRotate() {
+        const pos = playerPiece.pos.x; let offset = 1; rotateMatrix(playerPiece.matrix);
+        while (collide(tetrisMatrix, playerPiece)) {
+            playerPiece.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > playerPiece.matrix[0].length) { rotateMatrix(playerPiece.matrix); playerPiece.pos.x = pos; return; }
+        }
+    }
+
+    function arenaSweep() {
+        let rowCount = 1;
+        outer: for (let y = tetrisMatrix.length - 1; y >= 0; --y) {
+            for (let x = 0; x < tetrisMatrix[y].length; ++x) { if (tetrisMatrix[y][x] === 0) continue outer; }
+            const row = tetrisMatrix.splice(y, 1)[0].fill(0); tetrisMatrix.unshift(row); y++;
+            score += rowCount * 100; rowCount *= 2;
+        }
+        updateScoreUI();
+    }
+
+    // ==================== 踩地雷 核心邏輯 ====================
+    function initMines() {
+        minesGrid = [];
+        for (let y = 0; y < rows; y++) {
+            let rowArr = [];
+            for (let x = 0; x < cols; x++) {
+                rowArr.push({ hasMine: false, revealed: false, flagged: false, count: 0, exploded: false });
+            }
+            minesGrid.push(rowArr);
+        }
+        plantMinesRandomly();
+    }
+
+    function plantMinesRandomly() {
+        let planted = 0;
+        while (planted < totalMines) {
+            let rx = Math.floor(Math.random() * cols);
+            let ry = Math.floor(Math.random() * rows);
+            if (!minesGrid[ry][rx].hasMine) {
+                minesGrid[ry][rx].hasMine = true;
+                planted++;
+            }
+        }
+        calculateMineNeighbors();
+    }
+
+    function calculateMineNeighbors() {
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (minesGrid[y][x].hasMine) continue;
+                let count = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        let ny = y + dy, nx = x + dx;
+                        if (ny >= 0 && ny < rows && nx >= 0 && nx < cols) {
+                            if (minesGrid[ny][nx].hasMine) count++;
+                        }
+                    }
+                }
+                minesGrid[y][x].count = count;
+            }
+        }
+    }
+
+    function ensureFirstClickSafe(startX, startY) {
+        if (minesGrid[startY][startX].hasMine || minesGrid[startY][startX].count > 0) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    let ny = startY + dy, nx = startX + dx;
+                    if (ny >= 0 && ny < rows && nx >= 0 && nx < cols) {
+                        minesGrid[ny][nx].hasMine = false;
+                    }
+                }
+            }
+            
+            let currentMines = 0;
+            for(let y=0; y<rows; y++) {
+                for(let x=0; x<cols; x++) { if(minesGrid[y][x].hasMine) currentMines++; }
+            }
+            
+            while (currentMines < totalMines) {
+                let rx = Math.floor(Math.random() * cols);
+                let ry = Math.floor(Math.random() * rows);
+                if (!minesGrid[ry][rx].hasMine && (Math.abs(rx - startX) > 1 || Math.abs(ry - startY) > 1)) {
+                    minesGrid[ry][rx].hasMine = true;
+                    currentMines++;
+                }
+            }
+            calculateMineNeighbors();
+        }
+        firstClickSafe = false;
+    }
+
+    function handleMinesClick(gridX, gridY) {
+        if (gameState !== 'playing' || minesStatus !== 'smile') return;
+        let cell = minesGrid[gridY][gridX];
+        
+        if (isFlagMode) {
+            if (!cell.revealed) {
+                cell.flagged = !cell.flagged;
+                mineCountRemaining += cell.flagged ? -1 : 1;
+                updateMinesScoreUI();
+            }
+        } else {
+            if (cell.flagged || cell.revealed) return;
+            
+            if (firstClickSafe) {
+                ensureFirstClickSafe(gridX, gridY);
+                cell = minesGrid[gridY][gridX];
+            }
+
+            if (cell.hasMine) {
+                cell.exploded = true;
+                minesStatus = 'dead';
+                revealAllMines();
+                draw();
+                setTimeout(() => { triggerGameOver(); }, 600);
+                return;
+            } else {
+                revealMinesCell(gridX, gridY);
+                checkMinesWin();
+            }
+        }
+        draw();
+    }
+
+    function revealMinesCell(x, y) {
+        if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+        let cell = minesGrid[y][x];
+        if (cell.revealed || cell.flagged || cell.hasMine) return;
+        
+        cell.revealed = true;
+
+        if (cell.count === 0) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    revealMinesCell(x + dx, y + dy);
+                }
+            }
+        }
+    }
+
+    function revealAllMines() {
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                let cell = minesGrid[y][x];
+                if (cell.hasMine && !cell.flagged) cell.revealed = true;
+                if (!cell.hasMine && cell.flagged) cell.revealed = false; 
+            }
+        }
+    }
+
+    function checkMinesWin() {
+        let win = true;
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (!minesGrid[y][x].hasMine && !minesGrid[y][x].revealed) { win = false; break; }
+            }
+        }
+        if (win) {
+            minesStatus = 'win';
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) { if (minesGrid[y][x].hasMine) minesGrid[y][x].flagged = true; }
+            }
+            mineCountRemaining = 0;
+            updateMinesScoreUI();
+            
+            score = Math.max(10, 1000 - minesTimeCounter * 2); 
+            gameState = 'gameover';
+            cancelAnimationFrame(gameLoopId);
+            draw();
+            setTimeout(() => {
+                openOverlay('🎉 恭喜破關 !!', `挑戰成功！拆除所有地雷！最終得分：${score} 分`, false, true);
+            }, 400);
+        }
+    }
+
+    // ==================== 畫布繪製與復古風格渲染 ====================
+    function fillRoundRect(x, y, w, h, radius) {
+        if (w < 2 * radius) radius = w / 2;
+        if (h < 2 * radius) radius = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + w, y, x + w, y + h, radius);
+        ctx.arcTo(x + w, y + h, x, y + h, radius);
+        ctx.arcTo(x, y + h, x, y, radius);
+        ctx.arcTo(x, y, x + w, y, radius);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function draw3DBorder(x, y, w, h, thickness, invert = false) {
+        const light = invert ? '#7b7b7b' : '#ffffff';
+        const shadow = invert ? '#ffffff' : '#7b7b7b';
+        
+        ctx.fillStyle = light;
+        ctx.fillRect(x, y, w, thickness); 
+        ctx.fillRect(x, y, thickness, h); 
+        
+        ctx.fillStyle = shadow;
+        ctx.fillRect(x, y + h - thickness, w, thickness); 
+        ctx.fillRect(x + w - thickness, y, thickness, h); 
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (currentGame === 'stairs') {
+            // 背景
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#222';
+            ctx.fillRect(10, 20, canvas.width - 20, canvas.height - 20);
+
+            // 頂部針刺陷阱
+            ctx.fillStyle = '#888';
+            for (let i = 10; i < canvas.width - 10; i += 10) {
+                ctx.beginPath();
+                ctx.moveTo(i, 20);
+                ctx.lineTo(i + 5, 32);
+                ctx.lineTo(i + 10, 20);
+                ctx.fill();
+            }
+
+            // 繪製階梯
+            platforms.forEach(plat => {
+                if (plat.type === 'normal') {
+                    ctx.fillStyle = '#8e44ad'; // 紫色普通台
+                } else if (plat.type === 'spring') {
+                    ctx.fillStyle = '#e67e22'; // 橘色彈簧
+                } else if (plat.type === 'conveyor-l') {
+                    ctx.fillStyle = '#3498db'; // 藍色傳送帶 (左)
+                } else if (plat.type === 'conveyor-r') {
+                    ctx.fillStyle = '#2980b9'; // 深藍傳送帶 (右)
+                } else if (plat.type === 'flip') {
+                    ctx.fillStyle = '#f1c40f'; // 黃色翻轉台
+                } else if (plat.type === 'spikePlat') {
+                    ctx.fillStyle = '#c0392b'; // 紅色帶刺台
+                }
+
+                ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+                
+                // 裝飾細節
+                if (plat.type === 'spikePlat') {
+                    ctx.fillStyle = '#eee';
+                    for(let k = plat.x + 4; k < plat.x + plat.width; k += 8) {
+                        ctx.beginPath();
+                        ctx.moveTo(k, plat.y);
+                        ctx.lineTo(k + 3, plat.y - 4);
+                        ctx.lineTo(k + 6, plat.y);
+                        ctx.fill();
+                    }
+                } else if (plat.type === 'spring') {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(plat.x + plat.width/2 - 6, plat.y - 2, 12, 3);
+                } else if (plat.type === 'conveyor-l') {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText('◀', plat.x + 5, plat.y + 8);
+                } else if (plat.type === 'conveyor-r') {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText('▶', plat.x + plat.width - 15, plat.y + 8);
+                }
+            });
+
+            // 繪製玩家（簡單像素小人）
+            ctx.fillStyle = '#2ecc71';
+            fillRoundRect(player.x, player.y, player.width, player.height, 4);
+            // 眼睛
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player.x + 3, player.y + 4, 2, 2);
+            ctx.fillRect(player.x + player.width - 5, player.y + 4, 2, 2);
+
+            // 繪製畫面上方血條 (HP)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(15, 25, 80, 8);
+            ctx.fillStyle = player.hp > 3 ? '#2ecc71' : '#e74c3c';
+            ctx.fillRect(15, 25, (player.hp / player.maxHp) * 80, 8);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(15, 25, 80, 8);
+        }
+        else if (currentGame === 'snake') {
+            ctx.fillStyle = varFromString('--nokia-screen', '#ffffff'); 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = varFromString('--nokia-pixel', '#000000'); 
+            ctx.lineWidth = 2; 
+            ctx.strokeRect(gridW - 1, gridH - 1, canvas.width - (gridW * 2) + 2, canvas.height - (gridH * 2) + 2);
+
+            foods.forEach(f => {
+                if (f.type === 'normal') {
+                    ctx.fillStyle = varFromString('--nokia-green', '#2ecc71');
+                    ctx.fillRect(f.x * gridW + 3, f.y * gridH + 3, gridW - 6, gridH - 6);
+                } else if (f.type === 'big') {
+                    if (flashToggle) {
+                        ctx.fillStyle = varFromString('--nokia-blue', '#00d2ff'); 
+                        ctx.beginPath();
+                        ctx.arc(f.x * gridW + gridW/2, f.y * gridH + gridH/2, gridW/2 - 1, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+
+            snake.forEach((cell, index) => {
+                ctx.fillStyle = varFromString('--nokia-pixel', '#000000');
+                let sizeOffset = index * 0.5; 
+                if (sizeOffset > gridW / 2 - 2) sizeOffset = gridW / 2 - 2; 
+                let w = gridW - 2 - sizeOffset;
+                let h = gridH - 2 - sizeOffset;
+                let offsetX = cell.x * gridW + 1 + sizeOffset / 2;
+                let offsetY = cell.y * gridH + 1 + sizeOffset / 2;
+                
+                fillRoundRect(offsetX, offsetY, w, h, 6);
+
+                if (index === 0) {
+                    ctx.fillStyle = '#ffffff'; 
+                    let eyeSize = 3;
+                    let eX1 = 0, eY1 = 0, eX2 = 0, eY2 = 0;
+                    if (snakeDir.x === 1) { eX1 = offsetX + w - 5; eY1 = offsetY + 3; eX2 = offsetX + w - 5; eY2 = offsetY + h - 6; } 
+                    else if (snakeDir.x === -1) { eX1 = offsetX + 2; eY1 = offsetY + 3; eX2 = offsetX + 2; eY2 = offsetY + h - 6; } 
+                    else if (snakeDir.y === -1) { eX1 = offsetX + 3; eY1 = offsetY + 2; eX2 = offsetX + w - 6; eY2 = offsetY + 2; } 
+                    else if (snakeDir.y === 1) { eX1 = offsetX + 3; eY1 = offsetY + h - 5; eX2 = offsetX + w - 6; eY2 = offsetY + h - 5; }
+                    ctx.fillRect(eX1, eY1, eyeSize, eyeSize); ctx.fillRect(eX2, eY2, eyeSize, eyeSize);
+                    ctx.fillStyle = '#000000'; ctx.fillRect(eX1 + 1, eY1 + 1, 1, 1); ctx.fillRect(eX2 + 1, eY2 + 1, 1, 1);
+
+                    ctx.fillStyle = '#ff3344'; 
+                    let tongueLen = 4 + Math.sin(tongueCycle * 0.02) * 3; if (tongueLen < 2) tongueLen = 2;
+                    ctx.beginPath();
+                    if (snakeDir.x === 1) { ctx.fillRect(offsetX + w, offsetY + h/2 - 1, tongueLen, 2); } 
+                    else if (snakeDir.x === -1) { ctx.fillRect(offsetX - tongueLen, offsetY + h/2 - 1, tongueLen, 2); } 
+                    else if (snakeDir.y === -1) { ctx.fillRect(offsetX + w/2 - 1, offsetY - tongueLen, 2, tongueLen); } 
+                    else if (snakeDir.y === 1) { ctx.fillRect(offsetX + w/2 - 1, offsetY + h, 2, tongueLen); }
+                }
+            });
+        } 
+        else if (currentGame === 'tetris') {
+            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#111'; ctx.lineWidth = 1;
+            for(let i=0; i<=cols; i++) { ctx.beginPath(); ctx.moveTo(i*gridW, 0); ctx.lineTo(i*gridW, canvas.height); ctx.stroke(); }
+            for(let j=0; j<=rows; j++) { ctx.beginPath(); ctx.moveTo(0, j*gridH); ctx.lineTo(canvas.width, j*gridH); ctx.stroke(); }
+
+            tetrisMatrix.forEach((row, y) => {
+                row.forEach((value, x) => { if (value !== 0) { ctx.fillStyle = TETRIS_COLORS[value]; ctx.fillRect(x * gridW + 1, y * gridH + 1, gridW - 2, gridH - 2); } });
+            });
+            if (playerPiece) {
+                playerPiece.matrix.forEach((row, y) => {
+                    row.forEach((value, x) => { if (value !== 0) { ctx.fillStyle = TETRIS_COLORS[value]; ctx.fillRect((x + playerPiece.pos.x) * gridW + 1, (y + playerPiece.pos.y) * gridH + 1, gridW - 2, gridH - 2); } });
+                });
+            }
+        }
+        else if (currentGame === 'mines') {
+            ctx.fillStyle = '#bdbdbd'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            draw3DBorder(0, 0, canvas.width, canvas.height, 3, false);
+            draw3DBorder(6, 6, canvas.width - 12, 44, 2, true);
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(14, 12, 40, 32);
+            ctx.fillStyle = '#ff0000';
+            ctx.font = '22px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(Math.max(0, mineCountRemaining)).padStart(3, '0'), 34, 29);
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(canvas.width - 54, 12, 40, 32);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillText(String(Math.floor(minesTimeCounter)).padStart(3, '0'), canvas.width - 34, 29);
+
+            let faceX = canvas.width / 2 - 14;
+            let faceY = 14;
+            ctx.fillStyle = '#bdbdbd';
+            ctx.fillRect(faceX, faceY, 28, 28);
+            draw3DBorder(faceX, faceY, 28, 28, 2, false);
+            
+            ctx.font = '16px sans-serif';
+            let emo = '🙂';
+            if (minesStatus === 'dead') emo = '😵';
+            if (minesStatus === 'win') emo = '😎';
+            ctx.fillText(emo, faceX + 14, faceY + 15);
+
+            let boardX = 6;
+            let boardY = 56;
+            draw3DBorder(boardX, boardY, canvas.width - 12, canvas.height - 62, 3, true);
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    let cell = minesGrid[y][x];
+                    let cx = boardX + 3 + x * gridW;
+                    let cy = boardY + 3 + y * gridH;
+
+                    if (cell.revealed) {
+                        if (cell.hasMine) {
+                            ctx.fillStyle = cell.exploded ? '#ff0000' : '#bdbdbd';
+                            ctx.fillRect(cx, cy, gridW, gridH);
+                            ctx.strokeStyle = '#7b7b7b';
+                            ctx.strokeRect(cx, cy, gridW, gridH);
+                            ctx.fillStyle = '#000';
+                            ctx.font = '12px sans-serif';
+                            ctx.fillText('💣', cx + gridW/2, cy + gridH/2 + 1);
+                        } else {
+                            ctx.fillStyle = '#bdbdbd';
+                            ctx.fillRect(cx, cy, gridW, gridH);
+                            ctx.strokeStyle = '#7b7b7b';
+                            ctx.strokeRect(cx, cy, gridW, gridH);
+                            
+                            if (cell.count > 0) {
+                                ctx.fillStyle = MINE_NUM_COLORS[cell.count - 1];
+                                ctx.font = 'bold 14px Geneva, Arial, sans-serif';
+                                ctx.fillText(cell.count, cx + gridW/2, cy + gridH/2 + 1);
+                            }
+                        }
+                    } else {
+                        ctx.fillStyle = '#bdbdbd';
+                        ctx.fillRect(cx, cy, gridW, gridH);
+                        draw3DBorder(cx, cy, gridW, gridH, 2, false);
+
+                        if (cell.flagged) {
+                            ctx.fillStyle = '#ff0000';
+                            ctx.font = '11px sans-serif';
+                            ctx.fillText('🚩', cx + gridW/2, cy + gridH/2 + 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function varFromString(varName, fallback) {
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || fallback;
+    }
+
+    function updateScoreUI() { 
+        if(currentGame === 'stairs') {
+            liveScore.innerText = String(score).padStart(3, '0') + " 層";
+        } else {
+            liveScore.innerText = String(score).padStart(4, '0'); 
+        }
+    }
+    function updateMinesScoreUI() { liveScore.innerText = `雷:${Math.max(0, mineCountRemaining)} 時:${Math.floor(minesTimeCounter)}`; }
+
+    // ==================== 遊戲核心主循環計時器 ====================
+    function gameLoop(time = 0) {
+        if (gameState !== 'playing') return;
+        const deltaTime = time - lastTime; lastTime = time;
+
+        if (currentGame === 'stairs') {
+            updateStairs();
+            draw();
+        } else if (currentGame === 'snake') {
+            foodSpawn10sTimer += deltaTime;
+            if (foodSpawn10sTimer >= 10000) { spawnFood('normal'); foodSpawn10sTimer = 0; }
+            foodSpawn30sTimer += deltaTime;
+            if (foodSpawn30sTimer >= 30000) { spawnFood('big'); foodSpawn30sTimer = 0; }
+            flashTimer += deltaTime;
+            if (flashTimer >= 150) { flashToggle = !flashToggle; flashTimer = 0; }
+            tongueCycle += deltaTime; 
+            for (let i = foods.length - 1; i >= 0; i--) {
+                if (foods[i].type === 'big') {
+                    foods[i].timeLeft -= deltaTime;
+                    if (foods[i].timeLeft <= 0) foods.splice(i, 1);
+                }
+            }
+            snakeMoveTimer += deltaTime; 
+            if (snakeMoveTimer >= snakeSpeed) { updateSnake(deltaTime); snakeMoveTimer = 0; }
+            draw();
+        } else if (currentGame === 'tetris') {
+            tetrisDropTimer += deltaTime; 
+            if (tetrisDropTimer > tetrisDropInterval) { tetrisDrop(); }
+            draw();
+        } else if (currentGame === 'mines') {
+            if (minesStatus === 'smile') {
+                minesTimerAccumulator += deltaTime;
+                if (minesTimerAccumulator >= 1000) {
+                    minesTimeCounter++;
+                    if(minesTimeCounter > 999) minesTimeCounter = 999; 
+                    minesTimerAccumulator -= 1000;
+                    updateMinesScoreUI();
+                }
+            }
+            draw();
+        }
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    // ==================== 控制與事件輸入管理 ====================
+    function handleInput(action, isPress = true) {
+        if (gameState !== 'playing') return;
+        
+        if (currentGame === 'stairs') {
+            if (action === 'LEFT') keyState.left = isPress;
+            if (action === 'RIGHT') keyState.right = isPress;
+        } else if (isPress) { // 以下為單次觸發的遊戲
+            if (currentGame === 'snake') {
+                if (action === 'UP' && snakeDir.y === 0) nextDir = { x: 0, y: -1 };
+                if (action === 'DOWN' && snakeDir.y === 0) nextDir = { x: 0, y: 1 };
+                if (action === 'LEFT' && snakeDir.x === 0) nextDir = { x: -1, y: 0 };
+                if (action === 'RIGHT' && snakeDir.x === 0) nextDir = { x: 1, y: 0 };
+            } else if (currentGame === 'tetris') {
+                if (action === 'LEFT') tetrisMove(-1);
+                if (action === 'RIGHT') tetrisMove(1);
+                if (action === 'DOWN') tetrisDrop();
+                if (action === 'UP' || action === 'ROTATE') playerRotate();
+            } else if (currentGame === 'mines') {
+                if (action === 'ROTATE') { 
+                    isFlagMode = !isFlagMode;
+                    if (isFlagMode) actionCircleBtn.classList.add('flag-active');
+                    else actionCircleBtn.classList.remove('flag-active');
+                }
+            }
+        }
+        draw();
+    }
+
+    // 點擊畫布事件（已加入自動縮放的比例尺換算）
+    canvas.addEventListener('click', e => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const canvasX = clickX * scaleX;
+        const canvasY = clickY * scaleY;
+
+        if (currentGame === 'mines') {
+            let faceX = canvas.width / 2 - 14;
+            if (canvasX >= faceX && canvasX <= faceX + 28 && canvasY >= 14 && canvasY <= 42) {
+                initLayout();
+                return;
+            }
+
+            let boardX = 6 + 3;
+            let boardY = 56 + 3;
+            if (canvasX >= boardX && canvasX < boardX + cols * gridW && canvasY >= boardY && canvasY < boardY + rows * gridH) {
+                const gridX = Math.floor((canvasX - boardX) / gridW);
+                const gridY = Math.floor((canvasY - boardY) / gridH);
+                if (gridX >= 0 && gridX < cols && gridY >= 0 && gridY < rows) {
+                    handleMinesClick(gridX, gridY);
+                }
+            }
+        }
+    });
+
+    window.addEventListener('keydown', e => {
+        const keys = { 'ArrowUp': 'UP', 'ArrowDown': 'DOWN', 'ArrowLeft': 'LEFT', 'ArrowRight': 'RIGHT', 'w':'UP', 's':'DOWN', 'a':'LEFT', 'd':'RIGHT' };
+        if (keys[e.key]) { e.preventDefault(); handleInput(keys[e.key], true); }
+        if (e.key === ' ' || e.key === 'f') { e.preventDefault(); handleInput('ROTATE', true); } 
+    });
+
+    window.addEventListener('keyup', e => {
+        const keys = { 'ArrowLeft': 'LEFT', 'ArrowRight': 'RIGHT', 'a':'LEFT', 'd':'RIGHT' };
+        if (keys[e.key]) { e.preventDefault(); handleInput(keys[e.key], false); }
+    });
+
+    // 行動端按鈕事件監聽（支援下樓梯長按）
+    document.querySelectorAll('.pad-arrow').forEach(btn => {
+        const dir = btn.getAttribute('data-dir');
+        btn.addEventListener('mousedown', () => handleInput(dir, true));
+        btn.addEventListener('mouseup', () => handleInput(dir, false));
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(dir, true); });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); handleInput(dir, false); });
+    });
+    
+    actionCircleBtn.addEventListener('click', () => { handleInput('ROTATE', true); });
+
+    pauseGameBtn.addEventListener('click', () => {
+        if (gameState === 'playing') {
+            gameState = 'paused'; cancelAnimationFrame(gameLoopId); openOverlay('PAUSED', '遊戲暫停中', true, false);
+        } else if (gameState === 'paused') {
+            gameState = 'playing'; screenOverlay.style.display = 'none'; lastTime = performance.now(); gameLoopId = requestAnimationFrame(gameLoop);
+        }
+    });
+
+    function openOverlay(title, desc, showButtons = true, showNameForm = false) {
+        overlayTitle.innerText = title; overlayDesc.innerText = desc; screenOverlay.style.display = 'flex';
+        leaderboardSection.style.display = showNameForm ? 'none' : 'block';
+        nameFormSection.style.display = showNameForm ? 'block' : 'none';
+        actionButtonGroup.style.display = showButtons ? 'flex' : 'none';
+        if (!showNameForm) renderLeaderboardUI(currentGame);
+    }
+
+    function triggerGameOver() {
+        gameState = 'gameover'; cancelAnimationFrame(gameLoopId);
+        openOverlay('GAME OVER', `最終得分：${score} ${currentGame==='stairs'?'層':'分'}。請登陸前十排行榜：`, false, true);
+    }
+
+    saveScoreBtn.addEventListener('click', () => {
+        const name = playerNameInput.value.trim();
+        saveToLeaderboard(currentGame, name, score);
+        playerNameInput.value = '';
+        gameState = 'lobby';
+        openOverlay('紀錄已儲存', '你想直接再玩一局，還是返回大廳換遊戲？', true, false);
+        closeOverlayBtn.style.display = 'inline-block';
+        primaryOverlayBtn.innerText = '再玩一局';
+    });
+
+    primaryOverlayBtn.addEventListener('click', () => {
+        gameState = 'playing'; screenOverlay.style.display = 'none'; initLayout();
+        lastTime = performance.now(); gameLoopId = requestAnimationFrame(gameLoop);
+    });
+
+    closeOverlayBtn.addEventListener('click', () => {
+        gameState = 'lobby'; closeOverlayBtn.style.display = 'none'; primaryOverlayBtn.innerText = '開始遊玩';
+        openOverlay('READY', '已回到控制大廳，請選擇遊戲。', true, false);
+    });
+
+    lobbyStartBtn.addEventListener('click', () => {
+        initLayout(); gameState = 'playing'; screenOverlay.style.display = 'none';
+        lastTime = performance.now(); gameLoopId = requestAnimationFrame(gameLoop);
+    });
+    
+    gameSelect.addEventListener('change', () => { initLayout(); openOverlay('READY', '切換遊戲完成，點擊開始。', true, false); });
+    levelSelect.addEventListener('change', () => { initLayout(); draw(); });
+
+    initLayout();
+    openOverlay('WELCOME', '遊戲機已準備就緒', true, false);
+
+// ==========================================
+// 1. 載入頁首（融合「更多」自動收納邏輯）
+// ==========================================
+fetch('/header.html')
+    .then(response => response.text())
+    .then(data => {
+        const container = document.getElementById('header-container');
+        if (container) {
+            container.innerHTML = data;
+            setupHeaderMenu(); // 🛠️ 載入完成後，啟動選單核心與自動收納功能
+        }
+    })
+    .catch(err => console.error("頁首載入失敗:", err));
+
+// ==========================================
+// 2. 載入頁尾並處理年份（維持原樣）
+// ==========================================
+fetch('/footer.html')
+    .then(response => response.text())
+    .then(data => {
+        const footerContainer = document.getElementById('global-footer');
+        if (footerContainer) {
+            footerContainer.innerHTML = data;
+            
+            // 頁尾載入完成後，更新年份
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        }
+    })
+    .catch(err => console.error("頁尾載入失敗:", err));
+
+// ==========================================
+// 3. 定義 Header 選單邏輯（升級版演算法）
+// ==========================================
+function setupHeaderMenu() {
+    const toggleButton = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.header-nav-links');
+
+    // --- (A) 手機版漢堡選單開關邏輯 ---
+    if (toggleButton && navLinks) {
+        // 使用 onclick 確保不重複綁定事件
+        toggleButton.onclick = function(e) {
+            navLinks.classList.toggle('active');
+            e.stopPropagation();
+        };
+
+        document.onclick = function(e) {
+            if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && e.target !== toggleButton) {
+                navLinks.classList.remove('active');
+            }
+        };
+    }
+
+    // --- (B) 智能偵測寬度：過長項目收進「更多」演算法 ---
+    const mainNav = document.querySelector('.header-nav-links'); // 抓取主導覽列容器
+    if (!mainNav) return;
+
+    // 1. 動態建立「更多」下拉選單結構（如果 header.html 裡面還沒有的話，JS 會自動補上）
+    let moreMenu = document.getElementById('more-menu');
+    let overflowLinks = document.getElementById('overflow-links');
+    
+    if (!moreMenu) {
+        moreMenu = document.createElement('div');
+        moreMenu.id = 'more-menu';
+        moreMenu.className = 'more-dropdown';
+        moreMenu.innerHTML = `
+            <a href="#" class="more-toggle" onclick="return false;">更多 ▾</a>
+            <div class="more-dropdown-content" id="overflow-links"></div>
+        `;
+        mainNav.appendChild(moreMenu);
+        overflowLinks = document.getElementById('overflow-links');
+    }
+
+    // 2. 找出所有原本的連結項目（排除掉「更多」按鈕本身）
+    // 💡 這裡會抓取 nav 裡面所有的 <a> 標籤作為選單項目
+    const allLinks = Array.from(mainNav.children).filter(el => el !== moreMenu && el.tagName === 'A');
+
+    // 3. 核心計算函式
+    function adjustNavItems() {
+        // 📱 如果是手機版（寬度 <= 768px），停止收納演算法，將所有項目還原給漢堡選單垂直排列
+        if (window.innerWidth <= 768) {
+            allLinks.forEach(item => mainNav.insertBefore(item, moreMenu));
+            moreMenu.style.display = 'none';
+            return;
+        }
+
+        // 💻 電腦版自動收納計算
+        moreMenu.style.display = 'none'; // 先隱藏「更多」
+        overflowLinks.innerHTML = '';    // 清空收納盒
+        allLinks.forEach(item => mainNav.insertBefore(item, moreMenu)); // 先把所有項目放回主列以便測量真實寬度
+
+        let navContainerWidth = mainNav.offsetWidth;
+        let totalWidth = 0;
+        let isOverflow = false;
+        const moreBtnWidth = 90; // 預留給「更多 ▾」按鈕出現時的寬度緩衝
+
+        for (let i = 0; i < allLinks.length; i++) {
+            const item = allLinks[i];
+
+            // 如果前面已經爆滿了，後面的項目直接丟進「更多」收納盒
+            if (isOverflow) {
+                overflowLinks.appendChild(item);
+                continue;
+            }
+
+            // 累加當前項目的寬度（包含外距）
+            const itemStyle = window.getComputedStyle(item);
+            const marginLeft = parseFloat(itemStyle.marginLeft) || 0;
+            const marginRight = parseFloat(itemStyle.marginRight) || 0;
+            totalWidth += item.offsetWidth + marginLeft + marginRight;
+
+            // 💡 關鍵判斷：如果目前的總寬度加上「更多」按鈕寬度超過了導覽列總寬
+            if (totalWidth + moreBtnWidth > navContainerWidth) {
+                isOverflow = true;
+                moreMenu.style.display = 'inline-block'; // 顯現「更多」
+                overflowLinks.appendChild(item);         // 將當前這個放進收納盒
+            }
+        }
+    }
+
+    // 4. 初始化執行，並綁定視窗縮放事件
+    adjustNavItems();
+    window.removeEventListener('resize', adjustNavItems); // 防重複綁定
+    window.addEventListener('resize', adjustNavItems);
+=======
 /* ==========================================================================
    4. JavaScript 遊戲核心邏輯與 RWD 座標換算
    ========================================================================== */
@@ -402,6 +1569,7 @@ function getAudio() {
 	if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 	if (audioCtx.state === "suspended") audioCtx.resume();
 	return audioCtx;
+>>>>>>> 36c07030ed5ee46aeb8080c7d16b98c31a5ac6a5
 }
 function mkNoise(ctx, dur) {
 	const b = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate); const d = b.getChannelData(0);

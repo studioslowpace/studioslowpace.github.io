@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+
+        *, *::before, *::after {
+    box-sizing: border-box !important;
+}
         /* --- 全局變數與基礎設定 --- */
         :root {
             --bg-main: #f9fafb;
@@ -77,6 +81,8 @@
             max-width: 1000px;
             margin: 0 auto;
             padding: 0 16px;
+            /* 關鍵：讓 padding 內縮，不撐開寬度 */
+    box-sizing: border-box;
         }
         .hidden { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -98,6 +104,7 @@
             align-items: center;
             justify-content: space-between;
             position: relative;
+            
         }
         
         /* 導覽列靠右的 Logo 與名稱 */
@@ -415,6 +422,7 @@
 
         /* --- 響應式微調 --- */
         @media (max-width: 768px) {
+
             .carousel-desktop { display: none; }
             .carousel-mobile { display: flex; }
             .article-view { padding: 20px; }

@@ -35,6 +35,11 @@
       background-color: #70b39b; 
     }
     
+body.admin-mode-active #clubGlobalAddBlock,
+body.admin-mode-active .club-global-add-wrap {
+    display: flex !important;
+}
+
     /* 主內容容器限制寬度並置中 */
     .main-container {
       line-height: 1.8;
@@ -491,31 +496,37 @@
       if (alertEl) alertEl.style.display = 'none';
     }
 
-    // ==========================================
-    // 🌐 增強：動態引入外部 Header 與智慧權限同步
-    // ==========================================
-    async function loadExternalHeader() {
-      try {
-        const placeholder = document.getElementById('header-placeholder');
-        if (!placeholder) return; // 確保頁面上有預留盛裝 header 的容器
+// ==========================================
+// 🌐 修正版：動態引入外部 Header 與智慧權限同步
+// ==========================================
+async function loadExternalHeader() {
+  try {
+    // 💡 關鍵修正：將 'header-placeholder' 改成你 HTML 裡實際存在的 'header-container'
+    const placeholder = document.getElementById('header-container');
+    if (!placeholder) return; 
 
-        const response = await fetch('header.html');
-        if (!response.ok) throw new Error('無法尋找到外部 header.html 檔案');
-        
-        const htmlText = await response.text();
-        placeholder.innerHTML = htmlText;
-        
-        // 抓取 header 內原創的 auth-btn 節點並綁定安全驗證監聽器
-        const authBtn = document.getElementById('auth-btn');
-        if (authBtn) {
-          authBtn.addEventListener('click', handleHeaderAuthAction);
-        }
-        
-        await syncAdminUI();
-      } catch (err) {
-        console.error('載入外部 Header 失敗:', err);
-      }
+    const response = await fetch('/header.html');
+    if (!response.ok) throw new Error('無法尋找到外部 header.html 檔案');
+    
+    const htmlText = await response.text();
+    placeholder.innerHTML = htmlText;
+    
+    // 抓取 header 內原創的 auth-btn 節點並綁定安全驗證監聽器
+    const authBtn = document.getElementById('auth-btn');
+    if (authBtn) {
+      authBtn.addEventListener('click', handleHeaderAuthAction);
     }
+    
+    // 確保這裡有成功執行權限同步
+    await syncAdminUI();
+    
+    // 🛠️ 順便在這裡啟動選單核心與自動收納功能
+    setupHeaderMenu();
+    
+  } catch (err) {
+    console.error('載入外部 Header 失敗:', err);
+  }
+}
 
     // 同步全站管理員權限 UI 狀態
     async function syncAdminUI() {
@@ -542,51 +553,64 @@
         }
       }
     }
+// 在這函式外層（或最上方全域）確保有這個狀態鎖
+let isProcessingAuth = false;
 
-    // Header 登入按鈕專職行為：安全登入與登出驗證切換
-    async function handleHeaderAuthAction() {
-      if (!window.client || typeof window.client.auth === 'undefined') return;
-      
-      const { data: { session } } = await window.client.auth.getSession();
-      
-      if (session) {
-        // 狀態 A：已登入 -> 執行安全登出
-        if (confirm('您目前已是管理員身份。\n是否要確定登出管理員模式？')) {
-          try {
-            await window.client.auth.signOut();
-          } catch (err) {
-            console.error("Supabase 登出失敗", err);
-          }
-          // 清理潛留的 Token 殘留
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && key.includes('supabase.auth.token')) {
-              localStorage.removeItem(key);
-            }
-          }
-          window.club_isAdminMode = false;
-          alert('已安全登出管理員模式');
-          window.location.reload(true);
-        }
-      } else {
-        // 狀態 B：未登入 -> 彈出視窗請求 Supabase 帳密驗證
-        const adminId = prompt("請輸入管理員 ID (例如: admin):");
-        const password = prompt("請輸入密碼:");
-        if (adminId && password) {
-          const formattedEmail = `${adminId.trim()}@studio.local`;
-          const { error } = await window.client.auth.signInWithPassword({ 
-            email: formattedEmail, 
-            password: password 
-          });
-          if (error) {
-            showAlert("❌ 驗證失敗：" + error.message);
-          } else {
-            showAlert("🟢 管理員驗證成功！");
-            window.location.reload(true);
-          }
+async function handleHeaderAuthAction() {
+  if (!window.client || typeof window.client.auth === 'undefined') return;
+  
+  // 💡 檢查是否已經有 prompt 視窗開啟了，如果是，直接跳出不重複執行
+  if (isProcessingAuth) return; 
+
+  const { data: { session } } = await window.client.auth.getSession();
+  
+  if (session) {
+    // 狀態 A：已登入 -> 執行安全登出
+    if (confirm('您目前已是管理員身份。\n是否要確定登出管理員模式？')) {
+      try {
+        await window.client.auth.signOut();
+      } catch (err) {
+        console.error("Supabase 登出失敗", err);
+      }
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.includes('supabase.auth.token')) {
+          localStorage.removeItem(key);
         }
       }
+      window.club_isAdminMode = false;
+      alert('已安全登出管理員模式');
+      window.location.reload(true);
     }
+  } else {
+    // 狀態 B：未登入 -> 彈出視窗請求 Supabase 帳密驗證
+    try {
+      isProcessingAuth = true; // 🔒 鎖定，防止第二個 prompt 彈出
+      
+      const adminId = prompt("請輸入管理員 ID (例如: admin):");
+      if (adminId === null) return; // 如果點取消，直接結束
+      
+      const password = prompt("請輸入密碼:");
+      if (password === null) return; // 如果點取消，直接結束
+      
+      if (adminId && password) {
+        const formattedEmail = `${adminId.trim()}@studio.local`;
+        const { error } = await window.client.auth.signInWithPassword({ 
+          email: formattedEmail, 
+          password: password 
+        });
+        if (error) {
+          showAlert("❌ 驗證失敗：" + error.message);
+        } else {
+          showAlert("🟢 管理員驗證成功！");
+          window.location.reload(true);
+        }
+      }
+    } finally {
+      isProcessingAuth = false; // 🔓 解鎖
+    }
+  }
+}
 
     // ==========================================
     // 8. 資料讀取與動態渲染 (關鍵：逆向排序控制)
@@ -873,19 +897,6 @@
       }
     }
 
-    // ==========================================
-// 載入頁首並處理年份（維持原樣）
-// ==========================================  
-fetch('/header.html')
-    .then(response => response.text())
-    .then(data => {
-        const container = document.getElementById('header-container');
-        if (container) {
-            container.innerHTML = data;
-            setupHeaderMenu(); // 🛠️ 載入完成後，啟動選單核心與自動收納功能
-        }
-    })
-    .catch(err => console.error("頁首載入失敗:", err));
 
     // ==========================================================================
     // 【7. Header 智慧導覽選單演算法】
