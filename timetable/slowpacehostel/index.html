@@ -62,7 +62,7 @@
             display: flex; align-items: center; gap: 15px; justify-content: flex-end; flex-shrink: 0; 
         }
         .title-text-group { text-align: right; }
-        .title-area h1 { margin: 0 12px 8px 0; font-size: 48px; color: var(--danger-red); letter-spacing: 2px; font-weight: bold; }
+        .title-area h1 { margin: 0 12px 8px 0; font-size: 48px; color: #4EC100; letter-spacing: 2px; font-weight: bold; }
         
         .logo-btn {
             height: 60px; width: auto; object-fit: contain; cursor: pointer; transition: all 0.3s ease; user-select: none; border: 2px solid transparent; border-radius: 4px;
@@ -361,7 +361,7 @@
             <div id="legend-list" class="legend-box"></div>
 
             <div class="title-area">
-            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="/images/logo-small2.png" alt="客舍Logo" oncontextmenu="return false;" ondragstart="return false;">
+            <img class="logo-btn" id="logo-trigger" onclick="toggleAdmin()" src="/images/logo-small2.png" alt="客棧Logo" oncontextmenu="return false;" ondragstart="return false;">
             <div class="title-text-group">
                 <h1>
     客棧時間表
@@ -1125,7 +1125,7 @@ window.exportEventImage = function() {
             const downloadLink = document.createElement('a');
             downloadLink.style.display = 'none';
             downloadLink.href = dataURL;
-            downloadLink.download = `客舍時間表-${monthName}-1080x1350.png`;
+            downloadLink.download = `客棧時間表-${monthName}-1080x1350.png`;
             
             document.body.appendChild(downloadLink);
             downloadLink.click();
