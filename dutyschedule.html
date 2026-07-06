@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多功能雲端排班管理系統 v8</title>
+    <title>多功能雲端排班管理系統 v10</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -17,10 +17,10 @@
             --bg: #e6f2ff; 
             
             /* 🎨 狀態與排班類型顏色定義 */
-            --available-color: #e8f5e9;  /* 🚀 開放中改為：淺綠 */
+            --available-color: #fffde7;  /* 🚀 可選當值時間：轉淺黃 */
             --type-duty: #ffebee;        /* 當值：淺紅 */
             --type-event: #f3e5f5;       /* 活動：淺紫 */
-            --type-private: #fffde7;     /* 私人：淺黃 */
+            --type-private: #f5f5f5;     /* 🚀 私人：轉淺灰 */
         }
 
         body.theme-inn {
@@ -37,6 +37,7 @@
             margin: 0;
             padding: 10px;
             user-select: none;
+            -webkit-user-select: none;
             transition: background-color 0.3s ease;
         }
 
@@ -121,29 +122,40 @@
         .week-info { font-weight: bold; color: var(--primary); font-size: 16px; order: 1; }
         .nav-buttons { display: flex; gap: 8px; order: 2; }
         
-        @media (max-width: 576px) {
+        @media (max-width: 768px) {
             .table-nav { flex-direction: column; align-items: center; }
-            .week-info { order: 1; margin-bottom: 5px; font-size: 14px; text-align: center; }
+            .week-info { order: 1; margin-bottom: 5px; font-size: 13px; text-align: center; }
             .nav-buttons { order: 2; width: 100%; }
-            .nav-buttons button { flex: 1; }
+            .nav-buttons button { flex: 1; padding: 12px; font-size: 13px; }
         }
 
         #capture-area { background: var(--white); padding: 5px; }
         .responsive-table { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 750px; }
-        th, td { border: 1px solid var(--border); padding: 10px 4px; text-align: center; font-size: 13px; }
-        th { background: #f2f6fc; color: #333; font-weight: bold; font-size: 16px; } 
-        .time-col { width: 90px; background: #fafafa; font-weight: bold; font-size: 13px; }
-
-        .slot { height: 42px; transition: 0.1s; background-color: #ffffff; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 100%; }
         
-        /* 🚀 狀態與排班色彩樣式 */
-        .slot.available { background-color: var(--available-color) !important; color: #2e7d32; font-weight: normal; font-size: 11px; }
+        /* 🚀 3. 電腦模式預設格仔內的字大一點 */
+        th, td { border: 1px solid var(--border); padding: 10px 2px; text-align: center; font-size: 15px; font-weight: 500; word-break: break-all; }
+        th { background: #f2f6fc; color: #333; font-weight: bold; font-size: 16px; } 
+        .time-col { width: 95px; background: #fafafa; font-weight: bold; font-size: 13px; }
+
+        @media (max-width: 768px) {
+            th, td { font-size: 13px; font-weight: normal; }
+            th { font-size: 14px; font-weight: bold; }
+            .time-col { font-size: 12px; }
+        }
+
+        .slot { height: 44px; transition: 0.1s; background-color: #ffffff; cursor: pointer; touch-action: none; }
+        
+        .slot.available { background-color: var(--available-color) !important; color: #f57f17; font-size: 12px; }
         .slot.occ-duty { background-color: var(--type-duty) !important; color: #c62828; font-weight: bold; }
         .slot.occ-event { background-color: var(--type-event) !important; color: #6a1b9a; font-weight: bold; }
-        .slot.occ-private { background-color: var(--type-private) !important; color: #f57f17; font-weight: bold; }
+        .slot.occ-private { background-color: var(--type-private) !important; color: #616161; font-weight: bold; }
         
+        @media (max-width: 768px) {
+            .slot.available { font-size: 11px; }
+        }
+
         .slot.current-selected { outline: 3px solid #409eff; outline-offset: -3px; background-color: #e1f0fe !important; }
         .slot.highlighted { background-color: var(--accent) !important; color: #000; font-weight: bold; }
         .slot.dimmed { opacity: 0.25; }
@@ -152,7 +164,6 @@
         .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .card h3 { margin-top: 0; font-size: 16px; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 12px; }
 
-        /* 🚀 圖示說明的清單樣式 */
         .legend-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
         .legend-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; }
 
@@ -208,8 +219,8 @@
             <div class="table-nav">
                 <div class="week-info" id="week-display">連線中...</div>
                 <div class="nav-buttons">
-                    <button onclick="changeWeek(-1)">◀ 上一週</button>
-                    <button onclick="changeWeek(1)">下一週 ▶</button>
+                    <button id="btn-nav-prev" onclick="navigateTime(-1)">◀ 上一週</button>
+                    <button id="btn-nav-next" onclick="navigateTime(1)">下一週 ▶</button>
                 </div>
             </div>
             <div id="capture-area">
@@ -226,17 +237,17 @@
             <div class="card" id="legend-card">
                 <h3>🎨 排班類別與狀態說明</h3>
                 <ul class="legend-list">
-                    <li class="legend-item" style="background-color: var(--available-color); color: #2e7d32;">🟢 可選當值時間</li>
+                    <li class="legend-item" style="background-color: var(--available-color); color: #f57f17;">🟡 可選當值時間</li>
                     <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值 (排班)</li>
                     <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動 (包場/特別)</li>
-                    <li class="legend-item" style="background-color: var(--type-private); color: #f57f17;">🔒 私人 (不開放)</li>
+                    <li class="legend-item" style="background-color: var(--type-private); color: #616161;">🔒 私人 (不開放)</li>
                 </ul>
             </div>
 
             <div class="card panel-only" id="input-panel">
                 <h3>✏️ 編輯排班資料</h3>
                 <div class="input-group">
-                    <label id="selected-slot-label">請點選排班格子 (支援多選)...</label>
+                    <label id="selected-slot-label">請點選或滑動多選排班格子...</label>
                     <div class="input-row">
                         <input type="text" id="user-name-input" placeholder="請輸入名字..." disabled>
                         <select id="schedule-type-select" disabled>
@@ -248,7 +259,7 @@
                     <div class="input-row">
                         <button class="btn-primary" id="btn-save-data" onclick="saveMultiSlotData()" style="width: 100%;" disabled>儲存</button>
                     </div>
-                    <button class="btn-warn manager-only" id="btn-set-available" onclick="setMultiSlotAvailable()" style="width: 100%;">設為可選當值時間 (🟢)</button>
+                    <button class="btn-warn manager-only" id="btn-set-available" onclick="setMultiSlotAvailable()" style="width: 100%;">設為可選當值時間 (🟡)</button>
                     <button class="btn-danger" id="btn-clear-slot" onclick="clearMultiSlotData()" style="width: 100%;" disabled>清除所選格子</button>
                 </div>
             </div>
@@ -290,23 +301,58 @@
     let dbMonths = [];
     let cachedSchedule = {}; 
     let currentMonth = "";
-    let currentWeekOffset = 0;
-    let activeFilterUser = null;
     
+    let currentWeekOffset = 0; 
+    let mobileDayOffset = 0;   
+    let isMobileView = false;  
+    
+    let activeFilterUser = null;
     let selectedKeys = []; 
     let pendingTargetRole = ""; 
     let currentLocation = "舍"; 
+
+    let isDragging = false;
+
+    function checkIsMobile() {
+        isMobileView = window.innerWidth <= 768;
+        if (!isMobileView) {
+            mobileDayOffset = 0;
+        }
+    }
 
     function getTimeSlotsForCurrentLocation() {
         const slots = [];
         const startHour = (currentLocation === '舍') ? 9 : 13; 
         for(let i = startHour; i <= 22; i++) {
-            slots.push(`${i}:00-${i+1}:00`);
+            const currentStr = i < 10 ? `0${i}:00` : `${i}:00`;
+            const nextStr = (i+1) < 10 ? `0${i+1}:00` : `${i+1}:00`;
+            slots.push(`${currentStr}-${nextStr}`);
         }
         return slots;
     }
 
+    // 🚀 4. 日期格式去零轉換函式（2026-06-28 轉為 28/6）
+    function formatCleanDate(dateStr) {
+        if(!dateStr) return "";
+        const parts = dateStr.split('-');
+        if(parts.length < 3) return dateStr;
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        return `${day}/${month}`;
+    }
+
     async function initSystem() {
+        checkIsMobile();
+        window.addEventListener('resize', () => {
+            const oldMode = isMobileView;
+            checkIsMobile();
+            if(oldMode !== isMobileView) {
+                renderTable();
+            }
+        });
+
+        initDragSelection();
+
         document.getElementById('week-display').innerText = "雲端同步中...";
         try {
             let { data: configData } = await client.from('config').select('*');
@@ -334,6 +380,27 @@
         } catch (err) {
             console.error(err);
         }
+    }
+
+    function initDragSelection() {
+        const startDrag = () => { if(currentRole !== 'guest') isDragging = true; };
+        const endDrag = () => { isDragging = false; };
+
+        window.addEventListener('mousedown', startDrag);
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchstart', startDrag);
+        window.addEventListener('touchend', endDrag);
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (elem && elem.classList.contains('slot')) {
+                const key = elem.getAttribute('data-key');
+                const rawName = elem.getAttribute('data-raw');
+                processSelectAction(elem, key, rawName);
+            }
+        });
     }
 
     function toggleLocation() {
@@ -397,7 +464,7 @@
         } else if(pendingTargetRole === 'inn_user' && pass === pwdDb.inn_user) { 
             currentRole = "inn_user";
             executeSwitch('棧'); 
-            alert("🪵 歡迎客棧人登入！(已鎖定空間客棧自由填寫)");
+            alert("🪵 歡迎客棧人登入！(已鎖定空間客棧自由寫)");
         } else {
             alert("❌ 密碼錯誤！");
             return;
@@ -483,7 +550,8 @@
                 let week = [];
                 for(let i=0; i<7; i++) {
                     let d = new Date(curr);
-                    const cleanLabel = `${d.getMonth()+1}/${d.getDate()} (${['日','一','二','三','四','五','六'][d.getDay()]})`;
+                    // 🚀 4. 欄位內的日期格式改為 去零的 日子/月份()
+                    const cleanLabel = `${d.getDate()}/${d.getMonth()+1} (${['日','一','二','三','四','五','六'][d.getDay()]})`;
                     week.push({ full: d.toISOString().split('T')[0], label: cleanLabel });
                     curr.setDate(curr.getDate() + 1);
                 }
@@ -497,15 +565,39 @@
     function renderTable() {
         const weeks = getWeeksInMonth(currentMonth);
         if(weeks.length === 0) return;
+        
         if(currentWeekOffset >= weeks.length) currentWeekOffset = 0;
-        const currentWeek = weeks[currentWeekOffset];
+        const fullWeek = weeks[currentWeekOffset];
 
-        // 🚀 3. 將抬頭格式改為：「XXXX-XX-XX ~ XXXX-XX-XX 空間客舍/空間客棧開放時間表」
+        let visibleDays = [];
+        const prevBtn = document.getElementById('btn-nav-prev');
+        const nextBtn = document.getElementById('btn-nav-next');
+
+        if (isMobileView) {
+            if (mobileDayOffset === 0) {
+                visibleDays = fullWeek.slice(0, 3); 
+            } else if (mobileDayOffset === 3) {
+                visibleDays = fullWeek.slice(3, 6); 
+            } else {
+                visibleDays = fullWeek.slice(6, 7); 
+            }
+            prevBtn.innerText = "⬅️ 前三日";
+            nextBtn.innerText = "後三日 ➡️";
+        } else {
+            visibleDays = fullWeek;
+            prevBtn.innerText = "◀ 上一週";
+            nextBtn.innerText = "下一週 ▶";
+        }
+
+        // 🚀 4. 表頭大標題也去零
+        const dateStartLabel = formatCleanDate(visibleDays[0].full);
+        const dateEndLabel = formatCleanDate(visibleDays[visibleDays.length - 1].full);
         const locTitle = currentLocation === '舍' ? '空間客舍' : '空間客棧';
-        document.getElementById('week-display').innerText = `${currentWeek[0].full} ~ ${currentWeek[6].full} ${locTitle}開放時間表`;
+        
+        document.getElementById('week-display').innerText = `${dateStartLabel} ~ ${dateEndLabel} ${locTitle}開放時間表`;
 
         const header = document.getElementById('table-header');
-        header.innerHTML = `<th class="time-col">時間</th>` + currentWeek.map(day => `<th>${day.label}</th>`).join('');
+        header.innerHTML = `<th class="time-col">時間</th>` + visibleDays.map(day => `<th>${day.label}</th>`).join('');
 
         const body = document.getElementById('table-body');
         let html = "";
@@ -513,7 +605,7 @@
         
         currentSlots.forEach(slot => {
             html += `<tr><td class="time-col">${slot}</td>`;
-            currentWeek.forEach(day => {
+            visibleDays.forEach(day => {
                 const dbKey = `${currentLocation}_${day.full}_${slot}`;
                 const slotData = cachedSchedule[dbKey] || null;
                 
@@ -524,12 +616,11 @@
                 if(slotData) {
                     rawName = slotData.name;
                     if(rawName === "AVAILABLE") {
-                        // 🚀 2. 開放中 ➔ 轉為顯示「可選當值時間」，轉淺綠色
                         displayText = "可選當值時間";
                         statusClass = "available";
                     } else {
                         statusClass = `occ-${slotData.type}`; 
-                        displayText = rawName; // 🚀 圖示已全面移至右側 layout，格子內純文字保持乾淨
+                        displayText = rawName; 
                     }
                 }
 
@@ -537,14 +628,36 @@
                     statusClass += " current-selected";
                 }
 
-                html += `<td class="slot ${statusClass}" data-key="${dbKey}" data-raw="${rawName}" onclick="handleSlotClick(this, '${dbKey}', '${rawName}')">${displayText}</td>`;
+                html += `<td class="slot ${statusClass}" data-key="${dbKey}" data-raw="${rawName}" onmouseenter="handleSlotMouseEnter(this, '${dbKey}', '${rawName}')" mousedown="handleSlotMouseDown(this, '${dbKey}', '${rawName}')" onclick="handleSlotClick(this, '${dbKey}', '${rawName}')">${displayText}</td>`;
             });
             html += `</tr>`;
         });
         body.innerHTML = html;
 
-        calculateStats(currentWeek);
+        calculateStats(fullWeek); 
         applyHighlighting(); 
+    }
+
+    function handleSlotMouseDown(element, key, rawName) {
+        if(currentRole === 'guest') return;
+        processSelectAction(element, key, rawName);
+    }
+
+    function handleSlotMouseEnter(element, key, rawName) {
+        if (!isDragging || currentRole === 'guest') return;
+        processSelectAction(element, key, rawName);
+    }
+
+    function processSelectAction(element, key, rawName) {
+        if(currentRole === 'intern' && rawName !== "AVAILABLE" && !selectedKeys.includes(key) && !element.classList.contains('available')) {
+            return; 
+        }
+
+        if(!selectedKeys.includes(key)) {
+            selectedKeys.push(key);
+            element.classList.add('current-selected');
+            updateInputPanelUI(key, rawName);
+        }
     }
 
     function handleSlotClick(element, key, rawName) {
@@ -552,35 +665,70 @@
             if(rawName && rawName !== "AVAILABLE") toggleFilter(rawName);
             else toggleFilter(null);
         } else {
-            if(currentRole === 'intern' && rawName !== "AVAILABLE" && !selectedKeys.includes(key) && !element.classList.contains('available')) {
-                return; 
-            }
-            
             if(selectedKeys.includes(key)) {
                 selectedKeys = selectedKeys.filter(k => k !== key);
                 element.classList.remove('current-selected');
             } else {
+                if(currentRole === 'intern' && rawName !== "AVAILABLE" && !element.classList.contains('available')) return;
                 selectedKeys.push(key);
                 element.classList.add('current-selected');
             }
-
+            
             if(selectedKeys.length > 0) {
-                document.getElementById('selected-slot-label').innerText = `已選取 ${selectedKeys.length} 個時段格`;
-                document.getElementById('user-name-input').disabled = false;
-                document.getElementById('schedule-type-select').disabled = false;
-                
-                if(selectedKeys.length === 1) {
-                    const slotData = cachedSchedule[key];
-                    document.getElementById('user-name-input').value = (rawName === "AVAILABLE") ? "" : rawName;
-                    document.getElementById('schedule-type-select').value = (slotData && slotData.type) ? slotData.type : "duty";
-                }
-                
-                document.getElementById('btn-save-data').disabled = false;
-                document.getElementById('btn-clear-slot').disabled = false;
+                updateInputPanelUI(key, rawName);
             } else {
                 resetInputPanel();
             }
         }
+    }
+
+    function updateInputPanelUI(key, rawName) {
+        document.getElementById('selected-slot-label').innerText = `已選取 ${selectedKeys.length} 個時段格`;
+        document.getElementById('user-name-input').disabled = false;
+        document.getElementById('schedule-type-select').disabled = false;
+        
+        if(selectedKeys.length === 1) {
+            const slotData = cachedSchedule[key];
+            document.getElementById('user-name-input').value = (rawName === "AVAILABLE") ? "" : rawName;
+            document.getElementById('schedule-type-select').value = (slotData && slotData.type) ? slotData.type : "duty";
+        }
+        document.getElementById('btn-save-data').disabled = false;
+        document.getElementById('btn-clear-slot').disabled = false;
+    }
+
+    function navigateTime(direction) {
+        const weeks = getWeeksInMonth(currentMonth);
+        
+        if (isMobileView) {
+            if (direction === 1) { 
+                if (mobileDayOffset === 0) {
+                    mobileDayOffset = 3;
+                } else if (mobileDayOffset === 3) {
+                    mobileDayOffset = 6;
+                } else { 
+                    if (currentWeekOffset < weeks.length - 1) {
+                        currentWeekOffset++;
+                        mobileDayOffset = 0;
+                    }
+                }
+            } else { 
+                if (mobileDayOffset === 6) {
+                    mobileDayOffset = 3;
+                } else if (mobileDayOffset === 3) {
+                    mobileDayOffset = 0;
+                } else { 
+                    if (currentWeekOffset > 0) {
+                        currentWeekOffset--;
+                        mobileDayOffset = 6;
+                    }
+                }
+            }
+        } else {
+            currentWeekOffset += direction;
+            if(currentWeekOffset < 0) currentWeekOffset = 0;
+            if(currentWeekOffset >= weeks.length) currentWeekOffset = weeks.length - 1;
+        }
+        renderTable();
     }
 
     async function saveMultiSlotData() {
@@ -626,7 +774,7 @@
 
     function resetInputPanel() {
         selectedKeys = [];
-        document.getElementById('selected-slot-label').innerText = "請點選排班格子 (支援多選)...";
+        document.getElementById('selected-slot-label').innerText = "請點選或滑動多選排班格子...";
         document.getElementById('user-name-input').value = "";
         document.getElementById('user-name-input').disabled = true;
         document.getElementById('schedule-type-select').disabled = true;
@@ -700,14 +848,7 @@
     function switchMonth() {
         currentMonth = document.getElementById('month-select').value;
         currentWeekOffset = 0;
-        renderTable();
-    }
-
-    function changeWeek(dir) {
-        const weeks = getWeeksInMonth(currentMonth);
-        currentWeekOffset += dir;
-        if(currentWeekOffset < 0) currentWeekOffset = 0;
-        if(currentWeekOffset >= weeks.length) currentWeekOffset = weeks.length - 1;
+        mobileDayOffset = 0;
         renderTable();
     }
 
@@ -718,7 +859,6 @@
             currentSlots.forEach(slot => {
                 const dbKey = `${currentLocation}_${day.full}_${slot}`;
                 const slotData = cachedSchedule[dbKey];
-                
                 if(slotData && slotData.name && slotData.name !== "AVAILABLE" && slotData.type === 'duty') {
                     counts[slotData.name] = (counts[slotData.name] || 0) + 1;
                 }
