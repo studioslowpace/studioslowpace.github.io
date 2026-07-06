@@ -20,7 +20,7 @@
             --available-color: #fffde7;  /* 🚀 可選當值時間：轉淺黃 */
             --type-duty: #ffebee;        /* 當值：淺紅 */
             --type-event: #f3e5f5;       /* 活動：淺紫 */
-            --type-private: #f5f5f5;     /* 🚀 私人：轉淺灰 */
+            --type-private: #f5e6dd;     /* 🚀 私人：轉淺灰 */
         }
 
         body.theme-inn {
@@ -140,7 +140,7 @@
         .time-col { width: 95px; background: #fafafa; font-weight: bold; font-size: 13px; } /* 👈 這裡決定最左側「時間欄（09:00等）」的大小 */
 
         @media (max-width: 768px) {
-            th, td { font-size: 13px; font-weight: normal; }
+            th, td { font-size: 12px; font-weight: normal; }
             th { font-size: 14px; font-weight: bold; }
             .time-col { font-size: 12px; }
         }
@@ -825,16 +825,23 @@ function getWeeksInMonth(monthStr) {
         });
     }
 
-    function downloadTableAsImage() {
-        const target = document.getElementById('capture-area');
-        const weekDisplay = document.getElementById('week-display').innerText;
-        html2canvas(target, { backgroundColor: "#ffffff", scale: 2 }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `${weekDisplay}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-    }
+function downloadTableAsImage() {
+    // 🚀 將擷取目標從 capture-area 改為整張表格的外框 table-section，這樣就會連同上方的標題一起包進去
+    const target = document.querySelector('.table-section');
+    const weekDisplay = document.getElementById('week-display').innerText;
+    
+    // 加上額外的 padding 修正，讓匯出的圖片邊緣更美觀
+    html2canvas(target, { 
+        backgroundColor: "#ffffff", 
+        scale: 2,
+        logging: false
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${weekDisplay}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
 
     async function addNewMonth() {
         if(currentRole !== 'manager') return;
