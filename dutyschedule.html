@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多功能雲端排班管理系統 v6</title>
+    <title>多功能雲端排班管理系統 v8</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -14,8 +14,13 @@
             --border: #dcdfe6;
             --text: #2c3e50;
             --selected: #fff9c4;
-            --available-color: #fff9db;
             --bg: #e6f2ff; 
+            
+            /* 🎨 狀態與排班類型顏色定義 */
+            --available-color: #e8f5e9;  /* 🚀 開放中改為：淺綠 */
+            --type-duty: #ffebee;        /* 當值：淺紅 */
+            --type-event: #f3e5f5;       /* 活動：淺紫 */
+            --type-private: #fffde7;     /* 私人：淺黃 */
         }
 
         body.theme-inn {
@@ -37,7 +42,6 @@
 
         .container { max-width: 1400px; margin: 0 auto; }
 
-        /* 🚀 調整為單一整合式 Layout 下拉切換區 */
         .location-selector-wrap {
             margin-bottom: 12px;
             display: flex;
@@ -61,7 +65,6 @@
         .location-select-btn:hover {
             filter: brightness(1.1);
         }
-        /* 當鎖定地點時的樣式 */
         .location-select-btn.locked {
             opacity: 0.8;
             cursor: not-allowed;
@@ -85,7 +88,7 @@
         .role-guest { background: #e6a23c; color: white; }
         .role-intern { background: #409eff; color: white; }
         .role-friend { background: #9c27b0; color: white; } 
-        .role-innuser { background: #8d6e63; color: white; } /* 客棧人專屬大地色標籤 */
+        .role-innuser { background: #8d6e63; color: white; } 
         .role-manager { background: #67c23a; color: white; }
 
         select, button, input[type="text"], input[type="password"] {
@@ -101,7 +104,7 @@
         .btn-purple { background: #9c27b0; color: white; border: none; } 
         .btn-brown { background: #8d6e63; color: white; border: none; } 
 
-        .manager-only, .auth-only, .panel-only { display: none; }
+        .manager-only, .auth-only, .panel-only, .stats-only { display: none; }
 
         .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 15px; }
         @media (max-width: 992px) {
@@ -115,12 +118,12 @@
             padding: 15px; background: #f8f9fb; border-bottom: 1px solid var(--border);
             flex-wrap: wrap; gap: 10px;
         }
-        .week-info { font-weight: bold; color: var(--primary); font-size: 18px; order: 1; }
+        .week-info { font-weight: bold; color: var(--primary); font-size: 16px; order: 1; }
         .nav-buttons { display: flex; gap: 8px; order: 2; }
         
         @media (max-width: 576px) {
             .table-nav { flex-direction: column; align-items: center; }
-            .week-info { order: 1; margin-bottom: 5px; font-size: 16px; }
+            .week-info { order: 1; margin-bottom: 5px; font-size: 14px; text-align: center; }
             .nav-buttons { order: 2; width: 100%; }
             .nav-buttons button { flex: 1; }
         }
@@ -134,11 +137,14 @@
         .time-col { width: 90px; background: #fafafa; font-weight: bold; font-size: 13px; }
 
         .slot { height: 42px; transition: 0.1s; background-color: #ffffff; cursor: pointer; }
-        .slot.available { background-color: var(--available-color); }
-        .slot.occupied { background-color: #ecf5ff; color: #409eff; font-weight: bold; }
+        
+        /* 🚀 狀態與排班色彩樣式 */
+        .slot.available { background-color: var(--available-color) !important; color: #2e7d32; font-weight: normal; font-size: 11px; }
+        .slot.occ-duty { background-color: var(--type-duty) !important; color: #c62828; font-weight: bold; }
+        .slot.occ-event { background-color: var(--type-event) !important; color: #6a1b9a; font-weight: bold; }
+        .slot.occ-private { background-color: var(--type-private) !important; color: #f57f17; font-weight: bold; }
         
         .slot.current-selected { outline: 3px solid #409eff; outline-offset: -3px; background-color: #e1f0fe !important; }
-        
         .slot.highlighted { background-color: var(--accent) !important; color: #000; font-weight: bold; }
         .slot.dimmed { opacity: 0.25; }
 
@@ -146,10 +152,14 @@
         .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .card h3 { margin-top: 0; font-size: 16px; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 12px; }
 
+        /* 🚀 圖示說明的清單樣式 */
+        .legend-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; }
+
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .input-group label { font-size: 13px; font-weight: bold; color: #666; }
-        .input-row { display: flex; gap: 8px; }
-        .input-row input { flex: 1; }
+        .input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .input-row input, .input-row select { flex: 1; min-width: 120px; }
 
         .stats-list { list-style: none; padding: 0; margin: 0; }
         .stats-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; border-radius: 6px; }
@@ -187,7 +197,6 @@
             <span id="role-display" class="role-badge role-guest">一般模式</span>
             <button class="btn-purple" id="btn-login-friend" onclick="openLoginModal('friend')">🍇 空間友登入</button>
             <button class="btn-brown" id="btn-login-innuser" onclick="openLoginModal('inn_user')">🪵 客棧人登入</button>
-            
             <button class="btn-primary" id="btn-login-intern" onclick="openLoginModal('intern')">🔑 實習生登入</button>
             <button class="btn-success" id="btn-login-manager" onclick="openLoginModal('manager')">👑 店長登入</button>
             <button class="btn-danger auth-only" id="btn-logout" onclick="logout()">🚪 登出</button>
@@ -214,15 +223,32 @@
         </div>
 
         <div class="sidebar">
+            <div class="card" id="legend-card">
+                <h3>🎨 排班類別與狀態說明</h3>
+                <ul class="legend-list">
+                    <li class="legend-item" style="background-color: var(--available-color); color: #2e7d32;">🟢 可選當值時間</li>
+                    <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值 (排班)</li>
+                    <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動 (包場/特別)</li>
+                    <li class="legend-item" style="background-color: var(--type-private); color: #f57f17;">🔒 私人 (不開放)</li>
+                </ul>
+            </div>
+
             <div class="card panel-only" id="input-panel">
-                <h3 id="panel-title">✏️ 編輯排班資料</h3>
+                <h3>✏️ 編輯排班資料</h3>
                 <div class="input-group">
                     <label id="selected-slot-label">請點選排班格子 (支援多選)...</label>
                     <div class="input-row">
                         <input type="text" id="user-name-input" placeholder="請輸入名字..." disabled>
-                        <button class="btn-primary" id="btn-save-data" onclick="saveMultiSlotData()" disabled>儲存</button>
+                        <select id="schedule-type-select" disabled>
+                            <option value="duty">🛠️ 當值</option>
+                            <option value="event">🎉 活動</option>
+                            <option value="private">🔒 私人</option>
+                        </select>
                     </div>
-                    <button class="btn-warn manager-only" id="btn-set-available" onclick="setMultiSlotAvailable()" style="width: 100%;">設為開放時段 (淺黃)</button>
+                    <div class="input-row">
+                        <button class="btn-primary" id="btn-save-data" onclick="saveMultiSlotData()" style="width: 100%;" disabled>儲存</button>
+                    </div>
+                    <button class="btn-warn manager-only" id="btn-set-available" onclick="setMultiSlotAvailable()" style="width: 100%;">設為可選當值時間 (🟢)</button>
                     <button class="btn-danger" id="btn-clear-slot" onclick="clearMultiSlotData()" style="width: 100%;" disabled>清除所選格子</button>
                 </div>
             </div>
@@ -232,8 +258,8 @@
                 <button class="btn-primary" style="width:100%; font-weight: bold;" onclick="downloadTableAsImage()">📥 下載本週時間表圖片</button>
             </div>
 
-            <div class="card">
-                <h3>📊 本週時數排行</h3>
+            <div class="card stats-only" id="stats-card">
+                <h3>📊 本週當值時數排行</h3>
                 <ul class="stats-list" id="stats-list"></ul>
             </div>
         </div>
@@ -262,14 +288,14 @@
 
     let currentRole = "guest"; 
     let dbMonths = [];
-    let cachedSchedule = {};
+    let cachedSchedule = {}; 
     let currentMonth = "";
     let currentWeekOffset = 0;
     let activeFilterUser = null;
     
     let selectedKeys = []; 
     let pendingTargetRole = ""; 
-    let currentLocation = "舍"; // 預設為空間客舍
+    let currentLocation = "舍"; 
 
     function getTimeSlotsForCurrentLocation() {
         const slots = [];
@@ -292,7 +318,14 @@
             let { data: scheduleData } = await client.from(TABLE_NAME).select('slot_key, user_name');
             cachedSchedule = {};
             if(scheduleData) {
-                scheduleData.forEach(row => { cachedSchedule[row.slot_key] = row.user_name; });
+                scheduleData.forEach(row => { 
+                    if(row.user_name.includes('__')) {
+                        const [name, type] = row.user_name.split('__');
+                        cachedSchedule[row.slot_key] = { name, type };
+                    } else {
+                        cachedSchedule[row.slot_key] = { name: row.user_name, type: 'duty' }; 
+                    }
+                });
             }
 
             updateMonthSelectUI();
@@ -303,15 +336,10 @@
         }
     }
 
-    // 🚀 單一按鈕切換邏輯
     function toggleLocation() {
-        if (currentRole === 'friend' || currentRole === 'inn_user') return; // 鎖定狀態不可切換
-        
-        if (currentLocation === '舍') {
-            executeSwitch('棧');
-        } else {
-            executeSwitch('舍');
-        }
+        if (currentRole === 'friend' || currentRole === 'inn_user') return; 
+        if (currentLocation === '舍') executeSwitch('棧');
+        else executeSwitch('舍');
     }
 
     function executeSwitch(loc) {
@@ -328,7 +356,7 @@
             mainBtn.style.background = "#2e7d32";
         }
 
-        applyRoleVisibility(); // 依據地點刷新按鈕顯示
+        applyRoleVisibility(); 
         resetInputPanel();
         renderTable();
     }
@@ -364,11 +392,11 @@
             alert("👤 歡迎實習生登入！");
         } else if(pendingTargetRole === 'friend' && pass === pwdDb.friend) { 
             currentRole = "friend";
-            executeSwitch('舍'); // 強制切到客舍
+            executeSwitch('舍'); 
             alert("🍇 歡迎空間友登入！(已鎖定空間客舍自由填寫)");
-        } else if(pendingTargetRole === 'inn_user' && pass === pwdDb.inn_user) { // 🚀 驗證客棧人密碼
+        } else if(pendingTargetRole === 'inn_user' && pass === pwdDb.inn_user) { 
             currentRole = "inn_user";
-            executeSwitch('棧'); // 強制切到客棧
+            executeSwitch('棧'); 
             alert("🪵 歡迎客棧人登入！(已鎖定空間客棧自由填寫)");
         } else {
             alert("❌ 密碼錯誤！");
@@ -395,21 +423,17 @@
         document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'none'); 
         
-        // 預設全部隱藏，再根據地點動態顯示
         document.getElementById('btn-login-friend').style.display = 'none';
         document.getElementById('btn-login-innuser').style.display = 'none';
         document.getElementById('btn-login-intern').style.display = 'inline-block';
         document.getElementById('btn-login-manager').style.display = 'inline-block';
         mainBtn.classList.remove('locked');
 
-        // 🚀 依地點決定顯示「空間友」或「客棧人」按鈕
         if (currentRole === 'guest') {
-            if (currentLocation === '舍') {
-                document.getElementById('btn-login-friend').style.display = 'inline-block';
-            } else {
-                document.getElementById('btn-login-innuser').style.display = 'inline-block';
-            }
+            if (currentLocation === '舍') document.getElementById('btn-login-friend').style.display = 'inline-block';
+            else document.getElementById('btn-login-innuser').style.display = 'inline-block';
         }
 
         if(currentRole === 'manager') {
@@ -418,10 +442,12 @@
             document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
             document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'inline-block');
             document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'block'); 
             document.getElementById('btn-login-manager').style.display = 'none';
         } else if(currentRole === 'intern' || currentRole === 'friend' || currentRole === 'inn_user') {
             document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'inline-block');
             document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'block'); 
             document.getElementById('btn-login-intern').style.display = 'none';
             
             if (currentRole === 'intern') {
@@ -430,11 +456,11 @@
             } else if (currentRole === 'friend') {
                 badge.innerText = "空間友模式";
                 badge.className = "role-badge role-friend";
-                mainBtn.classList.add('locked'); // 鎖定按鈕
+                mainBtn.classList.add('locked'); 
             } else if (currentRole === 'inn_user') {
                 badge.innerText = "客棧人模式";
                 badge.className = "role-badge role-innuser";
-                mainBtn.classList.add('locked'); // 鎖定按鈕
+                mainBtn.classList.add('locked'); 
             }
         } else {
             badge.innerText = "一般模式";
@@ -448,10 +474,8 @@
         const [year, month] = monthStr.split('-').map(Number);
         const firstDay = new Date(year, month - 1, 1);
         const lastDay = new Date(year, month, 0);
-        
         let start = new Date(firstDay);
         while(start.getDay() !== 1) start.setDate(start.getDate() - 1);
-
         const weeks = [];
         let curr = new Date(start);
         while(curr <= lastDay || curr.getDay() !== 1) {
@@ -476,37 +500,44 @@
         if(currentWeekOffset >= weeks.length) currentWeekOffset = 0;
         const currentWeek = weeks[currentWeekOffset];
 
-        document.getElementById('week-display').innerText = `${currentWeek[0].full} ~ ${currentWeek[6].full}`;
+        // 🚀 3. 將抬頭格式改為：「XXXX-XX-XX ~ XXXX-XX-XX 空間客舍/空間客棧開放時間表」
+        const locTitle = currentLocation === '舍' ? '空間客舍' : '空間客棧';
+        document.getElementById('week-display').innerText = `${currentWeek[0].full} ~ ${currentWeek[6].full} ${locTitle}開放時間表`;
 
         const header = document.getElementById('table-header');
         header.innerHTML = `<th class="time-col">時間</th>` + currentWeek.map(day => `<th>${day.label}</th>`).join('');
 
         const body = document.getElementById('table-body');
         let html = "";
-        
         const currentSlots = getTimeSlotsForCurrentLocation(); 
         
         currentSlots.forEach(slot => {
             html += `<tr><td class="time-col">${slot}</td>`;
             currentWeek.forEach(day => {
                 const dbKey = `${currentLocation}_${day.full}_${slot}`;
-                const rawValue = cachedSchedule[dbKey] || "";
+                const slotData = cachedSchedule[dbKey] || null;
                 
-                let displayText = rawValue;
+                let displayText = "";
                 let statusClass = "";
+                let rawName = "";
 
-                if(rawValue === "AVAILABLE") {
-                    displayText = "開放中";
-                    statusClass = "available";
-                } else if(rawValue !== "") {
-                    statusClass = "occupied";
+                if(slotData) {
+                    rawName = slotData.name;
+                    if(rawName === "AVAILABLE") {
+                        // 🚀 2. 開放中 ➔ 轉為顯示「可選當值時間」，轉淺綠色
+                        displayText = "可選當值時間";
+                        statusClass = "available";
+                    } else {
+                        statusClass = `occ-${slotData.type}`; 
+                        displayText = rawName; // 🚀 圖示已全面移至右側 layout，格子內純文字保持乾淨
+                    }
                 }
 
                 if(selectedKeys.includes(dbKey)) {
                     statusClass += " current-selected";
                 }
 
-                html += `<td class="slot ${statusClass}" data-key="${dbKey}" data-raw="${rawValue}" onclick="handleSlotClick(this, '${dbKey}', '${rawValue}')">${displayText}</td>`;
+                html += `<td class="slot ${statusClass}" data-key="${dbKey}" data-raw="${rawName}" onclick="handleSlotClick(this, '${dbKey}', '${rawName}')">${displayText}</td>`;
             });
             html += `</tr>`;
         });
@@ -516,18 +547,12 @@
         applyHighlighting(); 
     }
 
-    function handleSlotClick(element, key, rawValue) {
+    function handleSlotClick(element, key, rawName) {
         if(currentRole === 'guest') {
-            if(rawValue && rawValue !== "AVAILABLE") {
-                toggleFilter(rawValue);
-            } else {
-                toggleFilter(null);
-            }
+            if(rawName && rawName !== "AVAILABLE") toggleFilter(rawName);
+            else toggleFilter(null);
         } else {
-            // 🚀 權限限制：
-            // 實習生：只能填寫店長設定為 AVAILABLE 的格子
-            // 空間友 & 客棧人：無格式限制，全部格子都可自由填寫。
-            if(currentRole === 'intern' && rawValue !== "AVAILABLE" && !selectedKeys.includes(key) && !element.classList.contains('occupied')) {
+            if(currentRole === 'intern' && rawName !== "AVAILABLE" && !selectedKeys.includes(key) && !element.classList.contains('available')) {
                 return; 
             }
             
@@ -541,11 +566,13 @@
 
             if(selectedKeys.length > 0) {
                 document.getElementById('selected-slot-label').innerText = `已選取 ${selectedKeys.length} 個時段格`;
-                const input = document.getElementById('user-name-input');
-                input.disabled = false;
+                document.getElementById('user-name-input').disabled = false;
+                document.getElementById('schedule-type-select').disabled = false;
                 
                 if(selectedKeys.length === 1) {
-                    input.value = (rawValue === "AVAILABLE") ? "" : rawValue;
+                    const slotData = cachedSchedule[key];
+                    document.getElementById('user-name-input').value = (rawName === "AVAILABLE") ? "" : rawName;
+                    document.getElementById('schedule-type-select').value = (slotData && slotData.type) ? slotData.type : "duty";
                 }
                 
                 document.getElementById('btn-save-data').disabled = false;
@@ -559,11 +586,13 @@
     async function saveMultiSlotData() {
         if(selectedKeys.length === 0) return;
         const nameVal = document.getElementById('user-name-input').value.trim();
+        const typeVal = document.getElementById('schedule-type-select').value;
         if(!nameVal) { alert("請輸入名字"); return; }
 
         for(let key of selectedKeys) {
-            cachedSchedule[key] = nameVal;
-            await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: nameVal }, { onConflict: 'slot_key' });
+            cachedSchedule[key] = { name: nameVal, type: typeVal };
+            const compositeValue = `${nameVal}__${typeVal}`;
+            await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: compositeValue }, { onConflict: 'slot_key' });
         }
         
         resetInputPanel();
@@ -572,30 +601,25 @@
 
     async function setMultiSlotAvailable() {
         if(selectedKeys.length === 0 || currentRole !== 'manager') return;
-        
         for(let key of selectedKeys) {
-            cachedSchedule[key] = "AVAILABLE";
+            cachedSchedule[key] = { name: "AVAILABLE", type: "duty" };
             await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: "AVAILABLE" }, { onConflict: 'slot_key' });
         }
-        
         resetInputPanel();
         renderTable();
     }
 
     async function clearMultiSlotData() {
         if(selectedKeys.length === 0) return;
-        
         for(let key of selectedKeys) {
-            // 空間友、客棧人、實習生清除都退回開放狀態
             if(currentRole === 'intern' || currentRole === 'friend' || currentRole === 'inn_user') {
-                cachedSchedule[key] = "AVAILABLE";
+                cachedSchedule[key] = { name: "AVAILABLE", type: "duty" };
                 await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: "AVAILABLE" }, { onConflict: 'slot_key' });
             } else {
                 delete cachedSchedule[key];
                 await client.from(TABLE_NAME).delete().eq('slot_key', key);
             }
         }
-
         resetInputPanel();
         renderTable();
     }
@@ -603,9 +627,9 @@
     function resetInputPanel() {
         selectedKeys = [];
         document.getElementById('selected-slot-label').innerText = "請點選排班格子 (支援多選)...";
-        const input = document.getElementById('user-name-input');
-        input.value = "";
-        input.disabled = true;
+        document.getElementById('user-name-input').value = "";
+        document.getElementById('user-name-input').disabled = true;
+        document.getElementById('schedule-type-select').disabled = true;
         document.getElementById('btn-save-data').disabled = true;
         document.getElementById('btn-clear-slot').disabled = true;
         document.querySelectorAll('.slot').forEach(el => el.classList.remove('current-selected'));
@@ -637,10 +661,9 @@
     function downloadTableAsImage() {
         const target = document.getElementById('capture-area');
         const weekDisplay = document.getElementById('week-display').innerText;
-        const locName = currentLocation === '舍' ? '空間客舍' : '空間客棧';
         html2canvas(target, { backgroundColor: "#ffffff", scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `排班表_${locName}_${weekDisplay}.png`;
+            link.download = `${weekDisplay}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
@@ -694,8 +717,11 @@
         week.forEach(day => {
             currentSlots.forEach(slot => {
                 const dbKey = `${currentLocation}_${day.full}_${slot}`;
-                const name = cachedSchedule[dbKey];
-                if(name && name !== "AVAILABLE") counts[name] = (counts[name] || 0) + 1;
+                const slotData = cachedSchedule[dbKey];
+                
+                if(slotData && slotData.name && slotData.name !== "AVAILABLE" && slotData.type === 'duty') {
+                    counts[slotData.name] = (counts[slotData.name] || 0) + 1;
+                }
             });
         });
         const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
@@ -704,7 +730,7 @@
             <li class="stats-item" onclick="toggleFilter('${name}')">
                 <span>👤 ${name}</span><span>${count} 小時</span>
             </li>
-        `).join('') || "<li>本週無排班</li>";
+        `).join('') || "<li>本週無當值排班</li>";
         applyHighlighting();
     }
 
