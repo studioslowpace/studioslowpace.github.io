@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多功能雲端排班管理系統 v10</title>
+    <title>空間客舍時間表</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -135,9 +135,9 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 100%; }
         
         /* 🚀 3. 電腦模式預設格仔內的字大一點 */
-        th, td { border: 1px solid var(--border); padding: 10px 2px; text-align: center; font-size: 15px; font-weight: 500; word-break: break-all; }
-        th { background: #f2f6fc; color: #333; font-weight: bold; font-size: 16px; } 
-        .time-col { width: 95px; background: #fafafa; font-weight: bold; font-size: 13px; }
+        th, td { border: 0.5px solid var(--border); padding: 10px 2px; text-align: center; font-size: 14px; font-weight: 500; word-break: break-all; }
+        th { background: #f2f6fc; color: #333; font-weight: bold; font-size: 16px; }  /* 👈 這裡決定欄位頂端「日期標頭」的大小 */
+        .time-col { width: 95px; background: #fafafa; font-weight: bold; font-size: 13px; } /* 👈 這裡決定最左側「時間欄（09:00等）」的大小 */
 
         @media (max-width: 768px) {
             th, td { font-size: 13px; font-weight: normal; }
@@ -147,7 +147,7 @@
 
         .slot { height: 44px; transition: 0.1s; background-color: #ffffff; cursor: pointer; touch-action: none; }
         
-        .slot.available { background-color: var(--available-color) !important; color: #f57f17; font-size: 12px; }
+        .slot.available { background-color: var(--available-color) !important; color: #f57f17; font-size: 14px; } /* 👈 這裡決定「可選當值時間」的文字*/
         .slot.occ-duty { background-color: var(--type-duty) !important; color: #c62828; font-weight: bold; }
         .slot.occ-event { background-color: var(--type-event) !important; color: #6a1b9a; font-weight: bold; }
         .slot.occ-private { background-color: var(--type-private) !important; color: #616161; font-weight: bold; }
@@ -235,17 +235,17 @@
 
         <div class="sidebar">
             <div class="card" id="legend-card">
-                <h3>🎨 排班類別與狀態說明</h3>
+                <h3>🎨 開放狀態說明</h3>
                 <ul class="legend-list">
                     <li class="legend-item" style="background-color: var(--available-color); color: #f57f17;">🟡 可選當值時間</li>
-                    <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值 (排班)</li>
-                    <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動 (包場/特別)</li>
-                    <li class="legend-item" style="background-color: var(--type-private); color: #616161;">🔒 私人 (不開放)</li>
+                    <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值</li>
+                    <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動</li>
+                    <li class="legend-item" style="background-color: var(--type-private); color: #616161;">🔒 私人 (不對外開放)</li>
                 </ul>
             </div>
 
             <div class="card panel-only" id="input-panel">
-                <h3>✏️ 編輯排班資料</h3>
+                <h3>✏️ 編輯時間表資料</h3>
                 <div class="input-group">
                     <label id="selected-slot-label">請點選或滑動多選排班格子...</label>
                     <div class="input-row">
@@ -265,12 +265,12 @@
             </div>
 
             <div class="card panel-only" id="function-panel">
-                <h3>📸 排班匯出</h3>
+                <h3>📸 時間表匯出</h3>
                 <button class="btn-primary" style="width:100%; font-weight: bold;" onclick="downloadTableAsImage()">📥 下載本週時間表圖片</button>
             </div>
 
             <div class="card stats-only" id="stats-card">
-                <h3>📊 本週當值時數排行</h3>
+                <h3>📊 本月當值時數排行</h3>
                 <ul class="stats-list" id="stats-list"></ul>
             </div>
         </div>
@@ -634,7 +634,7 @@
         });
         body.innerHTML = html;
 
-        calculateStats(fullWeek); 
+        calculateStats(); 
         applyHighlighting(); 
     }
 
@@ -852,27 +852,39 @@
         renderTable();
     }
 
-    function calculateStats(week) {
-        const counts = {};
-        const currentSlots = getTimeSlotsForCurrentLocation();
+function calculateStats() {
+    const counts = {};
+    const currentSlots = getTimeSlotsForCurrentLocation();
+    
+    // 1. 獲取當前月份的所有週與所有日期
+    const allWeeks = getWeeksInMonth(currentMonth);
+    
+    // 2. 遍歷整個月份的每一天、每一個時段
+    allWeeks.forEach(week => {
         week.forEach(day => {
             currentSlots.forEach(slot => {
                 const dbKey = `${currentLocation}_${day.full}_${slot}`;
                 const slotData = cachedSchedule[dbKey];
+                
+                // 篩選出屬於排班（duty）且不是 AVAILABLE 的項目
                 if(slotData && slotData.name && slotData.name !== "AVAILABLE" && slotData.type === 'duty') {
                     counts[slotData.name] = (counts[slotData.name] || 0) + 1;
                 }
             });
         });
-        const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-        const list = document.getElementById('stats-list');
-        list.innerHTML = sorted.map(([name, count]) => `
-            <li class="stats-item" onclick="toggleFilter('${name}')">
-                <span>👤 ${name}</span><span>${count} 小時</span>
-            </li>
-        `).join('') || "<li>本週無當值排班</li>";
-        applyHighlighting();
-    }
+    });
+    
+    // 3. 排序並渲染到前端界面
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    const list = document.getElementById('stats-list');
+    list.innerHTML = sorted.map(([name, count]) => `
+        <li class="stats-item" onclick="toggleFilter('${name}')">
+            <span>👤 ${name}</span><span>${count} 小時</span>
+        </li>
+    `).join('') || "<li>本月無當值排班</li>";
+    
+    applyHighlighting();
+}
 
     window.onload = initSystem;
 </script>
