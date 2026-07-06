@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能雲端排班管理系統 v8</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #2b579a;
+            --accent: #ffeb3b;
+            --white: #ffffff;
+            --border: #dcdfe6;
+            --text: #2c3e50;
+            --selected: #fff9c4;
+            --bg: #e6f2ff; 
+            
+            /* 🎨 狀態與排班類型顏色定義 */
+            --available-color: #e8f5e9;  /* 🚀 開放中改為：淺綠 */
+            --type-duty: #ffebee;        /* 當值：淺紅 */
+            --type-event: #f3e5f5;       /* 活動：淺紫 */
+            --type-private: #fffde7;     /* 私人：淺黃 */
+        }
+
+        body.theme-inn {
+            --bg: #eaf5eb;
+            --primary: #2e7d32;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .location-selector-wrap {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+        }
+        .location-select-btn {
+            width: 100%;
+            max-width: 500px;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+        .location-select-btn:hover {
+            filter: brightness(1.1);
+        }
+        .location-select-btn.locked {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--white);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .manager-zone, .role-zone { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .role-badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+        .role-guest { background: #e6a23c; color: white; }
+        .role-intern { background: #409eff; color: white; }
+        .role-friend { background: #9c27b0; color: white; } 
+        .role-innuser { background: #8d6e63; color: white; } 
+        .role-manager { background: #67c23a; color: white; }
+
+        select, button, input[type="text"], input[type="password"] {
+            padding: 10px 14px; border-radius: 8px;
+            border: 1px solid var(--border); font-size: 14px; cursor: pointer;
+        }
+        input[type="text"], input[type="password"] { cursor: text; background: white; color: var(--text); }
+
+        .btn-primary { background: var(--primary); color: white; border: none; }
+        .btn-danger { background: #f56c6c; color: white; border: none; }
+        .btn-success { background: #67c23a; color: white; border: none; }
+        .btn-warn { background: #e6a23c; color: white; border: none; }
+        .btn-purple { background: #9c27b0; color: white; border: none; } 
+        .btn-brown { background: #8d6e63; color: white; border: none; } 
+
+        .manager-only, .auth-only, .panel-only, .stats-only { display: none; }
+
+        .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 15px; }
+        @media (max-width: 992px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        .table-section { background: var(--white); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; }
+
+        .table-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; background: #f8f9fb; border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; gap: 10px;
+        }
+        .week-info { font-weight: bold; color: var(--primary); font-size: 16px; order: 1; }
+        .nav-buttons { display: flex; gap: 8px; order: 2; }
+        
+        @media (max-width: 576px) {
+            .table-nav { flex-direction: column; align-items: center; }
+            .week-info { order: 1; margin-bottom: 5px; font-size: 14px; text-align: center; }
+            .nav-buttons { order: 2; width: 100%; }
+            .nav-buttons button { flex: 1; }
+        }
+
+        #capture-area { background: var(--white); padding: 5px; }
+        .responsive-table { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 750px; }
+        th, td { border: 1px solid var(--border); padding: 10px 4px; text-align: center; font-size: 13px; }
+        th { background: #f2f6fc; color: #333; font-weight: bold; font-size: 16px; } 
+        .time-col { width: 90px; background: #fafafa; font-weight: bold; font-size: 13px; }
+
+        .slot { height: 42px; transition: 0.1s; background-color: #ffffff; cursor: pointer; }
+        
+        /* 🚀 狀態與排班色彩樣式 */
+        .slot.available { background-color: var(--available-color) !important; color: #2e7d32; font-weight: normal; font-size: 11px; }
+        .slot.occ-duty { background-color: var(--type-duty) !important; color: #c62828; font-weight: bold; }
+        .slot.occ-event { background-color: var(--type-event) !important; color: #6a1b9a; font-weight: bold; }
+        .slot.occ-private { background-color: var(--type-private) !important; color: #f57f17; font-weight: bold; }
+        
+        .slot.current-selected { outline: 3px solid #409eff; outline-offset: -3px; background-color: #e1f0fe !important; }
+        .slot.highlighted { background-color: var(--accent) !important; color: #000; font-weight: bold; }
+        .slot.dimmed { opacity: 0.25; }
+
+        .sidebar { display: flex; flex-direction: column; gap: 15px; }
+        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .card h3 { margin-top: 0; font-size: 16px; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 12px; }
+
+        /* 🚀 圖示說明的清單樣式 */
+        .legend-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; }
+
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .input-group label { font-size: 13px; font-weight: bold; color: #666; }
+        .input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .input-row input, .input-row select { flex: 1; min-width: 120px; }
+
+        .stats-list { list-style: none; padding: 0; margin: 0; }
+        .stats-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; border-radius: 6px; }
+        .stats-item:hover, .stats-item.active { background: var(--accent); font-weight: bold; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 360px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 15px;
+        }
+        .modal-content h3 { margin: 0; font-size: 18px; text-align: center; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="location-selector-wrap">
+        <button id="location-toggle-btn" class="location-select-btn" onclick="toggleLocation()">🏠 當前地點：空間客舍 (點擊切換)</button>
+    </div>
+
+    <header class="controls-header">
+        <div class="manager-zone">
+            <select id="month-select" onchange="switchMonth()"></select>
+            <button class="btn-success manager-only" id="btn-add-month" onclick="addNewMonth()">+ 新增月份</button>
+            <button class="btn-danger manager-only" id="btn-del-month" onclick="deleteCurrentMonth()">🗑️ 刪除月份</button>
+        </div>
+        
+        <div class="role-zone">
+            <span id="role-display" class="role-badge role-guest">一般模式</span>
+            <button class="btn-purple" id="btn-login-friend" onclick="openLoginModal('friend')">🍇 空間友登入</button>
+            <button class="btn-brown" id="btn-login-innuser" onclick="openLoginModal('inn_user')">🪵 客棧人登入</button>
+            <button class="btn-primary" id="btn-login-intern" onclick="openLoginModal('intern')">🔑 實習生登入</button>
+            <button class="btn-success" id="btn-login-manager" onclick="openLoginModal('manager')">👑 店長登入</button>
+            <button class="btn-danger auth-only" id="btn-logout" onclick="logout()">🚪 登出</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <div class="table-section">
+            <div class="table-nav">
+                <div class="week-info" id="week-display">連線中...</div>
+                <div class="nav-buttons">
+                    <button onclick="changeWeek(-1)">◀ 上一週</button>
+                    <button onclick="changeWeek(1)">下一週 ▶</button>
+                </div>
+            </div>
+            <div id="capture-area">
+                <div class="responsive-table">
+                    <table id="timetable">
+                        <thead><tr id="table-header"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card" id="legend-card">
+                <h3>🎨 排班類別與狀態說明</h3>
+                <ul class="legend-list">
+                    <li class="legend-item" style="background-color: var(--available-color); color: #2e7d32;">🟢 可選當值時間</li>
+                    <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值 (排班)</li>
+                    <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動 (包場/特別)</li>
+                    <li class="legend-item" style="background-color: var(--type-private); color: #f57f17;">🔒 私人 (不開放)</li>
+                </ul>
+            </div>
+
+            <div class="card panel-only" id="input-panel">
+                <h3>✏️ 編輯排班資料</h3>
+                <div class="input-group">
+                    <label id="selected-slot-label">請點選排班格子 (支援多選)...</label>
+                    <div class="input-row">
+                        <input type="text" id="user-name-input" placeholder="請輸入名字..." disabled>
+                        <select id="schedule-type-select" disabled>
+                            <option value="duty">🛠️ 當值</option>
+                            <option value="event">🎉 活動</option>
+                            <option value="private">🔒 私人</option>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <button class="btn-primary" id="btn-save-data" onclick="saveMultiSlotData()" style="width: 100%;" disabled>儲存</button>
+                    </div>
+                    <button class="btn-warn manager-only" id="btn-set-available" onclick="setMultiSlotAvailable()" style="width: 100%;">設為可選當值時間 (🟢)</button>
+                    <button class="btn-danger" id="btn-clear-slot" onclick="clearMultiSlotData()" style="width: 100%;" disabled>清除所選格子</button>
+                </div>
+            </div>
+
+            <div class="card panel-only" id="function-panel">
+                <h3>📸 排班匯出</h3>
+                <button class="btn-primary" style="width:100%; font-weight: bold;" onclick="downloadTableAsImage()">📥 下載本週時間表圖片</button>
+            </div>
+
+            <div class="card stats-only" id="stats-card">
+                <h3>📊 本週當值時數排行</h3>
+                <ul class="stats-list" id="stats-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-content">
+        <h3 id="modal-title">系統密碼驗證</h3>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 13px; font-weight: bold; color:#666;">請輸入密碼：</label>
+            <input type="password" id="login-password" placeholder="請輸入密碼..." onkeydown="if(event.key==='Enter') submitLogin()">
+        </div>
+        <div class="modal-actions">
+            <button onclick="closeLoginModal()">取消</button>
+            <button class="btn-primary" onclick="submitLogin()">確認登入</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const supabaseUrl = 'https://blqlrxqckiuvgevmakbu.supabase.co';
+    const supabaseKey = 'sb_publishable_qFXwpuGChVdRwjc9K7prVQ_PgYmlnpG';
+    const TABLE_NAME = 'schedules'; 
+    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let currentRole = "guest"; 
+    let dbMonths = [];
+    let cachedSchedule = {}; 
+    let currentMonth = "";
+    let currentWeekOffset = 0;
+    let activeFilterUser = null;
+    
+    let selectedKeys = []; 
+    let pendingTargetRole = ""; 
+    let currentLocation = "舍"; 
+
+    function getTimeSlotsForCurrentLocation() {
+        const slots = [];
+        const startHour = (currentLocation === '舍') ? 9 : 13; 
+        for(let i = startHour; i <= 22; i++) {
+            slots.push(`${i}:00-${i+1}:00`);
+        }
+        return slots;
+    }
+
+    async function initSystem() {
+        document.getElementById('week-display').innerText = "雲端同步中...";
+        try {
+            let { data: configData } = await client.from('config').select('*');
+            const monthsConf = configData ? configData.find(c => c.key === 'months') : null;
+            dbMonths = monthsConf ? monthsConf.value : ["2026-05", "2026-06"];
+            
+            if(!currentMonth) currentMonth = dbMonths[0];
+
+            let { data: scheduleData } = await client.from(TABLE_NAME).select('slot_key, user_name');
+            cachedSchedule = {};
+            if(scheduleData) {
+                scheduleData.forEach(row => { 
+                    if(row.user_name.includes('__')) {
+                        const [name, type] = row.user_name.split('__');
+                        cachedSchedule[row.slot_key] = { name, type };
+                    } else {
+                        cachedSchedule[row.slot_key] = { name: row.user_name, type: 'duty' }; 
+                    }
+                });
+            }
+
+            updateMonthSelectUI();
+            applyRoleVisibility(); 
+            renderTable();
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function toggleLocation() {
+        if (currentRole === 'friend' || currentRole === 'inn_user') return; 
+        if (currentLocation === '舍') executeSwitch('棧');
+        else executeSwitch('舍');
+    }
+
+    function executeSwitch(loc) {
+        currentLocation = loc;
+        const mainBtn = document.getElementById('location-toggle-btn');
+
+        if(loc === '舍') {
+            document.body.classList.remove('theme-inn');
+            mainBtn.innerText = "🏠 當前地點：空間客舍 (點擊切換)";
+            mainBtn.style.background = "#2b579a";
+        } else {
+            document.body.classList.add('theme-inn');
+            mainBtn.innerText = "🌲 當前地點：空間客棧 (點擊切換)";
+            mainBtn.style.background = "#2e7d32";
+        }
+
+        applyRoleVisibility(); 
+        resetInputPanel();
+        renderTable();
+    }
+
+    function openLoginModal(role) {
+        pendingTargetRole = role;
+        if(role === 'manager') document.getElementById('modal-title').innerText = "👑 店長模式密碼驗證";
+        else if(role === 'friend') document.getElementById('modal-title').innerText = "🍇 空間友模式密碼驗證";
+        else if(role === 'inn_user') document.getElementById('modal-title').innerText = "🪵 客棧人模式密碼驗證";
+        else document.getElementById('modal-title').innerText = "👤 實習生模式密碼驗證";
+        
+        document.getElementById('login-password').value = "";
+        document.getElementById('login-modal').classList.add('active');
+        document.getElementById('login-password').focus();
+    }
+    
+    function closeLoginModal() {
+        document.getElementById('login-modal').classList.remove('active');
+    }
+
+    async function submitLogin() {
+        const pass = document.getElementById('login-password').value.trim();
+        if(!pass) return;
+
+        let { data } = await client.from('config').select('*').eq('key', 'passwords').single();
+        const pwdDb = data.value;
+
+        if(pendingTargetRole === 'manager' && pass === pwdDb.manager) {
+            currentRole = "manager";
+            alert("👑 歡迎店長登入！");
+        } else if(pendingTargetRole === 'intern' && pass === pwdDb.intern) {
+            currentRole = "intern";
+            alert("👤 歡迎實習生登入！");
+        } else if(pendingTargetRole === 'friend' && pass === pwdDb.friend) { 
+            currentRole = "friend";
+            executeSwitch('舍'); 
+            alert("🍇 歡迎空間友登入！(已鎖定空間客舍自由填寫)");
+        } else if(pendingTargetRole === 'inn_user' && pass === pwdDb.inn_user) { 
+            currentRole = "inn_user";
+            executeSwitch('棧'); 
+            alert("🪵 歡迎客棧人登入！(已鎖定空間客棧自由填寫)");
+        } else {
+            alert("❌ 密碼錯誤！");
+            return;
+        }
+
+        closeLoginModal();
+        selectedKeys = []; 
+        applyRoleVisibility();
+        renderTable();
+    }
+
+    function logout() {
+        currentRole = "guest";
+        selectedKeys = [];
+        applyRoleVisibility();
+        renderTable();
+    }
+
+    function applyRoleVisibility() {
+        const badge = document.getElementById('role-display');
+        const mainBtn = document.getElementById('location-toggle-btn');
+        
+        document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'none'); 
+        
+        document.getElementById('btn-login-friend').style.display = 'none';
+        document.getElementById('btn-login-innuser').style.display = 'none';
+        document.getElementById('btn-login-intern').style.display = 'inline-block';
+        document.getElementById('btn-login-manager').style.display = 'inline-block';
+        mainBtn.classList.remove('locked');
+
+        if (currentRole === 'guest') {
+            if (currentLocation === '舍') document.getElementById('btn-login-friend').style.display = 'inline-block';
+            else document.getElementById('btn-login-innuser').style.display = 'inline-block';
+        }
+
+        if(currentRole === 'manager') {
+            badge.innerText = "店長模式";
+            badge.className = "role-badge role-manager";
+            document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
+            document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'inline-block');
+            document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'block'); 
+            document.getElementById('btn-login-manager').style.display = 'none';
+        } else if(currentRole === 'intern' || currentRole === 'friend' || currentRole === 'inn_user') {
+            document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'inline-block');
+            document.querySelectorAll('.panel-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.stats-only').forEach(el => el.style.display = 'block'); 
+            document.getElementById('btn-login-intern').style.display = 'none';
+            
+            if (currentRole === 'intern') {
+                badge.innerText = "實習生模式";
+                badge.className = "role-badge role-intern";
+            } else if (currentRole === 'friend') {
+                badge.innerText = "空間友模式";
+                badge.className = "role-badge role-friend";
+                mainBtn.classList.add('locked'); 
+            } else if (currentRole === 'inn_user') {
+                badge.innerText = "客棧人模式";
+                badge.className = "role-badge role-innuser";
+                mainBtn.classList.add('locked'); 
+            }
+        } else {
+            badge.innerText = "一般模式";
+            badge.className = "role-badge role-guest";
+        }
+        resetInputPanel();
+    }
+
+    function getWeeksInMonth(monthStr) {
+        if(!monthStr) return [];
+        const [year, month] = monthStr.split('-').map(Number);
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        let start = new Date(firstDay);
+        while(start.getDay() !== 1) start.setDate(start.getDate() - 1);
+        const weeks = [];
+        let curr = new Date(start);
+        while(curr <= lastDay || curr.getDay() !== 1) {
+            if(curr.getDay() === 1) {
+                let week = [];
+                for(let i=0; i<7; i++) {
+                    let d = new Date(curr);
+                    const cleanLabel = `${d.getMonth()+1}/${d.getDate()} (${['日','一','二','三','四','五','六'][d.getDay()]})`;
+                    week.push({ full: d.toISOString().split('T')[0], label: cleanLabel });
+                    curr.setDate(curr.getDate() + 1);
+                }
+                weeks.push(week);
+                if(curr > lastDay) break;
+            }
+        }
+        return weeks;
+    }
+
+    function renderTable() {
+        const weeks = getWeeksInMonth(currentMonth);
+        if(weeks.length === 0) return;
+        if(currentWeekOffset >= weeks.length) currentWeekOffset = 0;
+        const currentWeek = weeks[currentWeekOffset];
+
+        // 🚀 3. 將抬頭格式改為：「XXXX-XX-XX ~ XXXX-XX-XX 空間客舍/空間客棧開放時間表」
+        const locTitle = currentLocation === '舍' ? '空間客舍' : '空間客棧';
+        document.getElementById('week-display').innerText = `${currentWeek[0].full} ~ ${currentWeek[6].full} ${locTitle}開放時間表`;
+
+        const header = document.getElementById('table-header');
+        header.innerHTML = `<th class="time-col">時間</th>` + currentWeek.map(day => `<th>${day.label}</th>`).join('');
+
+        const body = document.getElementById('table-body');
+        let html = "";
+        const currentSlots = getTimeSlotsForCurrentLocation(); 
+        
+        currentSlots.forEach(slot => {
+            html += `<tr><td class="time-col">${slot}</td>`;
+            currentWeek.forEach(day => {
+                const dbKey = `${currentLocation}_${day.full}_${slot}`;
+                const slotData = cachedSchedule[dbKey] || null;
+                
+                let displayText = "";
+                let statusClass = "";
+                let rawName = "";
+
+                if(slotData) {
+                    rawName = slotData.name;
+                    if(rawName === "AVAILABLE") {
+                        // 🚀 2. 開放中 ➔ 轉為顯示「可選當值時間」，轉淺綠色
+                        displayText = "可選當值時間";
+                        statusClass = "available";
+                    } else {
+                        statusClass = `occ-${slotData.type}`; 
+                        displayText = rawName; // 🚀 圖示已全面移至右側 layout，格子內純文字保持乾淨
+                    }
+                }
+
+                if(selectedKeys.includes(dbKey)) {
+                    statusClass += " current-selected";
+                }
+
+                html += `<td class="slot ${statusClass}" data-key="${dbKey}" data-raw="${rawName}" onclick="handleSlotClick(this, '${dbKey}', '${rawName}')">${displayText}</td>`;
+            });
+            html += `</tr>`;
+        });
+        body.innerHTML = html;
+
+        calculateStats(currentWeek);
+        applyHighlighting(); 
+    }
+
+    function handleSlotClick(element, key, rawName) {
+        if(currentRole === 'guest') {
+            if(rawName && rawName !== "AVAILABLE") toggleFilter(rawName);
+            else toggleFilter(null);
+        } else {
+            if(currentRole === 'intern' && rawName !== "AVAILABLE" && !selectedKeys.includes(key) && !element.classList.contains('available')) {
+                return; 
+            }
+            
+            if(selectedKeys.includes(key)) {
+                selectedKeys = selectedKeys.filter(k => k !== key);
+                element.classList.remove('current-selected');
+            } else {
+                selectedKeys.push(key);
+                element.classList.add('current-selected');
+            }
+
+            if(selectedKeys.length > 0) {
+                document.getElementById('selected-slot-label').innerText = `已選取 ${selectedKeys.length} 個時段格`;
+                document.getElementById('user-name-input').disabled = false;
+                document.getElementById('schedule-type-select').disabled = false;
+                
+                if(selectedKeys.length === 1) {
+                    const slotData = cachedSchedule[key];
+                    document.getElementById('user-name-input').value = (rawName === "AVAILABLE") ? "" : rawName;
+                    document.getElementById('schedule-type-select').value = (slotData && slotData.type) ? slotData.type : "duty";
+                }
+                
+                document.getElementById('btn-save-data').disabled = false;
+                document.getElementById('btn-clear-slot').disabled = false;
+            } else {
+                resetInputPanel();
+            }
+        }
+    }
+
+    async function saveMultiSlotData() {
+        if(selectedKeys.length === 0) return;
+        const nameVal = document.getElementById('user-name-input').value.trim();
+        const typeVal = document.getElementById('schedule-type-select').value;
+        if(!nameVal) { alert("請輸入名字"); return; }
+
+        for(let key of selectedKeys) {
+            cachedSchedule[key] = { name: nameVal, type: typeVal };
+            const compositeValue = `${nameVal}__${typeVal}`;
+            await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: compositeValue }, { onConflict: 'slot_key' });
+        }
+        
+        resetInputPanel();
+        renderTable();
+    }
+
+    async function setMultiSlotAvailable() {
+        if(selectedKeys.length === 0 || currentRole !== 'manager') return;
+        for(let key of selectedKeys) {
+            cachedSchedule[key] = { name: "AVAILABLE", type: "duty" };
+            await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: "AVAILABLE" }, { onConflict: 'slot_key' });
+        }
+        resetInputPanel();
+        renderTable();
+    }
+
+    async function clearMultiSlotData() {
+        if(selectedKeys.length === 0) return;
+        for(let key of selectedKeys) {
+            if(currentRole === 'intern' || currentRole === 'friend' || currentRole === 'inn_user') {
+                cachedSchedule[key] = { name: "AVAILABLE", type: "duty" };
+                await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: "AVAILABLE" }, { onConflict: 'slot_key' });
+            } else {
+                delete cachedSchedule[key];
+                await client.from(TABLE_NAME).delete().eq('slot_key', key);
+            }
+        }
+        resetInputPanel();
+        renderTable();
+    }
+
+    function resetInputPanel() {
+        selectedKeys = [];
+        document.getElementById('selected-slot-label').innerText = "請點選排班格子 (支援多選)...";
+        document.getElementById('user-name-input').value = "";
+        document.getElementById('user-name-input').disabled = true;
+        document.getElementById('schedule-type-select').disabled = true;
+        document.getElementById('btn-save-data').disabled = true;
+        document.getElementById('btn-clear-slot').disabled = true;
+        document.querySelectorAll('.slot').forEach(el => el.classList.remove('current-selected'));
+    }
+
+    function toggleFilter(name) {
+        activeFilterUser = (activeFilterUser === name) ? null : name;
+        applyHighlighting();
+    }
+
+    function applyHighlighting() {
+        document.querySelectorAll('.slot').forEach(el => {
+            const user = el.getAttribute('data-raw');
+            el.classList.remove('highlighted', 'dimmed');
+            if(activeFilterUser) {
+                if(user === activeFilterUser) el.classList.add('highlighted');
+                else el.classList.add('dimmed');
+            }
+        });
+        
+        document.querySelectorAll('.stats-item').forEach(item => {
+            item.classList.remove('active');
+            if(activeFilterUser && item.innerText.includes(activeFilterUser)) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    function downloadTableAsImage() {
+        const target = document.getElementById('capture-area');
+        const weekDisplay = document.getElementById('week-display').innerText;
+        html2canvas(target, { backgroundColor: "#ffffff", scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `${weekDisplay}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+
+    async function addNewMonth() {
+        if(currentRole !== 'manager') return;
+        const val = prompt("請輸入新月份 (格式: YYYY-MM)，例如: 2026-07");
+        if(/^\d{4}-\d{2}$/.test(val)) {
+            if(!dbMonths.includes(val)) {
+                dbMonths.push(val); dbMonths.sort(); currentMonth = val;
+                await client.from('config').upsert({ key: 'months', value: dbMonths });
+                initSystem();
+            }
+        }
+    }
+
+    async function deleteCurrentMonth() {
+        if(currentRole !== 'manager') return;
+        if(confirm(`確定要刪除整個 ${currentMonth} 月份嗎？`)) {
+            dbMonths = dbMonths.filter(m => m !== currentMonth);
+            await client.from('config').upsert({ key: 'months', value: dbMonths });
+            await client.from(TABLE_NAME).delete().like('slot_key', `%_${currentMonth}%`);
+            currentMonth = dbMonths[0] || "";
+            initSystem();
+        }
+    }
+
+    function updateMonthSelectUI() {
+        const select = document.getElementById('month-select');
+        select.innerHTML = dbMonths.map(m => `<option value="${m}" ${m===currentMonth?'selected':''}>${m}</option>`).join('');
+    }
+
+    function switchMonth() {
+        currentMonth = document.getElementById('month-select').value;
+        currentWeekOffset = 0;
+        renderTable();
+    }
+
+    function changeWeek(dir) {
+        const weeks = getWeeksInMonth(currentMonth);
+        currentWeekOffset += dir;
+        if(currentWeekOffset < 0) currentWeekOffset = 0;
+        if(currentWeekOffset >= weeks.length) currentWeekOffset = weeks.length - 1;
+        renderTable();
+    }
+
+    function calculateStats(week) {
+        const counts = {};
+        const currentSlots = getTimeSlotsForCurrentLocation();
+        week.forEach(day => {
+            currentSlots.forEach(slot => {
+                const dbKey = `${currentLocation}_${day.full}_${slot}`;
+                const slotData = cachedSchedule[dbKey];
+                
+                if(slotData && slotData.name && slotData.name !== "AVAILABLE" && slotData.type === 'duty') {
+                    counts[slotData.name] = (counts[slotData.name] || 0) + 1;
+                }
+            });
+        });
+        const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+        const list = document.getElementById('stats-list');
+        list.innerHTML = sorted.map(([name, count]) => `
+            <li class="stats-item" onclick="toggleFilter('${name}')">
+                <span>👤 ${name}</span><span>${count} 小時</span>
+            </li>
+        `).join('') || "<li>本週無當值排班</li>";
+        applyHighlighting();
+    }
+
+    window.onload = initSystem;
+</script>
+</body>
+</html>
