@@ -1125,7 +1125,7 @@ window.exportEventImage = function() {
             const downloadLink = document.createElement('a');
             downloadLink.style.display = 'none';
             downloadLink.href = dataURL;
-            downloadLink.download = `客棧時間表-${monthName}-1080x1350.png`;
+            downloadLink.download = `客棧時間表-${monthName}.png`;
             
             document.body.appendChild(downloadLink);
             downloadLink.click();
