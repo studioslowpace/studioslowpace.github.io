@@ -359,7 +359,41 @@
             const monthsConf = configData ? configData.find(c => c.key === 'months') : null;
             dbMonths = monthsConf ? monthsConf.value : ["2026-05", "2026-06"];
             
-            if(!currentMonth) currentMonth = dbMonths[0];
+            // 🚀 核心改動：自動定位到當天
+const today = new Date();
+const todayYYYYMM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+const todaySQL = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+// 1. 檢查資料庫有沒有當前的月份，有就跳過去，沒有就預設第一個
+if (dbMonths.includes(todayYYYYMM)) {
+    currentMonth = todayYYYYMM;
+} else {
+    currentMonth = dbMonths[0] || todayYYYYMM;
+}
+
+// 2. 初始化月份下拉選單（必須先執行這行，後面算週別才精準）
+updateMonthSelectUI();
+
+// 3. 自動計算今天是在這個月的第幾週、手機版是在第幾天
+const weeks = getWeeksInMonth(currentMonth);
+let foundWeekIdx = 0;
+let foundMobileDayOffset = 0;
+
+for (let w = 0; w < weeks.length; w++) {
+    // 檢查這一週內有沒有包含今天的日期
+    const dayIdx = weeks[w].findIndex(d => d.full === todaySQL);
+    if (dayIdx !== -1) {
+        foundWeekIdx = w;
+        // 手機模式下：0=週一~三, 3=週四~六, 6=週日
+        if (dayIdx < 3) foundMobileDayOffset = 0;
+        else if (dayIdx < 6) foundMobileDayOffset = 3;
+        else foundMobileDayOffset = 6;
+        break;
+    }
+}
+
+currentWeekOffset = foundWeekIdx;
+mobileDayOffset = foundMobileDayOffset;
 
             let { data: scheduleData } = await client.from(TABLE_NAME).select('slot_key, user_name');
             cachedSchedule = {};
