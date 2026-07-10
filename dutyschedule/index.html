@@ -297,6 +297,8 @@
     const TABLE_NAME = 'schedules'; 
     const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+    const holidays = ["2026-01-01", "2026-02-17", "2026-02-18", "2026-02-19", "2026-04-03", "2026-04-04", "2026-04-06", "2026-04-07", "2026-05-01", "2026-05-25", "2026-06-19", "2026-07-01", "2026-09-26", "2026-10-01", "2026-10-19", "2026-12-25", "2026-12-26"];
+
     let currentRole = "guest"; 
     let dbMonths = [];
     let cachedSchedule = {}; 
@@ -574,14 +576,10 @@ function getWeeksInMonth(monthStr) {
     if(!monthStr) return [];
     const [year, month] = monthStr.split('-').map(Number);
     
-    // 建立該月第一天
     const firstDay = new Date(year, month - 1, 1);
-    // 建立該月最後一天
     const lastDay = new Date(year, month, 0);
     
-    // 🚀 精準尋找該月第一週的星期一
     let start = new Date(firstDay);
-    // getDay(): 0是周日, 1是周一... 如果不是周一，就一直往回推一天
     while(start.getDay() !== 1) {
         start.setDate(start.getDate() - 1);
     }
@@ -589,21 +587,29 @@ function getWeeksInMonth(monthStr) {
     const weeks = [];
     let curr = new Date(start);
     
-    // 確保完整覆蓋當月所有日子
     while(curr <= lastDay || curr.getDay() !== 1) {
         if(curr.getDay() === 1) {
             let week = [];
             for(let i = 0; i < 7; i++) {
                 let d = new Date(curr);
                 
-                // 修正時區偏移，確保精準抓到本地日期的 YYYY-MM-DD
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
                 const fullDateStr = `${yyyy}-${mm}-${dd}`;
                 
-                // 去零格式： 日子/月份
-                const cleanLabel = `${d.getDate()}/${d.getMonth() + 1} (${['日','一','二','三','四','五','六'][d.getDay()]})`;
+                // 🚀 核心改動：檢查是否為星期日 (getDay() === 0) 或屬於 holidays 陣列
+                const isSunday = (d.getDay() === 0);
+                const isHoliday = holidays.includes(fullDateStr);
+                
+                let cleanLabel = "";
+                if (isSunday || isHoliday) {
+                    // 如果是紅日，將「日子/月份 (星期)」整個包進紅色 span
+                    cleanLabel = `<span style="color: #f56c6c; font-weight: bold;">${d.getDate()}/${d.getMonth() + 1} (${['日','一','二','三','四','五','六'][d.getDay()]})</span>`;
+                } else {
+                    // 一般日子維持原樣
+                    cleanLabel = `${d.getDate()}/${d.getMonth() + 1} (${['日','一','二','三','四','五','六'][d.getDay()]})`;
+                }
                 
                 week.push({ full: fullDateStr, label: cleanLabel });
                 curr.setDate(curr.getDate() + 1);
