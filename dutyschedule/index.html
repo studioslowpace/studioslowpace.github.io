@@ -807,23 +807,24 @@ function getWeeksInMonth(monthStr) {
         applyHighlighting();
     }
 
-    function applyHighlighting() {
-        document.querySelectorAll('.slot').forEach(el => {
-            const user = el.getAttribute('data-raw');
-            el.classList.remove('highlighted', 'dimmed');
-            if(activeFilterUser) {
-                if(user === activeFilterUser) el.classList.add('highlighted');
-                else el.classList.add('dimmed');
-            }
-        });
-        
-        document.querySelectorAll('.stats-item').forEach(item => {
-            item.classList.remove('active');
-            if(activeFilterUser && item.innerText.includes(activeFilterUser)) {
-                item.classList.add('active');
-            }
-        });
-    }
+function applyHighlighting() {
+    document.querySelectorAll('.slot').forEach(el => {
+        const user = el.getAttribute('data-raw');
+        el.classList.remove('highlighted', 'dimmed');
+        if(activeFilterUser) {
+            // 🚀 核心改動：如果格子包含被篩選的人名（包含多人情況），就予以高亮
+            if(user && user.includes(activeFilterUser)) el.classList.add('highlighted');
+            else el.classList.add('dimmed');
+        }
+    });
+    
+    document.querySelectorAll('.stats-item').forEach(item => {
+        item.classList.remove('active');
+        if(activeFilterUser && item.innerText.includes(activeFilterUser)) {
+            item.classList.add('active');
+        }
+    });
+}
 
 function downloadTableAsImage() {
     // 🚀 將擷取目標從 capture-area 改為整張表格的外框 table-section，這樣就會連同上方的標題一起包進去
@@ -894,7 +895,14 @@ function calculateStats() {
                 
                 // 篩選出屬於排班（duty）且不是 AVAILABLE 的項目
                 if(slotData && slotData.name && slotData.name !== "AVAILABLE" && slotData.type === 'duty') {
-                    counts[slotData.name] = (counts[slotData.name] || 0) + 1;
+                    
+                    // 🚀 核心改動：支援全形「，」或半形「,」分隔名字，並去除空格
+                    const names = slotData.name.split(/[，,]/).map(n => n.trim()).filter(n => n !== "");
+                    
+                    // 分開為每個人單獨累加 1 小時
+                    names.forEach(name => {
+                        counts[name] = (counts[name] || 0) + 1;
+                    });
                 }
             });
         });
