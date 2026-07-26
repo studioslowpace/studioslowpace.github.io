@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>展覽作品 - 被遺忘的一角</title>
+  <style>
+    /* 全域基礎設定 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", serif, sans-serif;
+      color: #333;
+      background-color: #fff;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* 頂部 Banner */
+    .banner {
+      width: 100%;
+      margin-bottom: 40px;
+    }
+
+    .banner img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* 主標題 */
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: #2b3a4a;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+
+    /* 作品列表區塊 */
+    .artwork-list {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* 單個作品卡片（Flex 布局） */
+    .artwork-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 30px;
+    }
+
+    /* 圖文交錯控制：反轉欄位方向 */
+    .artwork-item.reverse {
+      flex-direction: row-reverse;
+    }
+
+    .artwork-image {
+      flex: 1;
+    }
+
+    .artwork-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+
+    .artwork-info {
+      flex: 1;
+      padding-top: 10px;
+    }
+
+    .artwork-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+    }
+
+    .artwork-author {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    .artwork-author a {
+      color: #555;
+      text-decoration: underline;
+    }
+
+    .artwork-medium {
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    .artwork-description p {
+      font-size: 0.95rem;
+      color: #444;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    /* 響應式：手機畫面切換為單欄 */
+    @media (max-width: 768px) {
+      .artwork-item,
+      .artwork-item.reverse {
+        flex-direction: column;
+      }
+      
+      .artwork-image, .artwork-info {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 頂部 Banner -->
+    <header class="banner">
+      <img src="https://via.placeholder.com/900x250/e8e3dc/333333?text=%E3%80%8A%E2%BD%A2%E9%81%BA%E2%BD%84%E7%9A%84%E2%BD%80%E8%A7%92%E3%80%8B+The+Hidden+Utopia" alt="被遺忘的一角 Banner">
+    </header>
+
+    <!-- 標題 -->
+    <h1 class="page-title">展覽作品</h1>
+
+    <!-- 作品列表 -->
+    <main class="artwork-list">
+
+      <!-- 作品一 (左圖右文) -->
+      <article class="artwork-item">
+        <div class="artwork-image">
+          <img src="https://via.placeholder.com/450x350/555/fff?text=Artwork+1" alt="被記憶的遺忘">
+        </div>
+        <div class="artwork-info">
+          <h2 class="artwork-title">被記憶的遺忘</h2>
+          <p class="artwork-author">蘇禾 <a href="#">@soulraw</a></p>
+          <p class="artwork-medium">複合媒介</p>
+          <div class="artwork-description">
+            <p>在重新翻看每一張黑白照後，當的時色彩、心情、原因，早隨已時間逝去，現看到的，是只用當下視覺與情緒所看到的。</p>
+            <p>加上記憶之亂混與表達不能，者兩相互疊做了就自以為是的幻想。</p>
+            <p>但本無樹菩提，不用著執真實也可。</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 作品二 (右圖左文：加上 class "reverse") -->
+      <article class="artwork-item reverse">
+        <div class="artwork-image">
+          <img src="https://via.placeholder.com/450x450/777/fff?text=Artwork+2" alt="復刻．生活">
+        </div>
+        <div class="artwork-info">
+          <h2 class="artwork-title">復刻．生活</h2>
+          <p class="artwork-author">Ka Ho <a href="#">@hsparkp</a></p>
+          <p class="artwork-medium">紙張、木板</p>
+          <div class="artwork-description">
+            <p>想像東湧公立學校學生可能記得的瞬間，扣連可能存在的走馬燈製作的教程</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 作品三 (預留：左圖右文) -->
+      <article class="artwork-item">
+        <div class="artwork-image">
+          <img src="https://via.placeholder.com/450x300/333/fff?text=Artwork+3" alt="看不見的一方水土">
+        </div>
+        <div class="artwork-info">
+          <h2 class="artwork-title">看不見的一方水土</h2>
+          <!-- 內容可自行延伸 -->
+        </div>
+      </article>
+
+    </main>
+  </div>
+
+</body>
+</html>
