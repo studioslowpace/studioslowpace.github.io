@@ -1220,7 +1220,7 @@ function renderPosts() {
                 // 去格式化：改用 .leaderboard-item 區塊，內含排行文字與積分
                 leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
                     <div class="leaderboard-item">
-                        <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> (${h.contact})</span>
+                        <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> </span>
                         <span class="leaderboard-item-points">🪙 ${h.points} 分</span>
                     </div>
                 `).join('');
