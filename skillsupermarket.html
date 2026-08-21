@@ -739,6 +739,16 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
     display: flex;
     align-items: center;
     gap: 1rem;
+    width: 100%; /* 確保標頭容器佔滿寬度 */
+}
+
+/* 技能名冊排版 */
+.title-with-badge {
+    display: flex;
+     gap: 1.5rem;
+    align-items: center;            /* 垂直置中 */
+    flex: 1;                        /* 關鍵：讓此區塊自動填滿右側剩餘寬度 */
+    font-size: 0.75rem;             /* 設定字級大小 */
 }
 
 /* 頭像外圈 */
@@ -792,10 +802,11 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
 
 /* 底部資訊分隔線 */
 .task-card-footer {
+    font-size: 0.7rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 1rem;
+    padding-top: 0.7rem;
     border-top: 1px dashed #f1f5f9; /* 細緻的灰虛線 */
 }
 
@@ -879,7 +890,7 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
             
             <div id="admin-logged-out" class="admin-logout-row">
                 <p class="admin-hint-text">
-                    萬事屋主理人專用登入密碼：<code class="admin-password-code">admin123</code>
+                    萬事屋主理人專用登入密碼：<code class="admin-password-code"></code>
                 </p>
                 <div class="admin-input-group-wrapper">
                     <input type="password" id="admin-password-input" placeholder="輸入管理密碼" class="admin-password-input">
@@ -924,14 +935,14 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
         </div>
 
                     <div class="layout-action-row">
-            <button id="header-skill-btn" onclick="openSkillModal()" class="hidden btn-base btn-stone">+ 新增技能人才</button>
+            <button id="header-skill-btn" onclick="openSkillModal()" class="hidden btn-base btn-stone">+ 新增鄰里人技能</button>
             <button id="header-upload-btn" onclick="openUploadModal()" class="btn-base btn-orange">+ 發布新委託</button>
             </div>
 
             <div class="tabs-row">
                 <button id="tab-active" onclick="switchTab('active')" class="tab-btn tab-active-orange">等待幫助的委託</button>
                 <button id="tab-completed" onclick="switchTab('completed')" class="tab-btn">已完成的委託</button>
-                <button id="tab-skills" onclick="switchTab('skills')" class="tab-btn tab-btn-flex"><span>✨ 鄰里名冊與積分榜</span></button>
+                <button id="tab-skills" onclick="switchTab('skills')" class="tab-btn tab-btn-flex"><span>✨ 鄰里人名冊與積分榜</span></button>
             </div>
 
             <div id="skills-leaderboard-section" class="hidden leaderboard-panel">
@@ -984,7 +995,7 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                     <input type="text" id="join-name" required class="input-field">
                 </div>
                 <div>
-                    <label class="input-label">您的聯絡方式</label>
+                    <label class="input-label">您的聯絡方式 (IG / 電話)</label>
                     <input type="text" id="join-ig" required class="input-field">
                 </div>
                 <button type="submit" class="btn-form-submit-orange">確認接下此委託</button>
@@ -1030,23 +1041,23 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                 </div>
                 <div>
                     <label class="input-label">委託的事情</label>
-                    <input type="text" id="taskTitleInput" required class="input-field">
+                    <input type="text" id="taskTitleInput" required class="input-field" placeholder="請簡單填寫">
                 </div>
                 <div class="form-row-grid">
                     <div><label class="input-label">您的稱呼</label><input type="text" id="clientNameInput" required class="input-field"></div>
-                    <div><label class="input-label">您的聯絡方式</label><input type="text" id="clientContactInput" required class="input-field"></div>
+                    <div><label class="input-label">您的聯絡方式 (IG / 電話)</label><input type="text" id="clientContactInput" required class="input-field" placeholder="🔒 僅平台持有人可見"></div>
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">限制條件</label><input type="text" id="taskTagInput" required class="input-field"></div>
-                    <div><label class="input-label">報酬</label><input type="text" id="rewardInput" required class="input-field"></div>
+                    <div><label class="input-label">限制條件</label><input type="text" id="taskTagInput" required class="input-field" placeholder="用作指定特定條件持有者接單，如無可填 / "></div>
+                    <div><label class="input-label">報酬</label><input type="text" id="rewardInput" required class="input-field" placeholder="此為額外報酬，增加誘引讓人接單，如無可填 / "></div>
                 </div>
                 <div>
                     <label class="input-label">委託的詳細說明</label>
-                    <textarea id="taskDetailsInput" required rows="3" class="input-field input-field-textarea"></textarea>
+                    <textarea id="taskDetailsInput" required rows="3" class="input-field input-field-textarea" placeholder="請儘量詳細說明"></textarea>
                 </div>
                 <div class="input-block-orange">
                     <label class="input-label input-label-orange">設定管理密碼</label>
-                    <input type="password" id="postPasswordInput" required class="input-password-special">
+                    <input type="password" id="postPasswordInput" required class="input-password-special" placeholder="此密碼用於查看接單人資料及匯報完成，請務必牢記。"></p>
                 </div>
                 <button type="submit" class="btn-form-submit-orange">發佈並上傳至萬事屋</button>
             </form>
@@ -1233,35 +1244,49 @@ function renderPosts() {
             return;
         }
         
-        skills.forEach(skill => {
-            const card = document.createElement('div');
-            // 去格式化：將鄰里人技能同樣包裝成「白色卡片樣式」
-            card.className = "task-card";
-            const adminTools = isAdmin ? `
-                <div class="card-admin-tools">
-                    <button onclick="deleteSkill('${skill.id}')" class="btn-card-delete">🗑️</button>
-                </div>` : '';
-            
-            const myPoint = allScores[skill.contact?.trim()]?.points || 0;
+// 1. 定義標籤轉 Hashtag 的處理函式
+function formatHashtags(tagString) {
+    if (!tagString) return '';
+    
+    return tagString
+        .trim()                        // 去除前後空白
+        .split(/\s+/)                  // 以一個或多個空白字元分隔
+        .map(tag => tag.startsWith('#') ? tag : `#${tag}`) // 如果前面沒有 # 就自動補上
+        .join(' ');                    // 用空白組合回去
+}
 
-            card.innerHTML = `
-                <div>
-                    <div class="task-card-header">
-                        <div class="avatar-circle-stone">${skill.emoji || '🧑‍🎨'}</div>
-                        <div>
-                            <div class="title-with-badge">
-                                <h3 class="task-card-title">${skill.name}</h3>
-                                <span class="point-badge">🪙 萬事分: ${myPoint}</span>
-                            </div>
-                            <span class="tag-stone">${skill.skilltag || ''}</span>
-                        </div>
+// 2. 在渲染卡片時呼叫它
+skills.forEach(skill => {
+    const card = document.createElement('div');
+    card.className = "task-card";
+    
+    const adminTools = isAdmin ? `
+        <div class="card-admin-tools">
+            <button onclick="deleteSkill('${skill.id}')" class="btn-card-delete">🗑️</button>
+        </div>` : '';
+    
+    const myPoint = allScores[skill.contact?.trim()]?.points || 0;
+
+    // 將標籤字串轉為帶有 # 的格式
+    const formattedTags = formatHashtags(skill.skilltag);
+
+    card.innerHTML = `
+        <div>
+            <div class="task-card-header">
+                <div class="avatar-circle-stone">${skill.emoji || '🧑‍🎨'}</div>
+                <div style="flex: 1;">
+                    <div class="title-with-badge">
+                        <h3 class="task-card-title">${skill.name}</h3> 
+                        <span class="point-badge">🪙 ${myPoint}</span>
                     </div>
-                    ${adminTools}
-                    <p class="task-card-description">${skill.description}</p>
                 </div>
-                <div class="task-card-footer">
-<span class="tag-stone">${skill.skilltag || ''}</span>
-                </div>
+            </div>
+            ${adminTools}
+            <p class="task-card-description">${skill.description}</p>
+        </div>
+        <div class="task-card-footer">
+            <span class="tag-stone">${formattedTags}</span>
+        </div>
             `;
             container.appendChild(card);
         });
