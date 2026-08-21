@@ -1260,8 +1260,7 @@ function renderPosts() {
                     <p class="task-card-description">${skill.description}</p>
                 </div>
                 <div class="task-card-footer">
-                    <span class="contact-info-text">管道: <strong>${skill.contact}</strong></span>
-                    <button onclick="copyContactInfo('${skill.contact}')" class="btn-card-copy">📋 複製資料</button>
+<span class="tag-stone">${skill.skilltag || ''}</span>
                 </div>
             `;
             container.appendChild(card);
@@ -1454,12 +1453,6 @@ function renderPosts() {
                     </div>
                     <div class="bg-amber-50/30 rounded-2xl p-4 grid grid-cols-2 gap-4 text-sm border border-amber-100">
                         <div><span class="block text-xs text-gray-400 mb-0.5">💰 額外謝禮 </span><span class="font-bold text-amber-800">${rwd}</span></div>
-                        <div>
-                            <span class="block text-xs text-gray-400 mb-0.5">聯絡方法</span>
-                            <span onclick="copyContactInfo('${cContact}')" class="font-bold text-orange-600 cursor-pointer underline flex items-center gap-1">
-                                <span>${cContact}</span>
-                            </span>
-                        </div>
                     </div>
                     <div class="pt-2 flex items-center justify-between">
                         <div class="text-sm text-gray-600 flex items-center space-x-1"><i data-lucide="users" class="w-4 h-4 text-orange-600"></i><span>已有 <strong class="text-gray-900 font-bold text-base">${hList.length}</strong> 位鄰里人挺身而出</span></div>
