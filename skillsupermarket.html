@@ -610,8 +610,8 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
         }
         .input-label-orange { color: #9a3412; }
         .avatar-preview-circle {
-            width: 3.5rem;
-            height: 3.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
             border-radius: 50%;
             background-color: #fff7ed;
             border: 2px solid #fbe58a;
@@ -866,6 +866,13 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
     right: 1.25rem;
     z-index: 10;
 }
+
+/* 讓所有 input 和 textarea 的 placeholder 字體縮小並變淡 */
+input::placeholder,
+textarea::placeholder {
+    font-size: 0.75rem; /* 可以改為 12px 或 13px */
+    color: #99ca9a;     /* 你也可以順便調整提示文字的顏色 */
+}
     </style>
 </head>
 <body>
@@ -962,7 +969,7 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                     <div id="leaderboard-target" class="leaderboard-container"></div>
                 </div>
             </div>
-
+            <div id="skill-filter-bar-container" class="hidden" style="width: 100%; margin-bottom: 16px;"></div>
             <div id="posts-container" class="card-grid"></div>
         </div>
     </main>
@@ -1035,9 +1042,21 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                 <div class="input-block-bg">
                     <label class="input-label">委託人標誌</label>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div onclick="toggleEmojiBank('post')" id="current-avatar-preview" class="avatar-preview-circle">🙋‍♂️</div>
+                       <div onclick="toggleEmojiBank('post')" id="current-avatar-preview" class="avatar-preview-circle" style="cursor: pointer;">🙋‍♂️</div>
                     </div>
                     <input type="hidden" id="selected-emoji" value="🙋‍♂️">
+                    <!-- ⚠️ 這裡必須要有 id="emoji-bank-post" 對應你的 JS -->
+    <div id="emoji-bank-post" class="hidden" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
+        <div onclick="selectEmoji('🙋‍♂️', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🙋‍♂️</div>
+        <div onclick="selectEmoji('🙋‍♀️', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🙋‍♀️</div>
+        <div onclick="selectEmoji('🧑‍💻', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🧑‍💻</div>
+        <div onclick="selectEmoji('👩‍🎨', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">👩‍🎨</div>
+        <div onclick="selectEmoji('🐱', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🐱</div>
+        <div onclick="selectEmoji('🦊', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🦊</div>
+        <div onclick="selectEmoji('🦸‍♂️', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🦸‍♂️</div>
+        <div onclick="selectEmoji('💜', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">💜</div>
+        <div onclick="selectEmoji('⭐', 'post', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">⭐</div>
+    </div>
                 </div>
                 <div>
                     <label class="input-label">委託的事情</label>
@@ -1048,8 +1067,8 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                     <div><label class="input-label">您的聯絡方式 (IG / 電話)</label><input type="text" id="clientContactInput" required class="input-field" placeholder="🔒 僅平台持有人可見"></div>
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">限制條件</label><input type="text" id="taskTagInput" required class="input-field" placeholder="用作指定特定條件持有者接單，如無可填 / "></div>
-                    <div><label class="input-label">報酬</label><input type="text" id="rewardInput" required class="input-field" placeholder="此為額外報酬，增加誘引讓人接單，如無可填 / "></div>
+                    <div><label class="input-label">限制條件 (如無請填 / )</label><input type="text" id="taskTagInput" required class="input-field" placeholder="用作指定特定條件持有者"></div>
+                    <div><label class="input-label">額外報酬 (如無請填 / )</label><input type="text" id="rewardInput" required class="input-field" placeholder="可以此增加他人接單誘因"></div>
                 </div>
                 <div>
                     <label class="input-label">委託的詳細說明</label>
@@ -1079,14 +1098,27 @@ justify-content: flex-start; /* 關鍵：所有元素靠左緊貼，不平均分
                         <div onclick="toggleEmojiBank('skill')" id="skill-avatar-preview" class="avatar-preview-circle avatar-preview-stone">🧑‍🎨</div>
                     </div>
                     <input type="hidden" id="skill-selected-emoji" value="🧑‍🎨">
+                    <!-- ⚠️ 這裡必須要有 id="emoji-bank-skill" 對應你的 JS -->
+    <div id="emoji-bank-skill" class="hidden" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
+        <div onclick="selectEmoji('🙋‍♂️', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🙋‍♂️</div>
+        <div onclick="selectEmoji('🙋‍♀️', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🙋‍♀️</div>
+        <div onclick="selectEmoji('🧑‍💻', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🧑‍💻</div>
+        <div onclick="selectEmoji('👩‍🎨', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">👩‍🎨</div>
+        <div onclick="selectEmoji('🐱', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🐱</div>
+        <div onclick="selectEmoji('🦊', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🦊</div>
+        <div onclick="selectEmoji('🦸‍♂️', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">🦸‍♂️</div>
+        <div onclick="selectEmoji('💜', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">💜</div>
+        <div onclick="selectEmoji('⭐', 'skill', this)" class="avatar-preview-circle" style="cursor: pointer; text-align: center; font-size: 1.3rem;">⭐</div>
+    </div>
                 </div>
                 <div>
                     <label class="input-label">鄰里人的姓名</label>
                     <input type="text" id="skillNameInput" required class="input-field input-field-stone">
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">技能標籤</label><input type="text" id="skillTagInput" required class="input-field input-field-stone"></div>
-                    <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone"></div>
+                    <div><label class="input-label">日常使用的技能</label><input type="text" id="skillTagInput" required class="input-field input-field-stone"></div>
+                    <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
+                    <div><label class="input-label">正在研習的興趣</label><input type="text" id="skillTagInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
                 </div>
                 <div>
                     <label class="input-label">個人專長介紹</label>
@@ -1207,15 +1239,42 @@ function switchTab(tabName) {
     renderPosts();
 }
 
-// 主列表渲染主程式
-function renderPosts() {
-    const container = document.getElementById('posts-container');
-    if(!container) return;
-    container.innerHTML = '';
+// ==========================================
+        // 1. 全域變數與篩選狀態
+        // ==========================================
+        let currentTagFilter = 'all';
 
-    const allScores = countAllPoints();
+        // 2. 標籤轉 Hashtag 的處理函式（升級為可點擊過濾）
+        function formatHashtags(tagString) {
+            if (!tagString || tagString === '/') return '';
+            
+            return tagString
+                .trim()                        
+                .split(/\s+/)                  
+                .map(tag => {
+                    const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
+                    return `<span onclick="event.stopPropagation(); filterByTag('${cleanTag}')" style="cursor: pointer; display: inline-block; margin-right: 4px;">${cleanTag}</span>`;
+                }) 
+                .join(' ');                    
+        }
 
-    if (currentTab === 'skills') {
+        // 3. 點擊標籤進行過濾的函式
+        function filterByTag(tag) {
+            currentTagFilter = tag;
+            renderPosts(); // 重新渲染列表
+        }
+
+        // ==========================================
+        // 主列表渲染主程式
+        // ==========================================
+        function renderPosts() {
+            const container = document.getElementById('posts-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const allScores = countAllPoints();
+
+        if (currentTab === 'skills') {
         const leaderboardTarget = document.getElementById('leaderboard-target');
         if(leaderboardTarget) {
             const sortedHeroes = Object.keys(allScores)
@@ -1224,11 +1283,9 @@ function renderPosts() {
                 .slice(0, 3);
             
             if(sortedHeroes.length === 0) {
-                // 去格式化：改為自訂的榜單空狀態文字樣式 class
                 leaderboardTarget.innerHTML = `<p class="leaderboard-empty-text">尚無得點紀錄，等待第一位英雄誕生！</p>`;
             } else {
                 const medals = ['🥇', '🥈', '🥉'];
-                // 去格式化：改用 .leaderboard-item 區塊，內含排行文字與積分
                 leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
                     <div class="leaderboard-item">
                         <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> </span>
@@ -1238,128 +1295,167 @@ function renderPosts() {
             }
         }
 
+        // 取得獨立的篩選列容器
+        const filterBarContainer = document.getElementById('skill-filter-bar-container');
+
         if (skills.length === 0) {
-            // 去格式化：使用自訂無資料提示樣式
+            if(filterBarContainer) filterBarContainer.innerHTML = '';
             container.innerHTML = '<p class="container-empty-hint">目前尚無登記鄰里人技能。</p>';
             return;
         }
-        
-// 1. 定義標籤轉 Hashtag 的處理函式
-function formatHashtags(tagString) {
-    if (!tagString) return '';
-    
-    return tagString
-        .trim()                        // 去除前後空白
-        .split(/\s+/)                  // 以一個或多個空白字元分隔
-        .map(tag => tag.startsWith('#') ? tag : `#${tag}`) // 如果前面沒有 # 就自動補上
-        .join(' ');                    // 用空白組合回去
-}
 
-// 2. 在渲染卡片時呼叫它
-skills.forEach(skill => {
-    const card = document.createElement('div');
-    card.className = "task-card";
-    
-    const adminTools = isAdmin ? `
-        <div class="card-admin-tools">
-            <button onclick="deleteSkill('${skill.id}')" class="btn-card-delete">🗑️</button>
-        </div>` : '';
-    
-    const myPoint = allScores[skill.contact?.trim()]?.points || 0;
+        // 收集所有標籤
+        let allTagsSet = new Set();
+        skills.forEach(skill => {
+            if (skill.skilltag) {
+                skill.skilltag.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
+            }
+            if (skill.learning && skill.learning !== '/') {
+                skill.learning.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
+            }
+        });
 
-    // 將標籤字串轉為帶有 # 的格式
-    const formattedTags = formatHashtags(skill.skilltag);
+        // 渲染獨立的頂部篩選列
+        if(filterBarContainer) {
+            filterBarContainer.classList.remove('hidden');
+            let filterHtml = `
+                <div style="width: 100%; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap;">
+                    <button onclick="filterByTag('all')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${currentTagFilter === 'all' ? '#333' : '#fff'}; color: ${currentTagFilter === 'all' ? '#fff' : '#333'}; cursor: pointer;">全部顯示</button>
+            `;
+            allTagsSet.forEach(tag => {
+                const isActive = currentTagFilter === tag;
+                filterHtml += `<button onclick="filterByTag('${tag}')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${isActive ? '#333' : '#fff'}; color: ${isActive ? '#fff' : '#333'}; cursor: pointer;">${tag}</button>`;
+            });
+            filterHtml += `</div>`;
+            filterBarContainer.innerHTML = filterHtml;
+        }
 
-    card.innerHTML = `
-        <div>
-            <div class="task-card-header">
-                <div class="avatar-circle-stone">${skill.emoji || '🧑‍🎨'}</div>
-                <div style="flex: 1;">
-                    <div class="title-with-badge">
-                        <h3 class="task-card-title">${skill.name}</h3> 
-                        <span class="point-badge">🪙 ${myPoint}</span>
+        container.innerHTML = ''; // 清空卡片容器
+
+        const filteredSkills = skills.filter(skill => {
+            if (currentTagFilter === 'all') return true;
+            const tText = (skill.skilltag || '') + ' ' + (skill.learning || '');
+            return tText.includes(currentTagFilter.replace('#', ''));
+        });
+
+        if (filteredSkills.length === 0) {
+            container.innerHTML = '<p class="container-empty-hint">沒有找到符合此標籤的鄰里人。</p>';
+            return;
+        }
+
+        // 渲染卡片
+        filteredSkills.forEach(skill => {
+            const card = document.createElement('div');
+            card.className = "task-card";
+            
+            const adminTools = isAdmin ? `
+                <div class="card-admin-tools">
+                    <button onclick="deleteSkill('${skill.id}')" class="btn-card-delete">🗑️</button>
+                </div>` : '';
+            
+            const myPoint = allScores[skill.contact?.trim()]?.points || 0;
+
+            const formattedTags = formatHashtags(skill.skilltag);
+            const formattedLearning = formatHashtags(skill.learning);
+ 
+            // 💡 判斷是否有填寫「專長」，有填寫就加上「📜 應用中：」前綴
+            const skillTagBadge = skill.skilltag && skill.skilltag !== '/' ? 
+                `<span class="tag-stone" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">📜 應用中：${formattedTags}</span>` : '';
+            const learningBadge = skill.learning && skill.learning !== '/' ? 
+                `<span class="tag-learning" style="background: #f3f4f6; color: #4b5563; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 6px;">📚 研習中：${formattedLearning}</span>` : '';
+
+            card.innerHTML = `
+                <div>
+                    <div class="task-card-header">
+                        <div class="avatar-circle-stone">${skill.emoji || '🧑‍🎨'}</div>
+                        <div style="flex: 1;">
+                            <div class="title-with-badge">
+                                <h3 class="task-card-title">${skill.name}</h3> 
+                                <span class="point-badge">🪙 ${myPoint}</span>
+                            </div>
+                        </div>
                     </div>
+                    ${adminTools}
+                    <p class="task-card-description">${skill.description}</p>
                 </div>
-            </div>
-            ${adminTools}
-            <p class="task-card-description">${skill.description}</p>
-        </div>
-        <div class="task-card-footer">
-            <span class="tag-stone">${formattedTags}</span>
-        </div>
+                <div class="task-card-footer" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                    ${skillTagBadge}
+                    ${learningBadge}
+                </div>
             `;
             container.appendChild(card);
         });
         return;
+    } else {
+        // 如果切換到其他分頁（active / completed），記得把獨立的篩選列隱藏
+        const filterBarContainer = document.getElementById('skill-filter-bar-container');
+        if(filterBarContainer) filterBarContainer.classList.add('hidden');
     }
 
-    const isCompletedTarget = (currentTab === 'completed');
-    const filteredPosts = posts.filter(post => {
-        const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-        return !!compVal === isCompletedTarget;
-    });
-    
-    if (filteredPosts.length === 0) {
-        // 去格式化：使用自訂無資料提示樣式
-        container.innerHTML = '<p class="container-empty-hint">此分類目前沒有委託案件。</p>';
-        return;
-    }
+            const isCompletedTarget = (currentTab === 'completed');
+            const filteredPosts = posts.filter(post => {
+                const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+                return !!compVal === isCompletedTarget;
+            });
+            
+            if (filteredPosts.length === 0) {
+                container.innerHTML = '<p class="container-empty-hint">此分類目前沒有委託案件。</p>';
+                return;
+            }
 
-    filteredPosts.forEach(post => {
-        const hList = post.heroeslist || [];
-        const count = hList.length;
-        const card = document.createElement('div');
-        
-        const cEmoji = post.clientemoji || '🙋‍♂️';
-        const tTitle = post.tasktitle || '';
-        const cName = post.clientname || '';
-        const tTag = post.tasktag || '';
-        const tDetails = post.taskdetails || '';
-        const rwd = post.reward || '';
-        const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+            filteredPosts.forEach(post => {
+                const hList = post.heroeslist || [];
+                const count = hList.length;
+                const card = document.createElement('div');
+                
+                const cEmoji = post.clientemoji || '🙋‍♂️';
+                const tTitle = post.tasktitle || '';
+                const cName = post.clientname || '';
+                const tTag = post.tasktag || '';
+                const tDetails = post.taskdetails || '';
+                const rwd = post.reward || '';
+                const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
 
-        // 【核心修改】：全面換成自訂的白色卡片樣式 Class
-        card.className = "task-card clickable-group";
-        card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
+                card.className = "task-card clickable-group";
+                card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
 
-        let adminActionHtml = '';
-        if (isAdmin) {
-            // 去格式化：移除 bg-red-50 text-red-600 等 Tailwind
-            adminActionHtml += `<button onclick="deletePost('${post.id}')" class="btn-card-delete">🗑️</button>`;
-        }
-
-        card.innerHTML = `
-            <div>
-                <div class="task-card-header">
-                    <div class="avatar-circle-orange">${cEmoji}</div>
-                    <div style="flex: 1; min-width: 0;">
-                        <h3 class="task-card-title text-ellipsis-2line">${tTitle}</h3>
-                        <p class="task-card-subtitle">委託人：${cName} • ${count}人已接單</p>
-                    </div>
-                </div>
-                <div class="card-admin-tools">${adminActionHtml}</div>
-                <div style="margin-bottom: 0.5rem;">
-                    <span class="tag-orange">${tTag}</span>
-                </div>
-                <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
-            </div>
-            <div class="task-card-footer">
-                <div class="reward-info-text">
-                    <span class="reward-highlight">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span>
-                </div>
-                ${isComp 
-                    ? `<span class="badge-status-success">
-                        <span class="status-success-title">圓滿解決 🏮</span>
-                        <span class="status-success-subtitle">貢獻者: ${post.completed_by_name || '無'}</span>
-                       </span>`
-                    : `<button onclick="openJoinModal('${post.id}')" class="btn-base btn-orange">接受委託</button>`
+                let adminActionHtml = '';
+                if (isAdmin) {
+                    adminActionHtml += `<button onclick="deletePost('${post.id}')" class="btn-card-delete">🗑️</button>`;
                 }
-            </div>
-        `;
-        container.appendChild(card);
-    });
-    setTimeout(() => { lucide.createIcons(); }, 100);
-}
+
+                card.innerHTML = `
+                    <div>
+                        <div class="task-card-header">
+                            <div class="avatar-circle-orange">${cEmoji}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h3 class="task-card-title text-ellipsis-2line">${tTitle}</h3>
+                                <p class="task-card-subtitle">委託人：${cName} • ${count}人已接單</p>
+                            </div>
+                        </div>
+                        <div class="card-admin-tools">${adminActionHtml}</div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <span class="tag-orange">${tTag}</span>
+                        </div>
+                        <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
+                    </div>
+                    <div class="task-card-footer">
+                        <div class="reward-info-text">
+                            <span class="reward-highlight">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span>
+                        </div>
+                        ${isComp 
+                            ? `<span class="badge-status-success">
+                                <span class="status-success-title">圓滿解決 🏮</span>
+                                <span class="status-success-subtitle">貢獻者: ${post.completed_by_name || '無'}</span>
+                               </span>`
+                            : `<button onclick="openJoinModal('${post.id}')" class="btn-base btn-orange">接受委託</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            setTimeout(() => { lucide.createIcons(); }, 100);
+        }
 
         // 導向至單一案件詳細內頁
         function goToPostDetail(postId) {
