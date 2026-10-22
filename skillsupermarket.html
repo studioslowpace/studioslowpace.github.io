@@ -233,6 +233,15 @@
             object-fit: cover;
             transition: opacity 0.2s;
         }
+
+        /* 當螢幕寬度小於 768px（一般手機尺寸）時，自動變成 30px */
+        @media (max-width: 768px) {
+            .banner-logo-img {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
         .banner-logo-group:hover .banner-logo-img { opacity: 0.8; }
         .banner-title-main {
             font-size: 0.875rem;
@@ -321,11 +330,6 @@
         @media (min-width: 768px) {
             .main-layout { padding-left: 1.5rem; padding-right: 1.5rem; }
 
-                    .banner-logo-img {
-            width: 30px;
-            height: 30px;
-            object-fit: cover;
-            transition: opacity 0.2s;
         }
         }
         .single-layout {
