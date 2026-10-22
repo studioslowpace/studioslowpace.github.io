@@ -910,6 +910,17 @@ textarea::placeholder {
                     <i data-lucide="check-circle" class="admin-success-icon"></i>
                     <span class="admin-success-text">主理人模式已啟用：您不受個案密碼限制，可任意刪除/變更狀態。</span>
                 </div>
+                <!-- 🌟 把手動調整萬事分的區塊加在這裡！(並把原本的 class="hidden" 拿掉，讓它隨著登入成功自動顯示) -->
+                <div id="admin-points-control" style="margin-top: 15px; padding: 12px; background: #fff3ed; border-radius: 12px; border: 1px solid #ffd8c2;">
+                    <h4 style="font-size: 0.9rem; font-weight: bold; color: #c2410c; margin-bottom: 8px;">⚙️ 管理員手動調整萬事分</h4>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <input type="text" id="admin-target-contact" placeholder="目標聯絡方式 (IG/電話)" class="input-field" style="flex: 1; min-width: 150px; font-size: 0.85rem;">
+                        <input type="text" id="admin-target-name" placeholder="稱呼 (加分用)" class="input-field" style="width: 100px; font-size: 0.85rem;">
+                        <button onclick="adminAdjustPoints(1)" class="btn-base btn-orange" style="padding: 4px 12px; font-size: 0.85rem;">+1 分</button>
+                        <button onclick="adminAdjustPoints(-1)" style="padding: 4px 12px; font-size: 0.85rem; background: #ef4444; color: white; border-radius: 8px; border: none; cursor: pointer;">-1 分</button>
+                    </div>
+                </div>
+
                 <div class="admin-logout-wrapper">
                     <button onclick="handleAdminLogout()" class="btn-admin-logout">登出主理人</button>
                 </div>
@@ -1069,8 +1080,8 @@ textarea::placeholder {
                     <div><label class="input-label">您的聯絡方式 (IG / 電話)</label><input type="text" id="clientContactInput" required class="input-field" placeholder="🔒 僅平台持有人可見"></div>
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">限制條件 (如無請填 / )</label><input type="text" id="taskTagInput" required class="input-field" placeholder="用作指定特定條件持有者"></div>
-                    <div><label class="input-label">額外報酬 (如無請填 / )</label><input type="text" id="rewardInput" required class="input-field" placeholder="可以此增加他人接單誘因"></div>
+                    <div><label class="input-label">限制條件 (如無請填 / )</label><input type="text" id="taskTagInput" required class="input-field" placeholder="指定特定條件持有者"></div>
+                    <div><label class="input-label">額外報酬 (如無請填 / )</label><input type="text" id="rewardInput" required class="input-field" placeholder="增加他人接單的誘因"></div>
                 </div>
                 <div>
                     <label class="input-label">委託的詳細說明</label>
@@ -1120,7 +1131,7 @@ textarea::placeholder {
                 <div class="form-row-grid">
                     <div><label class="input-label">日常使用的技能</label><input type="text" id="skillTagInput" required class="input-field input-field-stone"></div>
                     <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
-                    <div><label class="input-label">正在研習的興趣</label><input type="text" id="skillTagInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
+                    <div><label class="input-label">正在研習的興趣</label><input type="text" id="skillLearningInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
                 </div>
                 <div>
                     <label class="input-label">個人專長介紹</label>
@@ -1154,6 +1165,7 @@ textarea::placeholder {
         window.onload = function() {
             fetchPostsFromSupabase();
             fetchSkillsFromSupabase(); 
+            fetchAllUserRecordsFromSupabase();
             setupRandomDefaultAvatar();
         };
 
@@ -1183,6 +1195,19 @@ textarea::placeholder {
             else { renderPosts(); } 
         }
 
+let allUserRecords = []; // 存放從 alluser_record 撈取的所有使用者積分資料
+
+// 網頁載入時除了原本的 fetch，多加這行
+// fetchAllUserRecordsFromSupabase();
+async function fetchAllUserRecordsFromSupabase() {
+    try {
+        const { data, error } = await client.from('alluser_record').select('*');
+        if (error) throw error;
+        allUserRecords = data || [];
+        refreshView();
+    } catch (err) { console.error("讀取用戶紀錄失敗:", err.message); }
+}
+
 // 計算某個聯絡人已經發布了幾次任務
 function countUserPosts(contact) {
     if (!contact) return 0;
@@ -1190,33 +1215,66 @@ function countUserPosts(contact) {
     return posts.filter(p => p.clientcontact && p.clientcontact.trim() === cleanContact).length;
 }
 
-// 計算每位鄰里人獲得與消耗的總萬事分（共通計算）
+// 直接從 alluser_record 取得所有人的分數對應表
 function countAllPoints() {
     const scores = {};
-    
-    posts.forEach(post => {
-        // 1. 計算完成任務獲得的分數 (+1 分)
-        const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-        if (isComp && post.completed_by_contact) {
-            const contact = post.completed_by_contact.trim();
-            if (!scores[contact]) {
-                scores[contact] = { name: post.completed_by_name || '神祕鄰里人', points: 0 };
-            }
-            scores[contact].points += 1;
-        }
-
-        // 2. 計算發布任務扣除的分數 (-1 分)，以 clientcontact 為依歸
-        if (post.clientcontact) {
-            const contact = post.clientcontact.trim();
-            const clientName = post.clientname || '神祕鄰里人';
-            if (!scores[contact]) {
-                scores[contact] = { name: clientName, points: 0 };
-            }
-            scores[contact].points -= 1; // 發布扣 1 分
+    allUserRecords.forEach(record => {
+        if (record.contact) {
+            const cleanContact = record.contact.trim();
+            scores[cleanContact] = {
+                name: record.name || '神祕鄰里人',
+                points: record.amount || 0
+            };
         }
     });
-    
     return scores;
+}
+
+// 請確認這段函式有完整貼在你的 JS 檔案中！
+async function updateUserPointsInSupabase(contact, name, pointChange) {
+    if (!contact) return;
+    const cleanContact = contact.trim();
+    const cleanName = (name && name !== '神祕鄰里人') ? name : null;
+
+    try {
+        const { data: existing, error: fetchError } = await client
+            .from('alluser_record')
+            .select('*')
+            .eq('contact', cleanContact)
+            .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (existing) {
+            const newAmount = (existing.amount || 0) + pointChange;
+            const updateData = { amount: newAmount };
+            if (cleanName) updateData.name = cleanName;
+
+            const { error: updateError } = await client
+                .from('alluser_record')
+                .update(updateData)
+                .eq('id', existing.id);
+
+            if (updateError) throw updateError;
+        } else {
+            const newRecord = {
+                contact: cleanContact,
+                name: cleanName || '神祕鄰里人',
+                amount: pointChange
+            };
+
+            const { error: insertError } = await client
+                .from('alluser_record')
+                .insert([newRecord]);
+
+            if (insertError) throw insertError;
+        }
+
+        await fetchAllUserRecordsFromSupabase();
+    } catch (err) {
+        console.error("更新用戶積分失敗:", err.message);
+        alert("⚠️ 寫入 alluser_record 失敗: " + err.message);
+    }
 }
 
         // 快速查詢個人累積點數
@@ -1722,7 +1780,7 @@ function switchTab(tabName) {
                 closeCompleteModal();
                 if(currentViewingPostId === postId) backToHomeList();
                 await fetchPostsFromSupabase();
-                
+                await updateUserPointsInSupabase(cContact, cName, 1); // 英雄 +1 分
                 if(cName) {
                     alert(`🏮 結案成功！恭喜【${cName}】獲得了 1 點萬事分！`);
                 } else {
@@ -1759,6 +1817,7 @@ async function handleFormSubmit(event) {
     event.preventDefault();
     
     const clientContact = document.getElementById('clientContactInput').value.trim();
+    const clientName = document.getElementById('clientNameInput').value.trim();
     
     // 💡 檢查此聯絡方式已發布過的任務數量
     const existingPostCount = countUserPosts(clientContact);
@@ -1777,11 +1836,11 @@ async function handleFormSubmit(event) {
     const bgColors = ['bg-amber-50', 'bg-orange-50', 'bg-yellow-50', 'bg-stone-100'];
     const newPost = {
         tasktitle: document.getElementById('taskTitleInput').value.trim(), 
-        clientname: document.getElementById('clientNameInput').value,
+        clientname: clientName || '神祕鄰里人',
         clientcontact: clientContact,
-        tasktag: document.getElementById('taskTagInput').value,
-        taskdetails: document.getElementById('taskDetailsInput').value,
-        reward: document.getElementById('rewardInput').value,
+        tasktag: formattedTaskTag, // 修正：這裡改成使用處理好的 formattedTaskTag！
+        taskdetails: document.getElementById('taskDetailsInput').value.trim(),
+        reward: document.getElementById('rewardInput').value.trim(),
         clientemoji: document.getElementById('selected-emoji').value,
         cardbgcolor: bgColors[Math.floor(Math.random() * bgColors.length)],
         iscompleted: false,
@@ -1790,25 +1849,31 @@ async function handleFormSubmit(event) {
     };
 
     try {
+        // 1. 寫入貼文到 Supabase
         const { error } = await client.from(POSTS_TABLE).insert([newPost]);
         if (error) throw error;
+
+        // 2. 扣除發布者的 1 點萬事分（寫入 alluser_record）
+        await updateUserPointsInSupabase(clientContact, clientName, -1);
+
         closeUploadModal();
         setupRandomDefaultAvatar();
         await fetchPostsFromSupabase();
-        
-        // 💡 提示已成功扣除 1 點萬事分（目前累積扣除次數）
+        // 如果你有拉取 alluser_record 的函數，也可以在這裡呼叫一次以確保排行榜同步：
+        // await fetchAllUserRecordsFromSupabase();
+
         alert(`✨ 委託發布成功！已為您扣除 1 點萬事分（目前已發布 ${existingPostCount + 1}/2 次）。請記好您的管理密碼！`);
     } catch (err) { 
         alert("發布新委託失敗: " + err.message); 
     }
 }
-
         // 新增鄰里人技能表單處理
         async function handleSkillSubmit(event) {
             event.preventDefault();
             const data = {
                 name: document.getElementById('skillNameInput').value,
                 skilltag: document.getElementById('skillTagInput').value,
+                learning: document.getElementById('skillLearningInput').value,
                 contact: document.getElementById('skillContactInput').value.trim(),
                 description: document.getElementById('skillDescInput').value,
                 emoji: document.getElementById('skill-selected-emoji').value
@@ -1924,7 +1989,37 @@ async function handleFormSubmit(event) {
             return `${diffDays} 天前`;
         }
 
-        // ==========================================
+// 管理員手動調整萬事分（直接修改 alluser_record）
+async function adminAdjustPoints(change) {
+    if (!isAdmin) {
+        alert("🔒 只有管理員可以調整萬事分！");
+        return;
+    }
+
+    const contact = document.getElementById('admin-target-contact').value.trim();
+    const name = document.getElementById('admin-target-name').value.trim();
+
+    if (!contact) {
+        alert("請輸入目標聯絡方式 (IG/電話)！");
+        return;
+    }
+
+    try {
+        // 直接利用我們寫好的輔助函數進行加減分
+        await updateUserPointsInSupabase(contact, name, change);
+        
+        alert(`✅ 成功為【${contact}】${change > 0 ? '增加' : '扣除'} 1 點萬事分！`);
+
+        // 清空輸入框
+        document.getElementById('admin-target-contact').value = '';
+        document.getElementById('admin-target-name').value = '';
+
+    } catch (err) {
+        alert("調整萬事分失敗: " + err.message);
+    }
+}
+
+// ==========================================
 // 載入頁首並處理年份（維持原樣）
 // ==========================================  
 fetch('/header.html')
