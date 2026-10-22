@@ -1181,21 +1181,41 @@ textarea::placeholder {
             else { renderPosts(); } 
         }
 
-        // 計算每位鄰里人獲得的總萬事分
-        function countAllPoints() {
-            const scores = {};
-            posts.forEach(post => {
-                const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-                if (isComp && post.completed_by_contact) {
-                    const contact = post.completed_by_contact.trim();
-                    if (!scores[contact]) {
-                        scores[contact] = { name: post.completed_by_name || '神祕鄰里人', points: 0 };
-                    }
-                    scores[contact].points += 1;
-                }
-            });
-            return scores;
+// 計算某個聯絡人已經發布了幾次任務
+function countUserPosts(contact) {
+    if (!contact) return 0;
+    const cleanContact = contact.trim();
+    return posts.filter(p => p.clientcontact && p.clientcontact.trim() === cleanContact).length;
+}
+
+// 計算每位鄰里人獲得與消耗的總萬事分（共通計算）
+function countAllPoints() {
+    const scores = {};
+    
+    posts.forEach(post => {
+        // 1. 計算完成任務獲得的分數 (+1 分)
+        const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+        if (isComp && post.completed_by_contact) {
+            const contact = post.completed_by_contact.trim();
+            if (!scores[contact]) {
+                scores[contact] = { name: post.completed_by_name || '神祕鄰里人', points: 0 };
+            }
+            scores[contact].points += 1;
         }
+
+        // 2. 計算發布任務扣除的分數 (-1 分)，以 clientcontact 為依歸
+        if (post.clientcontact) {
+            const contact = post.clientcontact.trim();
+            const clientName = post.clientname || '神祕鄰里人';
+            if (!scores[contact]) {
+                scores[contact] = { name: clientName, points: 0 };
+            }
+            scores[contact].points -= 1; // 發布扣 1 分
+        }
+    });
+    
+    return scores;
+}
 
         // 快速查詢個人累積點數
         function queryPersonalPoints() {
@@ -1238,6 +1258,7 @@ function switchTab(tabName) {
     }
     renderPosts();
 }
+
 
 // ==========================================
         // 1. 全域變數與篩選狀態
@@ -1360,9 +1381,9 @@ function switchTab(tabName) {
  
             // 💡 判斷是否有填寫「專長」，有填寫就加上「📜 應用中：」前綴
             const skillTagBadge = skill.skilltag && skill.skilltag !== '/' ? 
-                `<span class="tag-stone" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">📜 應用中：${formattedTags}</span>` : '';
+                `<span class="tag-stone" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; display: inline-block; margin-Top: 0.5rem">📜 應用中：${formattedTags}</span>` : '';
             const learningBadge = skill.learning && skill.learning !== '/' ? 
-                `<span class="tag-learning" style="background: #f3f4f6; color: #4b5563; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 6px;">📚 研習中：${formattedLearning}</span>` : '';
+                `<span class="tag-learning" style="background: #f3f4f6; color: #4b5563; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; display: inline-block; margin-Top: 0.5rem;">📚 研習中：${formattedLearning}</span>` : '';
 
             card.innerHTML = `
                 <div>
@@ -1376,11 +1397,13 @@ function switchTab(tabName) {
                         </div>
                     </div>
                     ${adminTools}
-                    <p class="task-card-description">${skill.description}</p>
+                    ${skillTagBadge}
+                    <br>
+                    ${learningBadge}
                 </div>
                 <div class="task-card-footer" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-                    ${skillTagBadge}
-                    ${learningBadge}
+                    <p class="task-card-description">${skill.description}</p>
+                    
                 </div>
             `;
             container.appendChild(card);
@@ -1691,33 +1714,48 @@ function switchTab(tabName) {
             } catch (err) { alert("接受委託失敗: " + err.message); }
         }
 
-        // 新增發布委託表單處理
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            const bgColors = ['bg-amber-50', 'bg-orange-50', 'bg-yellow-50', 'bg-stone-100'];
-            const newPost = {
-                tasktitle: document.getElementById('taskTitleInput').value.trim(), 
-                clientname: document.getElementById('clientNameInput').value,
-                clientcontact: document.getElementById('clientContactInput').value,
-                tasktag: document.getElementById('taskTagInput').value,
-                taskdetails: document.getElementById('taskDetailsInput').value,
-                reward: document.getElementById('rewardInput').value,
-                clientemoji: document.getElementById('selected-emoji').value,
-                cardbgcolor: bgColors[Math.floor(Math.random() * bgColors.length)],
-                iscompleted: false,
-                heroeslist: [],
-                password: document.getElementById('postPasswordInput').value.trim()
-            };
+// 新增發布委託表單處理（加入萬事分扣除與上限檢查）
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    
+    const clientContact = document.getElementById('clientContactInput').value.trim();
+    
+    // 💡 檢查此聯絡方式已發布過的任務數量
+    const existingPostCount = countUserPosts(clientContact);
+    
+    if (existingPostCount >= 2) {
+        alert("⚠️ 每個帳號/聯絡方式最多只能發布 2 次任務（扣除 2 點萬事分上限），您已達發布上限！");
+        return;
+    }
 
-            try {
-                const { error } = await client.from(POSTS_TABLE).insert([newPost]);
-                if (error) throw error;
-                closeUploadModal();
-                setupRandomDefaultAvatar();
-                await fetchPostsFromSupabase();
-                alert("✨ 委託發布成功！請記好您的管理密碼，以便日後回來查看名冊或結案！");
-            } catch (err) { alert("發布新委託失敗: " + err.message); }
-        }
+    const bgColors = ['bg-amber-50', 'bg-orange-50', 'bg-yellow-50', 'bg-stone-100'];
+    const newPost = {
+        tasktitle: document.getElementById('taskTitleInput').value.trim(), 
+        clientname: document.getElementById('clientNameInput').value,
+        clientcontact: clientContact,
+        tasktag: document.getElementById('taskTagInput').value,
+        taskdetails: document.getElementById('taskDetailsInput').value,
+        reward: document.getElementById('rewardInput').value,
+        clientemoji: document.getElementById('selected-emoji').value,
+        cardbgcolor: bgColors[Math.floor(Math.random() * bgColors.length)],
+        iscompleted: false,
+        heroeslist: [],
+        password: document.getElementById('postPasswordInput').value.trim()
+    };
+
+    try {
+        const { error } = await client.from(POSTS_TABLE).insert([newPost]);
+        if (error) throw error;
+        closeUploadModal();
+        setupRandomDefaultAvatar();
+        await fetchPostsFromSupabase();
+        
+        // 💡 提示已成功扣除 1 點萬事分（目前累積扣除次數）
+        alert(`✨ 委託發布成功！已為您扣除 1 點萬事分（目前已發布 ${existingPostCount + 1}/2 次）。請記好您的管理密碼！`);
+    } catch (err) { 
+        alert("發布新委託失敗: " + err.message); 
+    }
+}
 
         // 新增鄰里人技能表單處理
         async function handleSkillSubmit(event) {
