@@ -952,7 +952,9 @@ textarea::placeholder {
                 <button id="tab-skills" onclick="switchTab('skills')" class="tab-btn tab-btn-flex"><span>✨ 鄰里人名冊與積分榜</span></button>
             </div>
 
+    
             <div id="skills-leaderboard-section" class="hidden leaderboard-panel">
+                
                 <div class="search-box-card">
                     <div>
                         <h4 class="search-title">
@@ -1233,7 +1235,7 @@ function countAllPoints() {
  // 頁籤切換控制邏輯
 function switchTab(tabName) {
     currentTab = tabName;
-    
+    currentTagFilter = 'all';
     ['tab-active', 'tab-completed', 'tab-skills'].forEach(t => {
         const el = document.getElementById(t);
         if(el) el.className = "tab-btn";
@@ -1286,7 +1288,7 @@ function switchTab(tabName) {
         }
 
         // ==========================================
-        // 主列表渲染主程式
+        // 主列表渲染主程式 (整合後的版本)
         // ==========================================
         function renderPosts() {
             const container = document.getElementById('posts-container');
@@ -1295,74 +1297,77 @@ function switchTab(tabName) {
 
             const allScores = countAllPoints();
 
-        if (currentTab === 'skills') {
-        const leaderboardTarget = document.getElementById('leaderboard-target');
-        if(leaderboardTarget) {
-            const sortedHeroes = Object.keys(allScores)
-                .map(k => ({ contact: k, ...allScores[k] }))
-                .sort((a,b) => b.points - a.points)
-                .slice(0, 3);
-            
-            if(sortedHeroes.length === 0) {
-                leaderboardTarget.innerHTML = `<p class="leaderboard-empty-text">尚無得點紀錄，等待第一位英雄誕生！</p>`;
-            } else {
-                const medals = ['🥇', '🥈', '🥉'];
-                leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
-                    <div class="leaderboard-item">
-                        <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> </span>
-                        <span class="leaderboard-item-points">🪙 ${h.points} 分</span>
-                    </div>
-                `).join('');
+            // 1. 英雄榜區塊維持不變
+            if (currentTab === 'skills') {
+                const leaderboardTarget = document.getElementById('leaderboard-target');
+                if(leaderboardTarget) {
+                    const sortedHeroes = Object.keys(allScores)
+                        .map(k => ({ contact: k, ...allScores[k] }))
+                        .sort((a,b) => b.points - a.points)
+                        .slice(0, 3);
+                    
+                    if(sortedHeroes.length === 0) {
+                        leaderboardTarget.innerHTML = `<p class="leaderboard-empty-text">尚無得點紀錄，等待第一位英雄誕生！</p>`;
+                    } else {
+                        const medals = ['🥇', '🥈', '🥉'];
+                        leaderboardTarget.innerHTML = sortedHeroes.map((h, i) => `
+                            <div class="leaderboard-item">
+                                <span class="leaderboard-item-info">${medals[i]} <strong>${h.name}</strong> </span>
+                                <span class="leaderboard-item-points">🪙 ${h.points} 分</span>
+                            </div>
+                        `).join('');
+                    }
+                }
             }
-        }
 
-        // 取得獨立的篩選列容器
-        const filterBarContainer = document.getElementById('skill-filter-bar-container');
+            // 取得獨立的篩選列容器 (共用同一個 container)
+            const filterBarContainer = document.getElementById('skill-filter-bar-container');
 
-        if (skills.length === 0) {
-            if(filterBarContainer) filterBarContainer.innerHTML = '';
-            container.innerHTML = '<p class="container-empty-hint">目前尚無登記鄰里人技能。</p>';
-            return;
-        }
+            // ==========================================
+            // 分支 A：如果是 'skills' 分頁
+            // ==========================================
+            if (currentTab === 'skills') {
+                if (skills.length === 0) {
+                    if(filterBarContainer) filterBarContainer.innerHTML = '';
+                    container.innerHTML = '<p class="container-empty-hint">目前尚無登記鄰里人技能。</p>';
+                    return;
+                }
 
-        // 收集所有標籤
-        let allTagsSet = new Set();
-        skills.forEach(skill => {
-            if (skill.skilltag) {
-                skill.skilltag.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
-            }
-            if (skill.learning && skill.learning !== '/') {
-                skill.learning.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
-            }
-        });
+                let allTagsSet = new Set();
+                skills.forEach(skill => {
+                    if (skill.skilltag) {
+                        skill.skilltag.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
+                    }
+                    if (skill.learning && skill.learning !== '/') {
+                        skill.learning.trim().split(/\s+/).forEach(t => allTagsSet.add(t.startsWith('#') ? t : `#${t}`));
+                    }
+                });
 
-        // 渲染獨立的頂部篩選列
-        if(filterBarContainer) {
-            filterBarContainer.classList.remove('hidden');
-            let filterHtml = `
-                <div style="width: 100%; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap;">
-                    <button onclick="filterByTag('all')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${currentTagFilter === 'all' ? '#333' : '#fff'}; color: ${currentTagFilter === 'all' ? '#fff' : '#333'}; cursor: pointer;">全部顯示</button>
-            `;
-            allTagsSet.forEach(tag => {
-                const isActive = currentTagFilter === tag;
-                filterHtml += `<button onclick="filterByTag('${tag}')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${isActive ? '#333' : '#fff'}; color: ${isActive ? '#fff' : '#333'}; cursor: pointer;">${tag}</button>`;
-            });
-            filterHtml += `</div>`;
-            filterBarContainer.innerHTML = filterHtml;
-        }
+                // 渲染頂部篩選列
+                if(filterBarContainer) {
+                    filterBarContainer.classList.remove('hidden');
+                    let filterHtml = `
+                        <div style="width: 100%; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap;">
+                            <button onclick="filterByTag('all')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${currentTagFilter === 'all' ? '#333' : '#fff'}; color: ${currentTagFilter === 'all' ? '#fff' : '#333'}; cursor: pointer;">全部顯示</button>
+                    `;
+                    allTagsSet.forEach(tag => {
+                        const isActive = currentTagFilter === tag;
+                        filterHtml += `<button onclick="filterByTag('${tag}')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${isActive ? '#333' : '#fff'}; color: ${isActive ? '#fff' : '#333'}; cursor: pointer;">${tag}</button>`;
+                    });
+                    filterHtml += `</div>`;
+                    filterBarContainer.innerHTML = filterHtml;
+                }
 
-        container.innerHTML = ''; // 清空卡片容器
+                const filteredSkills = skills.filter(skill => {
+                    if (currentTagFilter === 'all') return true;
+                    const tText = (skill.skilltag || '') + ' ' + (skill.learning || '');
+                    return tText.includes(currentTagFilter.replace('#', ''));
+                });
 
-        const filteredSkills = skills.filter(skill => {
-            if (currentTagFilter === 'all') return true;
-            const tText = (skill.skilltag || '') + ' ' + (skill.learning || '');
-            return tText.includes(currentTagFilter.replace('#', ''));
-        });
-
-        if (filteredSkills.length === 0) {
-            container.innerHTML = '<p class="container-empty-hint">沒有找到符合此標籤的鄰里人。</p>';
-            return;
-        }
+                if (filteredSkills.length === 0) {
+                    container.innerHTML = '<p class="container-empty-hint">沒有找到符合此標籤的鄰里人。</p>';
+                    return;
+                }
 
         // 渲染卡片
         filteredSkills.forEach(skill => {
@@ -1409,75 +1414,110 @@ function switchTab(tabName) {
             container.appendChild(card);
         });
         return;
-    } else {
-        // 如果切換到其他分頁（active / completed），記得把獨立的篩選列隱藏
-        const filterBarContainer = document.getElementById('skill-filter-bar-container');
-        if(filterBarContainer) filterBarContainer.classList.add('hidden');
-    }
-
-            const isCompletedTarget = (currentTab === 'completed');
-            const filteredPosts = posts.filter(post => {
-                const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
-                return !!compVal === isCompletedTarget;
-            });
-            
-            if (filteredPosts.length === 0) {
-                container.innerHTML = '<p class="container-empty-hint">此分類目前沒有委託案件。</p>';
-                return;
-            }
-
-            filteredPosts.forEach(post => {
-                const hList = post.heroeslist || [];
-                const count = hList.length;
-                const card = document.createElement('div');
+    } 
+    // ==========================================
+            // 分支 B：如果是 'active' 或 'completed' 分頁（任務列表）
+            // ==========================================
+            else {
+                const isCompletedTarget = (currentTab === 'completed');
                 
-                const cEmoji = post.clientemoji || '🙋‍♂️';
-                const tTitle = post.tasktitle || '';
-                const cName = post.clientname || '';
-                const tTag = post.tasktag || '';
-                const tDetails = post.taskdetails || '';
-                const rwd = post.reward || '';
-                const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+                // 1. 先抓出符合當前分頁狀態的貼文
+                const baseFilteredPosts = posts.filter(post => {
+                    const compVal = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+                    return !!compVal === isCompletedTarget;
+                });
 
-                card.className = "task-card clickable-group";
-                card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
+                // 2. 收集這些貼文當中的所有 tasktag
+                let postTagsSet = new Set();
+                baseFilteredPosts.forEach(post => {
+                    if (post.tasktag) {
+                        post.tasktag.trim().split(/\s+/).forEach(t => postTagsSet.add(t.startsWith('#') ? t : `#${t}`));
+                    }
+                });
 
-                let adminActionHtml = '';
-                if (isAdmin) {
-                    adminActionHtml += `<button onclick="deletePost('${post.id}')" class="btn-card-delete">🗑️</button>`;
+                // 3. 共用同一個 filterBarContainer 渲染頂部任務標籤篩選列
+                if (filterBarContainer && baseFilteredPosts.length > 0) {
+                    filterBarContainer.classList.remove('hidden');
+                    let filterHtml = `
+                        <div style="width: 100%; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap;">
+                            <button onclick="filterByTag('all')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${currentTagFilter === 'all' ? '#333' : '#fff'}; color: ${currentTagFilter === 'all' ? '#fff' : '#333'}; cursor: pointer;">全部顯示</button>
+                    `;
+                    postTagsSet.forEach(tag => {
+                        const isActive = currentTagFilter === tag;
+                        filterHtml += `<button onclick="filterByTag('${tag}')" style="padding: 6px 16px; border-radius: 16px; border: 1px solid #ddd; background: ${isActive ? '#333' : '#fff'}; color: ${isActive ? '#fff' : '#333'}; cursor: pointer;">${tag}</button>`;
+                    });
+                    filterHtml += `</div>`;
+                    filterBarContainer.innerHTML = filterHtml;
+                } else if (filterBarContainer) {
+                    filterBarContainer.classList.add('hidden');
                 }
 
-                card.innerHTML = `
-                    <div>
-                        <div class="task-card-header">
-                            <div class="avatar-circle-orange">${cEmoji}</div>
-                            <div style="flex: 1; min-width: 0;">
-                                <h3 class="task-card-title text-ellipsis-2line">${tTitle}</h3>
-                                <p class="task-card-subtitle">委託人：${cName} • ${count}人已接單</p>
+                // 4. 根據 currentTagFilter 過濾任務貼文
+                const filteredPosts = baseFilteredPosts.filter(post => {
+                    if (currentTagFilter === 'all') return true;
+                    const tText = post.tasktag || '';
+                    return tText.includes(currentTagFilter.replace('#', ''));
+                });
+
+                if (filteredPosts.length === 0) {
+                    container.innerHTML = '<p class="container-empty-hint">此分類目前沒有符合此標籤的委託案件。</p>';
+                    return;
+                }
+
+                // 5. 渲染任務卡片 (這裡可以順便用你寫好的 formatHashtags 讓卡片上的標籤也能點擊！)
+                filteredPosts.forEach(post => {
+                    const hList = post.heroeslist || [];
+                    const count = hList.length;
+                    const card = document.createElement('div');
+                    
+                    const cEmoji = post.clientemoji || '🙋‍♂️';
+                    const tTitle = post.tasktitle || '';
+                    const cName = post.clientname || '';
+                    const tTag = formatHashtags(post.tasktag); // 💡 升級：讓任務卡片上的標籤也變成可點擊的 Hashtag！
+                    const tDetails = post.taskdetails || '';
+                    const rwd = post.reward || '';
+                    const isComp = post.iscompleted !== undefined ? post.iscompleted : post.isCompleted;
+
+                    card.className = "task-card clickable-group";
+                    card.onclick = (e) => { if (!e.target.closest('button')) { goToPostDetail(post.id); } };
+
+                    let adminActionHtml = '';
+                    if (isAdmin) {
+                        adminActionHtml += `<button onclick="deletePost('${post.id}')" class="btn-card-delete">🗑️</button>`;
+                    }
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="task-card-header">
+                                <div class="avatar-circle-orange">${cEmoji}</div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h3 class="task-card-title text-ellipsis-2line">${tTitle}</h3>
+                                    <p class="task-card-subtitle">委託人：${cName} • ${count}人已接單</p>
+                                </div>
                             </div>
+                            <div class="card-admin-tools">${adminActionHtml}</div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="tag-orange">${tTag}</span>
+                            </div>
+                            <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
                         </div>
-                        <div class="card-admin-tools">${adminActionHtml}</div>
-                        <div style="margin-bottom: 0.5rem;">
-                            <span class="tag-orange">${tTag}</span>
+                        <div class="task-card-footer">
+                            <div class="reward-info-text">
+                                <span class="reward-highlight">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span>
+                            </div>
+                            ${isComp 
+                                ? `<span class="badge-status-success">
+                                    <span class="status-success-title">圓滿解決 🏮</span>
+                                    <span class="status-success-subtitle">貢獻者: ${post.completed_by_name || '無'}</span>
+                                   </span>`
+                                : `<button onclick="openJoinModal('${post.id}')" class="btn-base btn-orange">接受委託</button>`
+                            }
                         </div>
-                        <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
-                    </div>
-                    <div class="task-card-footer">
-                        <div class="reward-info-text">
-                            <span class="reward-highlight">💰 報酬：${rwd}</span> • <span>${post.timeAgo}</span>
-                        </div>
-                        ${isComp 
-                            ? `<span class="badge-status-success">
-                                <span class="status-success-title">圓滿解決 🏮</span>
-                                <span class="status-success-subtitle">貢獻者: ${post.completed_by_name || '無'}</span>
-                               </span>`
-                            : `<button onclick="openJoinModal('${post.id}')" class="btn-base btn-orange">接受委託</button>`
-                        }
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-            setTimeout(() => { lucide.createIcons(); }, 100);
+                    `;
+                    container.appendChild(card);
+                });
+                setTimeout(() => { lucide.createIcons(); }, 100);
+            }
         }
 
         // 導向至單一案件詳細內頁
@@ -1727,6 +1767,12 @@ async function handleFormSubmit(event) {
         alert("⚠️ 每個帳號/聯絡方式最多只能發布 2 次任務（扣除 2 點萬事分上限），您已達發布上限！");
         return;
     }
+
+    // 💡 處理標籤：將空白隔開的詞自動補上 '#'
+    const rawTagInput = document.getElementById('taskTagInput').value.trim();
+    const formattedTaskTag = rawTagInput
+        ? rawTagInput.split(/\s+/).map(t => (t.startsWith('#') ? t : `#${t}`)).join(' ')
+        : '#一般委託';
 
     const bgColors = ['bg-amber-50', 'bg-orange-50', 'bg-yellow-50', 'bg-stone-100'];
     const newPost = {
