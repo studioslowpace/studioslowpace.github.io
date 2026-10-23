@@ -1690,7 +1690,7 @@ function switchTab(tabName) {
             }
 
             targetDiv.innerHTML = `
-                <div class="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-amber-100 w-full space-y-6">
+                <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-amber-100 w-full space-y-6">
                     <div class="flex items-center justify-between pb-4 border-b border-gray-100">
                         <div class="flex items-center space-x-4">
                             <div class="w-14 h-14 rounded-full ${bgClor} flex items-center justify-center text-3xl shadow-inner">${post.clientemoji || '🙋‍♂️'}</div>
@@ -2130,7 +2130,7 @@ fetch('/header.html')
         window.removeEventListener('resize', adjustNavItems);
         window.addEventListener('resize', adjustNavItems);
     }
-
+  
 // ==========================================
 // 載入頁尾並處理年份（維持原樣）
 // ==========================================
@@ -2149,6 +2149,7 @@ fetch('/header.html')
         }
     })
     .catch(err => console.error("頁尾載入失敗:", err));
+
     </script>
 </body>
 </html>

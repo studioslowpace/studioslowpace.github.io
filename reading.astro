@@ -424,6 +424,74 @@ if (response.ok) {
       submitBtn.disabled = false;
     }
   }
+
+  // 當使用者點擊「驗證並進入交流區」
+function verifyChatUser() {
+    const inputContact = document.getElementById('chat-verify-input').value.trim();
+    if (!inputContact) {
+        alert("請輸入您的聯絡方式！");
+        return;
+    }
+
+    // 🌟 直接從已載入的 alluser_record 資料中尋找該聯絡方式
+    const matchedUser = allUserRecords.find(user => user.contact && user.contact.trim() === inputContact);
+
+    if (matchedUser) {
+        const foundName = matchedUser.name || '神祕鄰里人';
+        
+        // 驗證成功，存入瀏覽器記憶，避免每次都要重打
+        localStorage.setItem('verified_chat_contact', inputContact);
+        localStorage.setItem('verified_chat_name', foundName);
+
+        unlockChatUI(foundName);
+    } else {
+        alert("❌ 查無此聯絡紀錄！\n請確認您輸入的聯絡方式是否正確，或您是否曾在客舍萬事屋留下過紀錄。");
+    }
+}
+
+
+// 解鎖聊天介面
+function unlockChatUI(userName) {
+    document.getElementById('chat-verify-box').classList.add('hidden');
+    document.getElementById('chat-unlocked-box').classList.remove('hidden');
+    document.getElementById('chat-page-section').style.gridTemplateColumns = '1fr'; // 恢復彈性寬度
+
+    // 自動填入發送者名稱
+    document.getElementById('chat-sender-name').value = userName;
+
+    // 載入主題
+    fetchTopics();
+}
+
+// 登出/切換身分
+function logoutChatUser() {
+    localStorage.removeItem('verified_chat_contact');
+    localStorage.removeItem('verified_chat_name');
+    document.getElementById('chat-unlocked-box').classList.add('hidden');
+    document.getElementById('chat-verify-box').classList.remove('hidden');
+    document.getElementById('chat-verify-input').value = '';
+}
+
+// 在切換到 chat 分頁時，自動檢查是否已經驗證過
+const originalSwitchTabForChat = switchTab;
+switchTab = function(tabName) {
+    originalSwitchTabForChat(tabName);
+
+    if (tabName === 'chat') {
+        const savedContact = localStorage.getItem('verified_chat_contact');
+        const savedName = localStorage.getItem('verified_chat_name');
+
+        if (savedContact && savedName) {
+            // 如果先前已經驗證過，直接解鎖並自動帶入
+            unlockChatUI(savedName);
+        } else {
+            // 顯示驗證畫面
+            document.getElementById('chat-verify-box').classList.remove('hidden');
+            document.getElementById('chat-unlocked-box').classList.add('hidden');
+        }
+    }
+};
+  
 </script>
 
 <style>
