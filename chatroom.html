@@ -565,14 +565,61 @@
             }
         }
 
-        async function fetchTopics() {
-            try {
-                const { data, error } = await client.from('chat_topics').select('*').order('created_at', { ascending: true });
-                if (error) throw error;
-                topics = data || [];
-                renderTopicsList();
-            } catch (err) { console.error("讀取主題失敗:", err.message); }
-        }
+async function fetchTopics() {
+    try {
+        // 🌟 優先依 sort_order 升冪排序（數字小的在前面），若同數字則依建立時間排序
+        const { data, error } = await client
+            .from('chat_topics')
+            .select('*')
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        topics = data || [];
+        renderTopicsList();
+    } catch (err) { console.error("讀取主題失敗:", err.message); }
+}
+
+async function moveTopicOrder(event, topicId, direction) {
+    event.stopPropagation(); // 避免觸發點擊進入主題
+
+    // 找出當前主題在陣列中的索引
+    const index = topics.findIndex(t => String(t.id) === String(topicId));
+    if (index === -1) return;
+
+    // 計算目標交換位置的索引
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= topics.length) {
+        alert("已經到底囉，無法再移動！");
+        return;
+    }
+
+    const currentTopic = topics[index];
+    const targetTopic = topics[targetIndex];
+
+    // 交換兩者的 sort_order 數值
+    let newCurrentOrder = targetTopic.sort_order ?? targetIndex;
+    let newTargetOrder = currentTopic.sort_order ?? index;
+
+    // 如果剛好數值一樣，手動強制給予新順序
+    if (newCurrentOrder === newTargetOrder) {
+        newCurrentOrder = direction === 'up' ? newTargetOrder - 1 : newTargetOrder + 1;
+    }
+
+    try {
+        // 同步更新資料庫中這兩個主題的 sort_order
+        const { error: err1 } = await client.from('chat_topics').update({ sort_order: newCurrentOrder }).eq('id', currentTopic.id);
+        const { error: err2 } = await client.from('chat_topics').update({ sort_order: newTargetOrder }).eq('id', targetTopic.id);
+
+        if (err1 || err2) throw (err1 || err2);
+
+        // 重新抓取並刷新畫面
+        fetchTopics();
+    } catch (err) {
+        alert("排序調整失敗: " + err.message);
+    }
+}
 
         // 在 JS 中新增刪除主題函式
 async function deleteTopic(event, topicId, topicTitle) {
@@ -601,41 +648,39 @@ function renderTopicsList() {
     
     const htmlContent = topics.length === 0 
         ? `<p style="font-size:0.75rem; color:#a09587; text-align:center; padding:1rem;">尚無討論主題</p>`
-        : topics.map(topic => {
+        : topics.map((topic, index) => {
             const hasPassword = topic.password && topic.password.trim() !== '';
             
-            // 🌟 計算剩餘時間字串
-            let timeRemainingText = '';
-            if (topic.is_anonymous && topic.expires_at) {
-                const now = new Date();
-                const expireDate = new Date(topic.expires_at);
-                const diffMs = expireDate - now;
-
-                if (diffMs > 0) {
-                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                    timeRemainingText = ` <span style="font-size:0.65rem; background:#fee2e2; color:#991b1b; padding:1px 5px; border-radius:4px; font-weight:normal;">⏳ 餘下 ${diffHrs}: ${diffMins}</span>`;
-                } else {
-                    timeRemainingText = ` <span style="font-size:0.65rem; background:#f3f4f6; color:#6b7280; padding:1px 5px; border-radius:4px;">⏳ 已過期</span>`;
-                }
-            }
+            // 🌟 透過共用函式取得剩餘時間字串與狀態
+            const timeInfo = getTopicTimeRemainingHtml(topic);
+            const timeRemainingText = timeInfo.text 
+                ? ` <span style="font-size:0.6rem; background:${timeInfo.expired ? '#f3f4f6' : '#fee2e2'}; color:${timeInfo.expired ? '#6b7280' : '#991b1b'}; padding:1px 4px; border-radius:3px;">${timeInfo.text}</span>` 
+                : '';
 
             const lockIcon = hasPassword ? '🔒 ' : (topic.is_anonymous ? '⏳ ' : '💬 ');
             
-            // 主理人登入時顯示刪除按鈕
-            const deleteBtn = isAdmin 
-                ? `<button onclick="deleteTopic(event, '${topic.id}', '${topic.title}')" style="background:#ef4444; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:0.65rem; cursor:pointer; margin-left:6px;">刪除</button>` 
-                : '';
+            // 主理人專屬控制按鈕：上移、下移、刪除
+            let adminControls = '';
+            if (isAdmin) {
+                const upBtn = index > 0 ? `<button onclick="moveTopicOrder(event, '${topic.id}', 'up')" style="background:#e2e8f0; border:none; padding:1px 4px; border-radius:3px; font-size:0.6rem; cursor:pointer;">⬆️</button>` : '';
+                const downBtn = index < topics.length - 1 ? `<button onclick="moveTopicOrder(event, '${topic.id}', 'down')" style="background:#e2e8f0; border:none; padding:1px 4px; border-radius:3px; font-size:0.6rem; cursor:pointer;">⬇️</button>` : '';
+                const deleteBtn = `<button onclick="deleteTopic(event, '${topic.id}', '${topic.title}')" style="background:#ef4444; color:white; border:none; padding:1px 5px; border-radius:3px; font-size:0.6rem; cursor:pointer;">刪除</button>`;
+                
+                adminControls = `<div style="display:flex; gap:3px; align-items:center;" onclick="event.stopPropagation();">${upBtn}${downBtn}${deleteBtn}</div>`;
+            }
 
             return `
-                <div onclick="trySelectTopic('${topic.id}')" class="topic-select-card">
+                <div onclick="trySelectTopic('${topic.id}')" class="topic-select-card" style="display:flex; flex-direction:column; gap:4px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h4 style="font-size: 0.85rem; font-weight: 800; color: #574332;">
-                            ${lockIcon}${topic.title}${timeRemainingText} ${deleteBtn}
+                        <h4 style="font-size: 0.85rem; font-weight: 800; color: #574332; display:flex; align-items:center; gap:4px;">
+                            ${lockIcon}${topic.title}${timeRemainingText}
                         </h4>
+                        ${adminControls}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <p style="font-size: 0.7rem; color: #786858; margin:0;">${topic.description || '無簡介'}</p>
                         <span style="font-size:0.7rem; color:#3b7a57; font-weight:bold;">進入 〉</span>
                     </div>
-                    <p style="font-size: 0.7rem; color: #786858; margin-top:2px;">${topic.description || '無簡介'}</p>
                 </div>
             `;
         }).join('');
@@ -669,45 +714,25 @@ function renderTopicsList() {
             }
         }
 
-        function enterTopicChat(topic) {
+function enterTopicChat(topic) {
     activeTopicId = topic.id;
     document.getElementById('current-topic-title').textContent = topic.title;
 
-    // 🌟 強固的頂部狀態標籤顯示邏輯
     const badgeContainer = document.getElementById('current-topic-status-badge');
     if (badgeContainer) {
-        // 印出詳細資料到 Console 方便我們在 F12 確認
-        console.log("進入主題詳情:", topic);
+        const timeInfo = getTopicTimeRemainingHtml(topic);
 
-        // 只要主題名稱包含 [限時] 或者資料庫標記為 is_anonymous，就視為限時主題
-        if (topic.is_anonymous || (topic.expires_at && topic.expires_at.trim() !== '')) {
-            if (topic.expires_at) {
-                const now = new Date();
-                const expireDate = new Date(topic.expires_at);
-                const diffMs = expireDate - now;
-
-                if (!isNaN(expireDate.getTime()) && diffMs > 0) {
-                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                    badgeContainer.innerHTML = `⏳ 餘下 ${diffHrs}: ${diffMins}`;
-                    badgeContainer.style.background = '#fee2e2';
-                    badgeContainer.style.color = '#991b1b';
-                    badgeContainer.style.display = 'inline-block';
-                } else {
-                    badgeContainer.innerHTML = `⏳ 已過期`;
-                    badgeContainer.style.background = '#f3f4f6';
-                    badgeContainer.style.color = '#6b7280';
-                    badgeContainer.style.display = 'inline-block';
-                }
-            } else {
-                // 如果是匿名但沒有設定過期時間的備用防護
-                badgeContainer.innerHTML = `🕵️ 匿名主題`;
-                badgeContainer.style.background = '#e0f2fe';
-                badgeContainer.style.color = '#0369a1';
-                badgeContainer.style.display = 'inline-block';
-            }
+        if (timeInfo.text) {
+            badgeContainer.innerHTML = timeInfo.text;
+            badgeContainer.style.background = timeInfo.expired ? '#f3f4f6' : '#fee2e2';
+            badgeContainer.style.color = timeInfo.expired ? '#6b7280' : '#991b1b';
+            badgeContainer.style.display = 'inline-block';
+        } else if (topic.is_anonymous) {
+            badgeContainer.innerHTML = `🕵️ 匿名主題`;
+            badgeContainer.style.background = '#e0f2fe';
+            badgeContainer.style.color = '#0369a1';
+            badgeContainer.style.display = 'inline-block';
         } else {
-            // 一般永久公開主題，隱藏標籤
             badgeContainer.style.display = 'none';
         }
     }
@@ -719,6 +744,30 @@ function renderTopicsList() {
     loadTopicMessages(topic.id);
     subscribeToTopicChat(topic.id);
 }
+
+function getTopicTimeRemainingHtml(topic) {
+    if (!topic.is_anonymous || !topic.expires_at) return '';
+
+    const now = new Date();
+    const expireDate = new Date(topic.expires_at);
+    const diffMs = expireDate - now;
+
+    if (!isNaN(expireDate.getTime()) && diffMs > 0) {
+        const diffHrs = String(Math.floor(diffMs / (1000 * 60 * 60))).padStart(2, '0');
+        const diffMins = String(Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+        
+        return {
+            text: `⏳ 剩餘 ${diffHrs}小時 ${diffMins}分`,
+            expired: false
+        };
+    } else {
+        return {
+            text: `⏳ 已過期`,
+            expired: true
+        };
+    }
+}
+
         function backToHome() {
             activeTopicId = null;
             document.getElementById('page-chat').classList.add('hidden');
