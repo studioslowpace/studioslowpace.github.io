@@ -1880,24 +1880,41 @@ async function handleFormSubmit(event) {
         alert("發布新委託失敗: " + err.message); 
     }
 }
-        // 新增鄰里人技能表單處理
+        // 新增鄰里人技能表單處理（同步寫入 name & contact 至 alluser_record 並加 1 分）
         async function handleSkillSubmit(event) {
             event.preventDefault();
+            
             const data = {
-                name: document.getElementById('skillNameInput').value,
-                skilltag: document.getElementById('skillTagInput').value,
-                learning: document.getElementById('skillLearningInput').value,
+                name: document.getElementById('skillNameInput').value.trim(),
+                skilltag: document.getElementById('skillTagInput').value.trim(),
+                learning: document.getElementById('skillLearningInput').value.trim(),
                 contact: document.getElementById('skillContactInput').value.trim(),
-                description: document.getElementById('skillDescInput').value,
+                description: document.getElementById('skillDescInput').value.trim(),
                 emoji: document.getElementById('skill-selected-emoji').value
             };
 
+            // 基本欄位防呆檢查
+            if (!data.name || !data.contact) {
+                alert("請填寫您的稱呼與聯絡管道！");
+                return;
+            }
+
             try {
+                // 1. 將技能資料寫入 skills 資料表
                 const { error } = await client.from(TABLE_NAME).insert([data]);
                 if (error) throw error;
+                
+                // 2. 同步將 name 與 contact 寫入/更新至 alluser_record 並加 1 分
+                await updateUserPointsInSupabase(data.contact, data.name, +1);
+
                 closeSkillModal();
                 await fetchSkillsFromSupabase();
-            } catch (err) { alert("儲存技能失敗: " + err.message); }
+                await fetchAllUserRecordsFromSupabase(); // 確保排行榜與點數即時同步
+
+                alert(`✨ 成功登記技能名冊！已同步您的資料並為您增加 1 點萬事分！`);
+            } catch (err) { 
+                alert("儲存技能失敗: " + err.message); 
+            }
         }
 
         // 複製聯絡資訊
