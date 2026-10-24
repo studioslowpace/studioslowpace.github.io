@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客舍萬事屋 | 鄰里交流對話區</title>
+    <title>客舍萬事屋 | 鄰里交流區</title>
     
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,253 +12,402 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #fcfbf7; color: #334155; padding-bottom: 3rem; }
+        body { background-color: #f5f2eb; color: #334155; padding: 1rem 0 2rem 0; }
         .hidden { display: none !important; }
 
-        .btn-base { padding: 0.625rem 1.25rem; border-radius: 0.875rem; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; transition: all 0.2s ease; }
-        .btn-orange { background-color: #ea580c; color: #ffffff; box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.2); border: none; cursor: pointer; font-weight: 700; border-radius: 0.75rem; }
+        .btn-orange { background-color: #ea580c; color: #ffffff; border: none; cursor: pointer; font-weight: 700; border-radius: 0.75rem; }
         .btn-orange:hover { background-color: #c2410c; }
 
-        .main-layout { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem; }
-        .layout-spacing { display: flex; flex-direction: column; gap: 1.5rem; }
-
-        /* Banner */
-        .hero-banner { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1.5px solid #fde68a; border-radius: 1.5rem; padding: 2rem; text-align: center; }
-        .hero-title { font-size: 1.75rem; font-weight: 900; color: #78350f; }
-        .hero-title-sub { display: block; font-size: 0.85rem; color: #b45309; margin-top: 0.25rem; }
-        .hero-desc-wrapper { margin-top: 1.25rem; font-size: 0.875rem; line-height: 1.7; color: #92400e; text-align: left; background: rgba(255,255,255,0.6); padding: 1.25rem; border-radius: 1rem; }
-
-        /* 數據統計面板 */
-        .community-stats-bar {
+        /* 📱 手機尺寸主容器 */
+        .phone-app-wrapper {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #faf7f2;
+            border: 1px solid #e7e0d3;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-top: 1rem;
-            padding-top: 0.75rem;
-            border-top: 1px dashed #fde68a;
-            font-size: 0.85rem;
-            font-weight: 700;
+            flex-direction: column;
+            height: 750px;
+            overflow: hidden;
+            position: relative;
         }
-        .stat-badge {
-            display: inline-flex;
+
+        /* 頂部 HeaderBar */
+        .phone-title-bar {
+            background: #ebd8c1;
+            border-bottom: 1px solid #dcc3a5;
+            padding: 0.6rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .main-title-box {
+            display: flex;
             align-items: center;
             gap: 0.35rem;
+            color: #78350f;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+        .logo-btn {
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+        .logo-btn:hover { transform: scale(1.15); }
+
+        .phone-header {
+            background: #f3ece0;
+            border-bottom: 1px solid #e2d8c7;
+            padding: 0.55rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+        .nav-link-btn {
             background: #ffffff;
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            border: 1px solid #fcd34d;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            animation: pulse 1.6s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        /* Tabs */
-        .tabs-row { display: flex; gap: 0.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem; overflow-x: auto; }
-        .tab-btn { padding: 0.625rem 1.25rem; border-radius: 0.75rem; background: transparent; border: none; font-size: 0.875rem; font-weight: 700; color: #64748b; cursor: pointer; white-space: nowrap; }
-        .tab-active-orange { background-color: #fff7ed !important; color: #c2410c !important; }
-        .tab-btn-flex { display: flex; align-items: center; gap: 0.375rem; }
-
-        /* 聊天室專屬排版 */
-        .chat-container { background: #fff; border-radius: 1.5rem; border: 1.5px solid #fffbeb; padding: 1.5rem; box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.05); min-height: 500px; width: 100%; }
-        .chat-layout-grid { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; width: 100%; }
-        @media(max-width: 768px) { .chat-layout-grid { grid-template-columns: 1fr; } }
-        
-        .topic-sidebar { border-right: 1px solid #f1f5f9; padding-right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-        .topic-item { padding: 0.75rem 1rem; border-radius: 0.75rem; cursor: pointer; transition: 0.2s; background: #f8fafc; border: 1px solid #e2e8f0; }
-        .topic-item:hover { background: #fff7ed; border-color: #fed7aa; }
-        .topic-item.active { background: #ea580c; color: white; border-color: #ea580c; }
-        .topic-item.active p { color: #ffedd5 !important; }
-
-        .chat-main-area { display: flex; flex-direction: column; height: 500px; }
-        
-        /* WhatsApp 風格聊天視窗底色 */
-        .chat-messages-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            background-color: #efeae2;
-            background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
-            background-size: 12px 12px;
-            border-radius: 1rem; 
-            padding: 1rem; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0.6rem; 
-            margin-bottom: 1rem; 
-            border: 1px solid #e2e8f0; 
-        }
-
-        /* WhatsApp 氣泡通用樣式 */
-        .msg-bubble {
-            max-width: 75%;
-            padding: 0.5rem 0.75rem 0.35rem 0.75rem;
+            border: 1px solid #d6cebf;
             border-radius: 0.6rem;
-            position: relative;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.725rem;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* 可點擊的主題名稱 */
+        .phone-header-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #574332;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        .phone-header-title:hover { background: #e8dfcf; }
+
+        .identity-badge {
+            font-size: 0.725rem;
+            font-weight: 700;
+            color: #3b7a57;
+            background: #ffffff;
+            border: 1px solid #c5e1b4;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            cursor: pointer;
+        }
+        .identity-badge:hover { background: #e2f0d9; }
+
+        /* 數據統計欄 (兩頁共用) */
+        .phone-sub-bar {
+            background: #f8f4ec;
+            border-bottom: 1px solid #eae2d5;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.725rem;
+            color: #786858;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .phone-sub-bar strong { color: #2e6f40; }
+
+        /* 雙欄按鈕卡片 (源由與守則) */
+        .info-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .info-trigger-btn {
+            background: #fff7ed;
+            border: 1.5px solid #fed7aa;
+            padding: 0.6rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .info-trigger-btn:hover { background: #ffedd5; }
+        .info-trigger-btn h5 { font-size: 0.8rem; font-weight: 800; color: #78350f; }
+        .info-trigger-btn span { font-size: 0.65rem; color: #b45309; }
+
+        .phone-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            background-color: #fcf9f2;
+            background-image: radial-gradient(#e2d9cc 0.8px, transparent 0.8px);
+            background-size: 10px 10px;
+        }
+
+        .msg-bubble {
+            max-width: 78%;
+            padding: 0.5rem 0.75rem 0.35rem 0.75rem;
+            border-radius: 0.75rem;
             font-size: 0.85rem;
             line-height: 1.45;
-            box-shadow: 0 1px 1.5px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             word-break: break-word;
         }
-
-        /* 他人發送的訊息 (靠左、白底) */
         .msg-row-other { display: flex; justify-content: flex-start; }
-        .msg-bubble-other { background-color: #ffffff; color: #111827; border-top-left-radius: 0.1rem; }
+        .msg-bubble-other { background-color: #ffffff; color: #2d241e; border: 1px solid #e8e1d5; border-top-left-radius: 0.1rem; }
 
-        /* 自己發送的訊息 (靠右、暖橘底) */
         .msg-row-self { display: flex; justify-content: flex-end; }
-        .msg-bubble-self { background-color: #ffedd5; color: #7c2d12; border-top-right-radius: 0.1rem; }
+        .msg-bubble-self { background-color: #e2f0d9; color: #1e4620; border: 1px solid #c5e1b4; border-top-right-radius: 0.1rem; }
 
-        .msg-sender-name { font-size: 0.7rem; font-weight: 700; color: #ea580c; margin-bottom: 0.15rem; display: block; }
-        .msg-time-stamp { font-size: 0.6rem; color: #94a3b8; float: right; margin-left: 0.5rem; margin-top: 0.2rem; user-select: none; }
+        .msg-sender-name { font-size: 0.7rem; font-weight: 700; color: #3b7a57; margin-bottom: 0.15rem; display: block; }
+        .msg-time-stamp { font-size: 0.6rem; color: #a09587; float: right; margin-left: 0.5rem; margin-top: 0.2rem; }
 
-        .input-field { width: 100%; padding: 0.625rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.875rem; }
-        .input-field:focus { outline: none; border-color: #ea580c; }
+        .phone-input-bar {
+            padding: 0.6rem 0.75rem;
+            background: #f3ece0;
+            border-top: 1px solid #e2d8c7;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .phone-input-field {
+            flex: 1;
+            padding: 0.6rem 0.85rem;
+            background-color: #ffffff;
+            border: 1px solid #d8cfc0;
+            border-radius: 1.25rem;
+            font-size: 0.875rem;
+            outline: none;
+        }
+        .phone-input-field:focus { border-color: #3b7a57; }
+        .phone-send-btn {
+            background-color: #3b7a57;
+            color: #ffffff;
+            border: none;
+            border-radius: 1.25rem;
+            padding: 0.6rem 1.1rem;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
 
-        /* 管理端 Navbar */
-        .admin-nav { background-color: #1c1917; color: #ffffff; padding: 1rem; border-bottom: 2px solid #ea580c; }
+        .topic-select-card {
+            background: #ffffff;
+            border: 1.5px solid #eae2d5;
+            border-radius: 0.85rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .topic-select-card:hover { border-color: #3b7a57; background: #fdfbf7; }
+
+        .input-field { width: 100%; padding: 0.625rem; background-color: #ffffff; border: 1px solid #e2d8c7; border-radius: 0.75rem; font-size: 0.875rem; }
+        .admin-nav { background-color: #1c1917; color: #ffffff; padding: 0.75rem 1rem; border-bottom: 2px solid #ea580c; }
     </style>
 </head>
 <body>
 
-    <!-- 頂部管理選單 -->
+    <!-- 頂部管理選單 (按 🏮 Logo 觸發) -->
     <div id="admin-navbar" class="hidden admin-nav">
-        <div style="max-width: 64rem; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; gap: 0.5rem; color: #fb923c; align-items: center;">
-                <i data-lucide="shield"></i><strong>萬事屋全域管理端</strong>
+        <div style="max-width: 420px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 0.35rem; color: #fb923c; align-items: center; font-size: 0.8rem;">
+                <i data-lucide="shield"></i><strong>主理人模式</strong>
             </div>
-            <div id="admin-logged-out" style="display: flex; gap: 8px;">
-                <input type="password" id="admin-password-input" placeholder="管理密碼" class="input-field" style="padding: 4px 8px; width: 120px;">
-                <button onclick="handleAdminLogin()" class="btn-orange" style="padding: 4px 12px;">登入</button>
+            <div id="admin-logged-out" style="display: flex; gap: 6px;">
+                <input type="password" id="admin-password-input" placeholder="密碼" class="input-field" style="padding: 2px 6px; width: 80px; font-size: 0.75rem;">
+                <button onclick="handleAdminLogin()" class="btn-orange" style="padding: 2px 8px; font-size: 0.75rem;">登入</button>
             </div>
-            <div id="admin-logged-in" class="hidden" style="display: flex; gap: 10px; align-items: center;">
-                <span style="color: #4ade80; font-size: 0.8rem;">🟢 主理人已登入</span>
-                <button onclick="handleAdminLogout()" style="background:#64748b; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;">登出</button>
+            <div id="admin-logged-in" class="hidden" style="display: flex; gap: 6px; align-items: center;">
+                <span style="color: #4ade80; font-size: 0.75rem;">🟢 已登入</span>
+                <button onclick="handleAdminLogout()" style="background:#64748b; color:white; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-size:0.75rem;">登出</button>
             </div>
         </div>
     </div>
 
-    <!-- 主頁面 -->
-    <main class="main-layout">
-        <div class="layout-spacing">
-            
-            <div class="hero-banner">
-                <div onclick="toggleAdminNavbar()" style="cursor: pointer;">
-                    <h1 class="hero-title">客舍萬事屋</h1>
-                    <span class="hero-title-sub">Slow Pace Skill Supermarket — 鄰里交流區</span>
-                </div>
-                <div class="hero-desc-wrapper">
-                    <p>這是一個獨立於委託之外的自由聚落。在這裡，您可以隨意參與各個主題討論，或與鄰里分享生活點滴。</p>
-                    
-                    <!-- 在線人數與名冊總人數面板 -->
-                    <div class="community-stats-bar">
-                        <span class="stat-badge" style="color: #15803d;">
-                            <span class="pulse-dot"></span>
-                            線上人數：<strong id="online-users-count">1</strong> 人
-                        </span>
-                        <span class="stat-badge" style="color: #b45309;">
-                            📜 居民名冊：<strong id="total-users-count">0</strong> 人
-                        </span>
-                    </div>
-                </div>
+    <!-- 📱 手機尺寸主容器 -->
+    <main class="phone-app-wrapper">
+        
+        <!-- 頂部固定標題列 -->
+        <div class="phone-title-bar">
+            <div class="main-title-box">
+                <span class="logo-btn" onclick="toggleAdminNavbar()" title="點擊切換主理人模式">🏮</span>
+                <span>客舍萬事屋 | 鄰里交流區</span>
             </div>
+            <button onclick="window.open('https://studioslowpace.com/skillsupermarket.html', '_blank')" class="nav-link-btn" style="color:#78350f; background:#fef3c7; border-color:#fde68a;">萬事屋 ↗</button>
+        </div>
 
-            <!-- 分頁切換列 -->
-            <div class="tabs-row">
-                <button id="tab-active" onclick="window.open('https://studioslowpace.com/skillsupermarket.html', '_blank')" class="tab-btn">等待幫助的委託</button>
-                <button id="tab-chat" onclick="switchTab('chat')" class="tab-btn tab-active-orange tab-btn-flex"><span>💬 鄰里交流對話區</span></button>
+        <!-- 🔒 驗證牆 (未驗證時顯示) -->
+        <div id="chat-verify-box" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding: 1.5rem; text-align: center; background: #fff7ed;">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #78350f;">鄰里居民身分驗證</h3>
+                <p style="font-size: 0.75rem; color: #92400e; margin-top:0.25rem;">請輸入您在萬事屋登記的**聯絡方式**與**姓名**。</p>
             </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <input type="text" id="chat-verify-contact" placeholder="請輸入聯絡方式 (IG / 電話)" class="input-field" style="text-align: center;">
+                <input type="text" id="chat-verify-name" placeholder="請輸入您的姓名 / 稱呼" class="input-field" style="text-align: center;">
+                <button onclick="verifyChatUser()" class="btn-orange" style="padding: 0.75rem; font-size: 0.9rem;">驗證並進入交流區</button>
+            </div>
+        </div>
 
-            <!-- 💬 獨立聊天室頁面容器 -->
-            <div id="chat-page-section" class="chat-container">
+        <!-- 🔓 交流區主視窗 (驗證後解鎖) -->
+        <div id="chat-unlocked-box" class="hidden" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+
+            <!-- ---------------------------------------------------- -->
+            <!-- 🏠 PAGE 1: 交流區首頁 -->
+            <!-- ---------------------------------------------------- -->
+            <div id="page-home" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 0.85rem;">
                 
-                <!-- 🔒 驗證牆 (雙欄位驗證：聯絡方式 + 姓名) -->
-                <div id="chat-verify-box" style="max-width: 28rem; margin: 3rem auto; background: #fff7ed; padding: 2rem; border-radius: 1.5rem; border: 1.5px solid #fed7aa; text-align: center; box-shadow: 0 10px 25px -5px rgba(251,191,36,0.1);">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏮</div>
-                    <h3 style="font-size: 1.2rem; font-weight: 800; color: #78350f; margin-bottom: 0.5rem;">鄰里交流區 僅限萬事屋居民</h3>
-                    <p style="font-size: 0.8rem; color: #92400e; line-height: 1.6; margin-bottom: 1.25rem;">
-                        請輸入您在客舍萬事屋登記的**聯絡方式 (IG/電話)** 與 **姓名/稱呼**，兩者皆相符方可進入。
-                    </p>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <input type="text" id="chat-verify-contact" placeholder="請輸入您的聯絡方式 (例如 IG / 電話)" class="input-field" style="text-align: center; font-size: 0.9rem;">
-                        <input type="text" id="chat-verify-name" placeholder="請輸入您的姓名 / 稱呼" class="input-field" style="text-align: center; font-size: 0.9rem;">
-                        <button onclick="verifyChatUser()" class="btn-orange" style="padding: 0.75rem; font-size: 0.9rem;">驗證並進入交流區</button>
+                <!-- 數據統計欄 (兩頁共用) -->
+                <div class="phone-sub-bar" style="border-radius: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #eae2d5;">
+                    <span>🟢 在線：<strong id="online-users-count-home">1</strong> 人</span>
+                    <span>|</span>
+                    <span>📜 居民總數：<strong id="total-users-count-home">0</strong> 人</span>
+                </div>
+
+                <!-- 📖 卡片一：雙欄按鈕 (源由 / 守則) -->
+                <div class="info-card-grid">
+                    <div class="info-trigger-btn" onclick="openModal('modal-origin')">
+                        <h5>🌱 社群源由</h5>
+                        <span>點擊查看詳情</span>
+                    </div>
+                    <div class="info-trigger-btn" onclick="openModal('modal-rules')">
+                        <h5>📜 鄰里守則</h5>
+                        <span>點擊查看公約</span>
                     </div>
                 </div>
 
-                <!-- 🔓 聊天對話區 (WhatsApp 風格) -->
-                <div id="chat-unlocked-box" class="chat-layout-grid hidden">
+                <!-- 👤 身分切換列 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0 0.1rem;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #574332;">📌 請選擇討論主題</span>
+                    <div id="my-identity-badge-home" class="identity-badge" onclick="confirmSwitchIdentity()">
+                        👤 載入中
+                    </div>
+                </div>
+
+                <!-- 主題列表 -->
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:0.25rem;">
+                        <button id="btn-add-topic" onclick="openTopicModal()" class="hidden btn-orange" style="padding: 2px 8px; font-size: 0.7rem;">+ 新增主題</button>
+                    </div>
+                    <div id="topics-list-container"></div>
+                </div>
+
+            </div>
+
+            <!-- ---------------------------------------------------- -->
+            <!-- 💬 PAGE 2: 手機對話模式 -->
+            <!-- ---------------------------------------------------- -->
+            <div id="page-chat" class="hidden" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                
+                <!-- 對話頂部 Header Bar (含主題切換下拉選單) -->
+                <div class="phone-header">
+                    <button class="nav-link-btn" onclick="backToHome()">< 首頁</button>
                     
-                    <!-- 左側：主題清單 -->
-                    <div class="topic-sidebar">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <h4 style="font-size: 0.9rem; font-weight: 800; color: #1e293b;">📌 討論區主題</h4>
-                            <button id="btn-add-topic" onclick="openTopicModal()" class="hidden btn-orange" style="padding: 2px 8px; font-size: 0.75rem;">+ 新增主題</button>
-                        </div>
-                        <div id="topics-list-container" style="display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 380px;"></div>
-                        
-                        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
-                            <button onclick="logoutChatUser()" style="width: 100%; padding: 0.4rem; background: #f1f5f9; color: #64748b; border: none; border-radius: 0.5rem; font-size: 0.75rem; cursor: pointer;">切換驗證身分</button>
-                        </div>
+                    <!-- 🌟 點擊主題名稱可隨時彈窗切換 -->
+                    <div class="phone-header-title" onclick="openTopicSwitcherModal()">
+                        <span id="current-topic-title">選擇主題</span>
+                        <span style="font-size: 0.6rem; color: #888;">▼</span>
                     </div>
 
-                    <!-- 右側：WhatsApp 風格聊天區域 -->
-                    <div class="chat-main-area">
-                        <div style="margin-bottom: 0.75rem;">
-                            <h3 id="current-topic-title" style="font-size: 1rem; font-weight: 800; color: #ea580c;">載入中...</h3>
-                            <p id="current-topic-desc" style="font-size: 0.75rem; color: #94a3b8;">請選擇左側主題開始對話</p>
-                        </div>
-
-                        <!-- WhatsApp 聊天訊息顯示框 -->
-                        <div id="topic-chat-messages" class="chat-messages-box">
-                            <p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin: auto;">請選擇一個討論主題</p>
-                        </div>
-
-                        <!-- 發送訊息輸入框 -->
-                        <form onsubmit="handleSendTopicMessage(event)" style="display: flex; gap: 0.5rem;">
-                            <input type="text" id="chat-sender-name" readonly class="input-field" style="width: 120px; background: #f1f5f9; color: #64748b; font-weight: bold;" title="已自動綁定您的身份">
-                            <input type="text" id="chat-input-content" placeholder="輸入訊息..." required class="input-field" style="flex: 1;">
-                            <button type="submit" class="btn-orange" style="padding: 0 1.25rem;">發送</button>
-                        </form>
+                    <div id="my-identity-badge-chat" class="identity-badge" onclick="confirmSwitchIdentity()">
+                        👤 載入中
                     </div>
-
                 </div>
+
+                <!-- 數據統計欄 (兩頁共用) -->
+                <div class="phone-sub-bar">
+                    <span>🟢 在線：<strong id="online-users-count-chat">1</strong> 人</span>
+                    <span>|</span>
+                    <span>📜 居民總數：<strong id="total-users-count-chat">0</strong> 人</span>
+                </div>
+
+                <!-- 對話訊息視窗 -->
+                <div id="topic-chat-messages" class="phone-chat-messages">
+                    <p style="font-size: 0.75rem; color: #a09587; text-align: center; margin: auto;">載入對話中...</p>
+                </div>
+
+                <!-- 底部發送欄 -->
+                <form onsubmit="handleSendTopicMessage(event)" class="phone-input-bar">
+                    <input type="text" id="chat-input-content" placeholder="講啲嘢..." required class="phone-input-field">
+                    <button type="submit" class="phone-send-btn">送出</button>
+                </form>
 
             </div>
 
         </div>
+
     </main>
 
-    <!-- 彈窗：新增主題 Modal (已加入密碼設定) -->
-    <div id="topic-modal" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1000; padding:1rem;">
-        <div style="background:white; padding:1.5rem; border-radius:1rem; width:100%; max-width:24rem; display:flex; flex-direction:column; gap:1rem;">
-            <h3 style="font-size: 1rem; font-weight: 800; color: #1e293b;">📌 新增討論區主題</h3>
-            <form onsubmit="handleCreateTopic(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
+    <!-- 📖 彈窗：社群源由 -->
+    <div id="modal-origin" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1200; padding:1rem;">
+        <div style="background:#fff7ed; border:1.5px solid #fed7aa; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #fed7aa; padding-bottom: 0.4rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #78350f;">🌱 「客舍萬事屋」源由</h3>
+                <button onclick="closeModal('modal-origin')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#78350f;">✕</button>
+            </div>
+            <p style="font-size: 0.775rem; color: #92400e; line-height: 1.6;">
+                「客舍萬事屋」致力於建立一個步調慢、人情味濃厚的技能互助與生活交流聚落。除了任務委託之外，這裡提供了一個專屬於居民的自由對話角落，讓大家能在此分享點滴、互相串聯。
+            </p>
+            <button onclick="closeModal('modal-origin')" class="btn-orange" style="padding:0.4rem; font-size:0.8rem;">了解</button>
+        </div>
+    </div>
+
+    <!-- 📖 彈窗：鄰里守則 -->
+    <div id="modal-rules" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1200; padding:1rem;">
+        <div style="background:#fff7ed; border:1.5px solid #fed7aa; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #fed7aa; padding-bottom: 0.4rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #78350f;">📜 鄰里公約 (使用守則)</h3>
+                <button onclick="closeModal('modal-rules')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#78350f;">✕</button>
+            </div>
+            <ul style="font-size: 0.775rem; color: #92400e; line-height: 1.6; padding-left: 1.1rem; display:flex; flex-direction:column; gap:0.35rem;">
+                <li><strong>真實身分驗證</strong>：僅限曾在萬事屋登記過之居民登入。</li>
+                <li><strong>友善溫暖交流</strong>：請保持尊重與包容，嚴禁言語攻擊。</li>
+                <li><strong>維護資訊安全</strong>：請勿散播他人私隱或未授權廣告。</li>
+                <li><strong>私密主題密碼</strong>：有密碼保護的主題請勿擅自外流。</li>
+            </ul>
+            <button onclick="closeModal('modal-rules')" class="btn-orange" style="padding:0.4rem; font-size:0.8rem;">我已瞭解</button>
+        </div>
+    </div>
+
+    <!-- 📌 彈窗：對話模式中的主題切換清單 Modal -->
+    <div id="topic-switcher-modal" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1000; padding:1rem;">
+        <div style="background:#faf7f2; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:360px; max-height:80vh; display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #574332;">📌 切換討論主題</h3>
+                <button onclick="closeTopicSwitcherModal()" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#888;">✕</button>
+            </div>
+            <div id="topics-switcher-list-container" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <!-- 📌 彈窗：主理人新增主題 Modal -->
+    <div id="topic-modal" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1100; padding:1rem;">
+        <div style="background:white; padding:1.25rem; border-radius:1rem; width:100%; max-width:320px; display:flex; flex-direction:column; gap:0.75rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">📌 新增討論主題</h3>
+            <form onsubmit="handleCreateTopic(event)" style="display:flex; flex-direction:column; gap:0.6rem;">
                 <div>
-                    <label style="font-size:0.75rem; font-weight:bold; color:#6b7280;">主題名稱</label>
-                    <input type="text" id="new-topic-title" required class="input-field" placeholder="例如: 🔒 核心幹部秘密基地">
+                    <label style="font-size:0.7rem; font-weight:bold; color:#6b7280;">主題名稱</label>
+                    <input type="text" id="new-topic-title" required class="input-field" placeholder="例如: 🔒 核心幹部基地">
                 </div>
                 <div>
-                    <label style="font-size:0.75rem; font-weight:bold; color:#6b7280;">主題簡介</label>
-                    <input type="text" id="new-topic-desc" class="input-field" placeholder="簡單描述這個主題的內容">
+                    <label style="font-size:0.7rem; font-weight:bold; color:#6b7280;">主題簡介</label>
+                    <input type="text" id="new-topic-desc" class="input-field" placeholder="簡短描述">
                 </div>
                 <div>
-                    <label style="font-size:0.75rem; font-weight:bold; color:#ea580c;">設定進入密碼 (選填)</label>
-                    <input type="password" id="new-topic-password" class="input-field" placeholder="留空代表公開，不需密碼">
+                    <label style="font-size:0.7rem; font-weight:bold; color:#ea580c;">進入密碼 (選填)</label>
+                    <input type="password" id="new-topic-password" class="input-field" placeholder="留空代表公開">
                 </div>
-                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <button type="button" onclick="closeTopicModal()" style="flex:1; padding:0.5rem; background:#f3f4f6; border:none; border-radius:0.75rem; font-weight:bold; cursor:pointer;">取消</button>
-                    <button type="submit" class="btn-orange" style="flex:1; padding:0.5rem;">確認建立</button>
+                <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
+                    <button type="button" onclick="closeTopicModal()" style="flex:1; padding:0.4rem; background:#f3f4f6; border:none; border-radius:0.6rem; font-weight:bold; cursor:pointer; font-size:0.8rem;">取消</button>
+                    <button type="submit" class="btn-orange" style="flex:1; padding:0.4rem; font-size:0.8rem;">確認建立</button>
                 </div>
             </form>
         </div>
@@ -277,7 +426,6 @@
         let chatSubscription = null;
         let presenceChannel = null;
         let unlockedTopics = {};
-        let isAdmin = false;
 
         window.onload = function() {
             fetchAllUserRecordsFromSupabase();
@@ -291,22 +439,18 @@
                 const { data, error } = await client.from('alluser_record').select('*');
                 if (error) throw error;
                 allUserRecords = data || [];
-                document.getElementById('total-users-count').textContent = allUserRecords.length;
+                const totalCount = allUserRecords.length;
+                document.getElementById('total-users-count-home').textContent = totalCount;
+                document.getElementById('total-users-count-chat').textContent = totalCount;
             } catch (err) { console.error("讀取用戶紀錄失敗:", err.message); }
         }
 
         function initPresenceTracker() {
             const savedContact = localStorage.getItem('verified_chat_contact');
             const savedName = localStorage.getItem('verified_chat_name');
-            
-            if (!savedContact || !savedName) {
-                document.getElementById('online-users-count').textContent = '1 (未驗證)';
-                return;
-            }
+            if (!savedContact || !savedName) return;
 
-            if (presenceChannel) {
-                client.removeChannel(presenceChannel);
-            }
+            if (presenceChannel) client.removeChannel(presenceChannel);
 
             presenceChannel = client.channel('community-online-room', {
                 config: { presence: { key: savedContact } }
@@ -315,15 +459,13 @@
             presenceChannel
                 .on('presence', { event: 'sync' }, () => {
                     const state = presenceChannel.presenceState();
-                    const uniqueOnlineUsers = Object.keys(state).length;
-                    document.getElementById('online-users-count').textContent = uniqueOnlineUsers;
+                    const onlineCount = Object.keys(state).length || 1;
+                    document.getElementById('online-users-count-home').textContent = onlineCount;
+                    document.getElementById('online-users-count-chat').textContent = onlineCount;
                 })
                 .subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
-                        await presenceChannel.track({
-                            name: savedName,
-                            online_at: new Date().toISOString()
-                        });
+                        await presenceChannel.track({ name: savedName, online_at: new Date().toISOString() });
                     }
                 });
         }
@@ -332,10 +474,7 @@
             const inputContact = document.getElementById('chat-verify-contact').value.trim();
             const inputName = document.getElementById('chat-verify-name').value.trim();
 
-            if (!inputContact || !inputName) {
-                alert("請完整輸入「聯絡方式」與「姓名」！");
-                return;
-            }
+            if (!inputContact || !inputName) { alert("請完整輸入「聯絡方式」與「姓名」！"); return; }
 
             const matchedUser = allUserRecords.find(user => 
                 user.contact && user.contact.trim() === inputContact &&
@@ -349,22 +488,23 @@
                 unlockChatUI(verifiedName);
                 initPresenceTracker();
             } else {
-                alert("❌ 驗證失敗！\n您輸入的「聯絡方式」與「姓名」無法在居民名冊中同時對應，請重新確認。");
+                alert("❌ 驗證失敗！「聯絡方式」與「姓名」不吻合。");
             }
         }
 
         function unlockChatUI(userName) {
             document.getElementById('chat-verify-box').classList.add('hidden');
             document.getElementById('chat-unlocked-box').classList.remove('hidden');
-            
-            const senderInput = document.getElementById('chat-sender-name');
-            senderInput.value = userName;
-            senderInput.readOnly = true;
-            senderInput.style.backgroundColor = '#f1f5f9';
-            senderInput.style.color = '#64748b';
-            senderInput.style.cursor = 'not-allowed';
-
+            document.getElementById('my-identity-badge-home').textContent = `👤 ${userName}`;
+            document.getElementById('my-identity-badge-chat').textContent = `👤 ${userName}`;
             fetchTopics();
+        }
+
+        function confirmSwitchIdentity() {
+            const currentName = localStorage.getItem('verified_chat_name');
+            if (confirm(`您目前的身分是「${currentName}」\n是否要登出並切換驗證身分？`)) {
+                logoutChatUser();
+            }
         }
 
         function logoutChatUser() {
@@ -394,67 +534,74 @@
                 if (error) throw error;
                 topics = data || [];
                 renderTopicsList();
-
-                if (topics.length > 0 && !activeTopicId) {
-                    trySelectTopic(topics[0].id);
-                }
             } catch (err) { console.error("讀取主題失敗:", err.message); }
         }
 
         function renderTopicsList() {
             const container = document.getElementById('topics-list-container');
-            if (!container) return;
+            const switcherContainer = document.getElementById('topics-switcher-list-container');
+            
+            const htmlContent = topics.length === 0 
+                ? `<p style="font-size:0.75rem; color:#a09587; text-align:center; padding:1rem;">尚無討論主題</p>`
+                : topics.map(topic => {
+                    const hasPassword = topic.password && topic.password.trim() !== '';
+                    const lockIcon = hasPassword ? '🔒 ' : '💬 ';
+                    return `
+                        <div onclick="trySelectTopic('${topic.id}')" class="topic-select-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h4 style="font-size: 0.85rem; font-weight: 800; color: #574332;">${lockIcon}${topic.title}</h4>
+                                <span style="font-size:0.7rem; color:#3b7a57; font-weight:bold;">進入 〉</span>
+                            </div>
+                            <p style="font-size: 0.7rem; color: #786858; margin-top:2px;">${topic.description || '無簡介'}</p>
+                        </div>
+                    `;
+                }).join('');
 
-            if (topics.length === 0) {
-                container.innerHTML = `<p style="font-size:0.75rem; color:#94a3b8; text-align:center;">尚無討論主題</p>`;
-                return;
-            }
-
-            container.innerHTML = topics.map(topic => {
-                const hasPassword = topic.password && topic.password.trim() !== '';
-                const lockIcon = hasPassword ? '🔒 ' : '';
-
-                return `
-                    <div onclick="trySelectTopic('${topic.id}')" class="topic-item ${String(activeTopicId) === String(topic.id) ? 'active' : ''}">
-                        <h5 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 2px;">${lockIcon}${topic.title}</h5>
-                        <p style="font-size: 0.7rem; color: #64748b;" class="topic-desc">${topic.description || '無簡介'}</p>
-                    </div>
-                `;
-            }).join('');
+            if (container) container.innerHTML = htmlContent;
+            if (switcherContainer) switcherContainer.innerHTML = htmlContent;
         }
+
+        // Modal 彈窗控制
+        function openModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
+        function openTopicSwitcherModal() { document.getElementById('topic-switcher-modal').classList.remove('hidden'); }
+        function closeTopicSwitcherModal() { document.getElementById('topic-switcher-modal').classList.add('hidden'); }
 
         function trySelectTopic(topicId) {
             const topic = topics.find(t => String(t.id) === String(topicId));
             if (!topic) return;
 
             if (topic.password && topic.password.trim() !== '' && !unlockedTopics[topicId]) {
-                const inputPwd = prompt(`🔒 此主題「${topic.title}」需要密碼才能進入：`);
+                const inputPwd = prompt(`🔒 主題「${topic.title}」需要密碼：`);
                 if (inputPwd === null) return;
 
                 if (inputPwd.trim() === topic.password.trim()) {
                     unlockedTopics[topicId] = true;
-                    alert("✅ 密碼正確，進入主題！");
-                    selectTopic(topicId);
+                    enterTopicChat(topic);
                 } else {
                     alert("❌ 密碼錯誤！");
                 }
             } else {
-                selectTopic(topicId);
+                enterTopicChat(topic);
             }
         }
 
-        function selectTopic(topicId) {
-            activeTopicId = topicId;
-            renderTopicsList();
+        function enterTopicChat(topic) {
+            activeTopicId = topic.id;
+            document.getElementById('current-topic-title').textContent = topic.title;
+            closeTopicSwitcherModal();
+            document.getElementById('page-home').classList.add('hidden');
+            document.getElementById('page-chat').classList.remove('hidden');
 
-            const current = topics.find(t => String(t.id) === String(topicId));
-            if (current) {
-                document.getElementById('current-topic-title').textContent = current.title;
-                document.getElementById('current-topic-desc').textContent = current.description || '';
-            }
+            loadTopicMessages(topic.id);
+            subscribeToTopicChat(topic.id);
+        }
 
-            loadTopicMessages(topicId);
-            subscribeToTopicChat(topicId);
+        function backToHome() {
+            activeTopicId = null;
+            document.getElementById('page-chat').classList.add('hidden');
+            document.getElementById('page-home').classList.remove('hidden');
         }
 
         async function loadTopicMessages(topicId) {
@@ -471,7 +618,7 @@
                 if (error) throw error;
                 renderTopicMessages(data || []);
             } catch (err) {
-                container.innerHTML = `<p style="font-size:0.75rem; color:#ef4444; text-align:center;">載入對話失敗</p>`;
+                container.innerHTML = `<p style="font-size:0.75rem; color:#ef4444; text-align:center;">載入失敗</p>`;
             }
         }
 
@@ -480,7 +627,7 @@
             if (!container) return;
 
             if (messages.length === 0) {
-                container.innerHTML = `<p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin: auto;">這個主題還很安靜，留個言開始交流吧！</p>`;
+                container.innerHTML = `<p style="font-size: 0.75rem; color: #a09587; text-align: center; margin: auto;">開始交流吧！</p>`;
                 return;
             }
 
@@ -519,15 +666,15 @@
             event.preventDefault();
             if (!activeTopicId) return;
 
-            const nameInput = document.getElementById('chat-sender-name');
+            const senderName = localStorage.getItem('verified_chat_name');
             const contentInput = document.getElementById('chat-input-content');
 
-            if (!nameInput.value.trim() || !contentInput.value.trim()) return;
+            if (!senderName || !contentInput.value.trim()) return;
 
             try {
                 const { error } = await client.from('topic_messages').insert([{
                     topic_id: activeTopicId,
-                    sender_name: nameInput.value.trim(),
+                    sender_name: senderName,
                     content: contentInput.value.trim()
                 }]);
 
@@ -558,11 +705,7 @@
             if (!title) return;
 
             try {
-                const { error } = await client.from('chat_topics').insert([{ 
-                    title, 
-                    description: desc, 
-                    password: password 
-                }]);
+                const { error } = await client.from('chat_topics').insert([{ title, description: desc, password: password }]);
                 if (error) throw error;
 
                 closeTopicModal();
@@ -577,7 +720,6 @@
         function toggleAdminNavbar() { document.getElementById('admin-navbar').classList.toggle('hidden'); }
         function handleAdminLogin() {
             if (document.getElementById('admin-password-input').value === defaultPassword) {
-                isAdmin = true;
                 document.getElementById('admin-logged-out').classList.add('hidden');
                 document.getElementById('admin-logged-in').classList.remove('hidden');
                 document.getElementById('btn-add-topic').classList.remove('hidden');
@@ -585,14 +727,9 @@
             } else { alert("密碼錯誤"); }
         }
         function handleAdminLogout() {
-            isAdmin = false;
             document.getElementById('admin-logged-out').classList.remove('hidden');
             document.getElementById('admin-logged-in').classList.add('hidden');
             document.getElementById('btn-add-topic').classList.add('hidden');
-        }
-
-        function switchTab(tab) {
-            if (tab === 'active') { window.location.href = 'index.html'; }
         }
     </script>
 </body>

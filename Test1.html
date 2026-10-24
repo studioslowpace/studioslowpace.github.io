@@ -1,0 +1,2079 @@
+<html lang="zh-HK"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF6EE">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cg stroke='%233B3A36' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 50Q17 33 34 33L55 33Q71 33 71 50L71 67Q71 82 56 82L42 95L42 82L34 82Q17 82 17 67Z' fill='%237C8C6B'/%3E%3Cpath d='M57 61Q57 45 73 45L94 45Q111 45 111 62L111 79Q111 94 95 94L95 107L81 94L73 94Q57 94 57 79Z' fill='%23D98E4A'/%3E%3Cg stroke='none'%3E%3Ccircle cx='34' cy='54' r='3' fill='%233B3A36'/%3E%3Ccircle cx='51' cy='54' r='3' fill='%233B3A36'/%3E%3Ccircle cx='76' cy='66' r='3' fill='%233B3A36'/%3E%3Ccircle cx='93' cy='66' r='3' fill='%233B3A36'/%3E%3C/g%3E%3Cpath d='M33 65Q42 74 51 65M76 77Q85 86 94 77' fill='none'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="description" content="樹窿台：一個匿名傾計的地方。隨機配對，同陌生人講心底話，唔使俾人認得。">
+<link rel="canonical" href="https://treehole.hkgamingapp.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="傾計 · 樹窿台">
+<meta property="og:description" content="隨機配對，同陌生人講心底話。匿名、簡單、免費。">
+<meta property="og:url" content="https://treehole.hkgamingapp.com/">
+<meta property="og:locale" content="zh_HK">
+<meta name="twitter:card" content="summary">
+<title>傾計 · 樹窿台</title>
+<style>
+  :root{
+    --bg:#FAF6EE; --surface:#FFFDF8; --surface2:#F4EEE0; --surface3:#EBE2CE;
+    --border:#C9B79C; --border-strong:#B29C7C;
+    --accent:#7C8C6B; --accent-hover:#6B7A5B; --accent-soft:rgba(124,140,107,.12);
+    --ink:#3B3A36; --ink2:#6E6A61; --ink3:#9A9385;
+    --male:#7E96A8; --female:#C58D9B; --bar:#F2ECDF;
+    --ok:#6E8B5E; --danger:#B0574C; --sun:#D98E4A; --line:#C9B79C; --shadow:rgba(59,58,54,.12);
+    --r:16px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", "Noto Sans HK", sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;
+    --paper-layers:
+      radial-gradient(130% 90% at 18% 8%, rgba(255,255,255,.60), rgba(255,255,255,0) 55%),
+      radial-gradient(90% 70% at 88% 92%, rgba(201,183,156,.22), rgba(201,183,156,0) 60%),
+      repeating-linear-gradient(0deg, rgba(59,58,54,.015) 0 2px, rgba(255,255,255,0) 2px 5px),
+      repeating-linear-gradient(90deg, rgba(59,58,54,.010) 0 3px, rgba(255,255,255,0) 3px 7px),
+      radial-gradient(165% 125% at 50% 38%, rgba(255,255,255,0) 55%, rgba(59,58,54,.06) 100%);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0; background-color:#ECE4D2; background-image:var(--paper-layers); font-family:var(--font); color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  #app{
+    width:100%; max-width:460px; height:100dvh; max-height:920px;
+    background-color:var(--bg); background-image:var(--paper-layers); position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    box-shadow:0 10px 36px rgba(59,58,54,.20);
+    border:1px solid rgba(201,183,156,.55);
+  }
+  @media (min-width:520px){ #app{ border-radius:22px; height:calc(100dvh - 48px); } }
+
+  .page{display:none; flex:1; min-height:0; flex-direction:column}
+  .page.active{display:flex}
+
+  /* 內容有機會高過可用高度（瀏覽器放大／矮芒／手機橫向）
+     → 一定要滾得郁，唔可以切頂切底。scrollbar 收細免遮住圓角。 */
+  .page.scrollable{
+    overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+    scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent;
+  }
+  .page.scrollable::-webkit-scrollbar{ width:6px }
+  .page.scrollable::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:3px }
+  .page.scrollable::-webkit-scrollbar-track{ background:transparent }
+  /* 兩粒 0 高嘅「彈簧」用 auto margin 吸走剩餘空間：
+     有位就垂直居中（同原本 justify-content:center 一樣），冇位就自動變 0、
+     內容由頂開始排 —— 呢個係 flex 居中唔切頂嘅正解。 */
+  .page.scrollable::before,
+  .page.scrollable::after{ content:""; display:block; flex:0 0 auto; height:0; margin-block:auto }
+
+  /* ---------- 登入 ---------- */
+  #page-login{ padding:20px 22px; gap:0 }
+  .brand{ text-align:center; margin-bottom:4px }
+  .brand h1{
+    margin:0; font-size:clamp(96px, 30vw, 136px); letter-spacing:16px; font-weight:700; color:var(--ink);
+    text-indent:16px; font-family:var(--font-serif); line-height:1.05;
+  }
+  .brand .sub{
+    margin-top:10px; font-size:30px; letter-spacing:8px; color:var(--ink2); text-indent:8px;
+    font-family:var(--font-serif);
+  }
+  .brand .rule{
+    width:44px; height:2px; background:var(--accent); opacity:.7; margin:10px auto 0; border-radius:2px;
+  }
+  .hero{ margin:4px auto 0; max-width:210px }
+  .hero svg{ display:block; width:100%; height:auto }
+  /* 登入頁社會證明：而家幾多人在線／累計幾多人用過 */
+  .proof-row{ text-align:center; margin-top:12px }
+  .proof{
+    display:inline-flex; align-items:baseline; gap:7px; padding:6px 16px;
+    font-size:12.5px; color:var(--ink2); background:var(--surface2);
+    border:1px solid var(--border-strong); border-radius:999px; line-height:1.35;
+    box-shadow:2px 2px 0 var(--shadow);
+  }
+  .proof b{ color:var(--accent-hover); font-weight:800; font-size:15px; font-variant-numeric:tabular-nums }
+  .proof .pdot{
+    width:6px; height:6px; border-radius:50%; background:var(--ok);
+    display:inline-block; flex:0 0 auto; align-self:center;
+  }
+  /* 同意閘：未剔《服務條款》唔准撳 Google／Apple 登入（每次 reload 重置） */
+  .agree{ margin-top:18px; display:flex; gap:8px; align-items:flex-start; font-size:12.5px; line-height:1.6; color:var(--ink2); cursor:pointer }
+  .agree input{ width:16px; height:16px; margin-top:2px; flex:0 0 auto; accent-color:var(--accent) }
+  .agree a{ color:var(--accent); font-weight:600 }
+  .login-actions{ margin-top:6px; display:flex; flex-direction:column; gap:12px }
+  .btn-oauth{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; height:52px; border-radius:12px; font-size:15px; font-weight:600;
+    border:1px solid var(--border); background:var(--surface); color:var(--ink);
+    cursor:pointer; transition:transform .08s ease, background .15s ease;
+    font-family:var(--font);
+  }
+  .btn-oauth:active{ transform:scale(.985) }
+  .btn-oauth:hover{ background:#fff }
+  .btn-oauth.apple{ background:#1b1b1b; color:#fff; border-color:#1b1b1b }
+  .btn-oauth.apple:hover{ background:#000 }
+  .btn-oauth[disabled]{ opacity:.45; cursor:not-allowed }
+  .legal{ margin-top:14px; font-size:11.5px; color:var(--ink3); text-align:center; line-height:1.7 }
+  .legal a{ color:var(--ink2) }
+  .legal .site{ margin-top:2px }
+  #demoBox{ margin-top:18px; display:none }
+  #demoBox.show{ display:block }
+  #demoBox .row{ display:flex; gap:8px }
+  #demoBox input{
+    flex:1; height:44px; border-radius:10px; border:1px dashed var(--border-strong);
+    background:transparent; padding:0 12px; font-size:13px; font-family:var(--font); color:var(--ink);
+  }
+  #demoBox button{
+    height:44px; padding:0 14px; border-radius:10px; border:1px solid var(--accent);
+    background:var(--accent-soft); color:var(--accent); font-weight:600; font-size:13px;
+    font-family:var(--font); cursor:pointer;
+  }
+  .errbox{
+    margin-top:14px; font-size:12.5px; color:var(--danger); text-align:center; min-height:18px; line-height:1.5;
+  }
+
+  /* 矮屏／瀏覽器放大 → 收緊間距，令登入頁盡量一屏睇完（真係唔夠就滾，唔會切） */
+  @media (max-height:700px){
+    #page-login{ padding:22px 22px }
+    .brand h1{ font-size:56px; letter-spacing:10px; text-indent:10px }
+    .brand .sub{ margin-top:8px; font-size:25px; letter-spacing:6px; text-indent:6px }
+    .brand .rule{ margin-top:12px }
+    .login-actions{ margin-top:24px; gap:10px }
+    .legal{ margin-top:10px; font-size:11px; line-height:1.6 }
+    .errbox{ margin-top:10px }
+    #demoBox{ margin-top:12px }
+    .hero{ max-width:250px }
+    #page-gender{ padding:24px 22px }
+    .g-sub{ margin-bottom:20px }
+  }
+  @media (max-height:560px){
+    #page-login{ padding:14px 18px }
+    .brand h1{ font-size:48px; letter-spacing:8px; text-indent:8px }
+    .brand .sub{ font-size:23px; letter-spacing:4px; text-indent:4px }
+    .brand .rule{ margin-top:8px }
+    .login-actions{ margin-top:16px; gap:8px }
+    .btn-oauth{ height:48px; font-size:14.5px }
+    .legal{ margin-top:8px; font-size:10.5px; line-height:1.55 }
+    #page-gender{ padding:16px 18px }
+    .g-title{ font-size:19px }
+    .g-sub{ margin-bottom:14px; font-size:12px }
+    .g-opt{ padding:13px 15px }
+    .btn-primary{ margin-top:14px; height:48px }
+    .hero{ max-width:205px }
+  }
+
+  /* ---------- 性別 ---------- */
+  #page-gender{ padding:34px 24px }
+  .g-title{ font-family:var(--font-serif); font-size:22px; font-weight:700; letter-spacing:3px; text-align:center; margin:0 0 6px }
+  .g-sub{ font-size:13px; color:var(--ink2); text-align:center; margin:0 0 32px; line-height:1.6 }
+  .g-options{ display:flex; flex-direction:column; gap:12px }
+  .g-opt{
+    display:flex; align-items:center; gap:14px; padding:17px 18px; border-radius:var(--r);
+    border:2px solid var(--border); background:var(--surface); cursor:pointer;
+    box-shadow:3px 4px 0 var(--shadow);
+    transition:border-color .15s, background .15s, box-shadow .15s, transform .15s;
+  }
+  .g-opt:active{ transform:translate(1px,1px); box-shadow:2px 3px 0 var(--shadow) }
+  .g-opt .dot{
+    width:22px; height:22px; border-radius:50%; border:1.5px solid var(--border-strong);
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .g-opt .dot i{ width:10px; height:10px; border-radius:50%; background:transparent; display:block }
+  .g-opt .label{ font-size:16px; font-weight:600 }
+  .g-opt .hint{ font-size:12px; color:var(--ink3); margin-left:auto }
+  .g-opt.sel{ border-color:var(--accent); background:var(--accent-soft); box-shadow:3px 4px 0 rgba(124,140,107,.30) }
+  .g-opt.sel .dot{ border-color:var(--accent) }
+  .g-opt.sel .dot i{ background:var(--accent) }
+  .g-lock{
+    margin-top:22px; font-size:12px; color:var(--ink2); line-height:1.7; text-align:center;
+    background:var(--surface2); border-radius:10px; padding:12px 14px;
+  }
+  .btn-primary{
+    margin-top:22px; width:100%; height:52px; border:none; border-radius:12px;
+    background:var(--accent); color:#fff; font-size:16px; font-weight:700; font-family:var(--font);
+    cursor:pointer; transition:background .15s, transform .08s;
+  }
+  .btn-primary:hover{ background:var(--accent-hover) }
+  .btn-primary:active{ transform:scale(.99) }
+  .btn-primary[disabled]{ background:var(--surface3); color:var(--ink3); cursor:default }
+
+  /* ---------- 聊天 ---------- */
+  #page-chat{ position:relative }
+  .chat-top{
+    flex:0 0 auto; height:44px; background:var(--bar);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 14px; border-bottom:1px solid rgba(178,156,124,.45);
+    padding-top:env(safe-area-inset-top);
+    height:calc(44px + env(safe-area-inset-top));
+  }
+  .gender-pill{
+    display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 12px;
+    border-radius:999px; font-size:13px; font-weight:600; background:var(--surface);
+    border:1px solid var(--border);
+  }
+  .gender-pill .gd{ width:8px; height:8px; border-radius:50%; display:block }
+  .gender-pill.male .gd{ background:var(--male) }
+  .gender-pill.female .gd{ background:var(--female) }
+  .gender-pill.unknown{ color:var(--ink3) }
+  .gender-pill.unknown .gd{ background:var(--ink3) }
+  /* 頂部 mini 品牌（A8 logo + 兩個小公仔 + 傾偈樹窿台）：Pill 同 換下一位 保持左右 */
+  .chat-brand{
+    display:flex; align-items:center; gap:4px; min-width:0;
+  }
+  .chat-brand .kid-mini{ display:block; height:20px; width:auto; flex:0 0 auto }
+  .chat-brand .logo{ display:block; width:22px; height:22px; flex:0 0 auto }
+  .chat-brand .name{
+    font-family:var(--font-serif); font-size:12.5px; font-weight:700;
+    letter-spacing:1px; color:var(--ink); white-space:nowrap;
+  }
+  /* 排隊中收起頂欄 mini 品牌（waiting 區已有大品牌，唔好重複）；配對到先返場 */
+  .is-waiting .chat-top .chat-brand{ display:none }
+  .btn-ghost{
+    height:32px; padding:0 12px; border-radius:9px; border:1px solid var(--border-strong);
+    background:var(--surface); color:var(--ink); font-size:13px; font-weight:600;
+    font-family:var(--font); cursor:pointer;
+  }
+  .btn-ghost:hover{ background:#fff }
+  .btn-ghost[disabled]{ opacity:.45; cursor:default }
+  .btn-leave{ width:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto }
+  .wb-leave{ margin-top:10px }
+  @media (max-width:430px){ .chat-brand .kid-mini{ display:none } }
+
+  .stats-bar{
+    flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:14px;
+    padding:7px 12px; background:rgba(244,238,224,.72);
+    border-bottom:1px solid rgba(178,156,124,.35);
+    font-size:11.5px; color:var(--ink2); letter-spacing:.2px;
+  }
+  .stats-bar b{ color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums }
+  .stats-bar i{ width:1px; height:10px; background:var(--border); display:block }
+  .stats-bar .live{ width:6px; height:6px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:5px }
+  .stats-bar.stats-total{
+    padding:5px 12px 6px; background:rgba(244,238,224,.42);
+    font-size:10.5px; color:var(--ink3); border-bottom:1px solid rgba(178,156,124,.3);
+  }
+  .stats-bar.stats-total b{ color:var(--ink2); font-weight:600 }
+
+  /* 回覆倒數提示（3 分鐘冇回覆自動斷線）＋ 提示音開關 */
+  .reply-hint{
+    flex:0 0 auto; display:flex; align-items:center; gap:10px;
+    padding:4px 14px; background:rgba(244,238,224,.55);
+    border-bottom:1px solid rgba(178,156,124,.3);
+    font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums;
+  }
+  .reply-hint .rh-text{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.2px }
+  .reply-hint.urgent .rh-text{ color:var(--danger); font-weight:700 }
+  .reply-hint .rh-btn{
+    flex:0 0 auto; width:26px; height:22px; padding:0; border:none; border-radius:6px;
+    background:transparent; color:var(--ink2); cursor:pointer; display:flex;
+    align-items:center; justify-content:center;
+  }
+  .reply-hint .rh-btn:hover{ background:var(--surface2) }
+  #btnSound .sp-off{ display:none }
+  #btnSound.sp-muted .sp-on{ display:none }
+  #btnSound.sp-muted .sp-off{ display:block }
+
+  #messages{
+    flex:1 1 auto; min-height:0; overflow-y:auto; padding:16px 14px 8px;
+    display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth;
+  }
+  .sys{
+    align-self:center; max-width:88%; text-align:center; font-size:12px; color:var(--ink3);
+    background:var(--surface2); border-radius:999px; padding:7px 14px; line-height:1.5; margin:4px 0;
+  }
+  .msg{ max-width:78%; padding:10px 13px; font-size:14.5px; line-height:1.55;
+    word-break:break-word; white-space:pre-wrap; }
+  .msg.mine{ align-self:flex-end; background:var(--accent); color:#fff; border-radius:16px 16px 4px 16px }
+  .msg.theirs{ align-self:flex-start; background:var(--surface); color:var(--ink);
+    border:1px solid var(--border); border-radius:16px 16px 16px 4px }
+  .msg .t{ display:block; font-size:10px; opacity:.65; margin-top:4px; text-align:right }
+
+  .composer{
+    flex:0 0 auto; display:flex; align-items:flex-end; gap:8px; padding:10px 12px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+    background:var(--surface); border-top:1px solid rgba(178,156,124,.45);
+  }
+  #input{
+    flex:1; resize:none; max-height:112px; min-height:44px; padding:11px 13px;
+    border-radius:12px; border:1px solid var(--border); background:var(--bg); color:var(--ink);
+    font-size:15px; line-height:1.4; font-family:var(--font); outline:none;
+  }
+  #input:focus{ border-color:var(--accent) }
+  #input::placeholder{ color:var(--ink3) }
+  #sendBtn{
+    flex:0 0 auto; height:44px; padding:0 18px; border:none; border-radius:12px;
+    background:var(--accent); color:#fff; font-size:14px; font-weight:700;
+    font-family:var(--font); cursor:pointer;
+  }
+  #sendBtn[disabled]{ background:var(--surface3); color:var(--ink3); cursor:default }
+
+  .waiting-wrap{
+    position:absolute; inset:calc(44px + env(safe-area-inset-top)) 0 0 0;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    background:var(--bg); z-index:3; padding:24px 20px; text-align:center;
+    overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+  }
+  /* 同登入頁一樣：用 0 高 auto-margin 彈簧，有位垂直居中、冇位貼頂可滾（唔會切頂） */
+  .waiting-wrap::before,
+  .waiting-wrap::after{ content:""; display:block; flex:0 0 auto; height:0; margin-block:auto }
+  @media (max-height:560px){
+    .waiting-wrap{ gap:11px; padding:14px 16px }
+    .waiting-sub{ display:none }
+  }
+  .waiting-wrap.hide{ display:none }
+  /* 排隊中品牌區：A8 logo ＋ 傾偈樹窿台 ＋ 網址 ＋ 兩個小公仔（由 hero 兩組 person 抽成 kid-left/kid-right symbol 重用） */
+  .wb-row{ display:flex; align-items:flex-end; justify-content:center; gap:10px; margin-bottom:-4px } /* 同標題實際 8px */
+  .wb-row .kid{ display:block; height:56px; width:auto; flex:0 0 auto }
+  .wb-logo{ display:block; width:112px; height:112px }
+  .wb-title{
+    margin:0; font-family:var(--font-serif); font-size:28px; font-weight:700;
+    letter-spacing:2px; color:var(--ink); line-height:1.25;
+  }
+  .wb-url{ font-size:12px; color:var(--accent); text-decoration:none; letter-spacing:.2px }
+  .wb-url:hover{ text-decoration:underline }
+  .spinner{ width:56px; height:56px; margin:0 auto }
+  .spinner svg{ display:block; width:100%; height:100% }
+  .waiting-title{ font-family:var(--font-serif); font-size:16px; font-weight:700; letter-spacing:2px }
+  .waiting-sub{ font-size:12.5px; color:var(--ink2); line-height:1.7; max-width:280px }
+  .waiting-live{
+    font-size:11.5px; color:var(--ink3); background:var(--surface2);
+    border-radius:999px; padding:6px 14px; margin-top:-4px; line-height:1.5;
+  }
+  /* 等待頁即時數字（上線／傾緊／累計用過） */
+  .waiting-stats{
+    display:flex; align-items:stretch; padding:12px 6px; min-width:252px;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:16px;
+    box-shadow:4px 5px 0 var(--shadow);
+  }
+  .ws-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px }
+  .ws-item b{
+    font-family:var(--font-serif); font-size:23px; font-weight:700; color:var(--ink);
+    line-height:1.1; font-variant-numeric:tabular-nums;
+  }
+  .ws-item em{ font-style:normal; font-size:11px; color:var(--ink3); letter-spacing:1.5px }
+  .ws-sep{ width:1px; background:var(--border); margin:6px 3px }
+  @media (max-height:640px){ .ws-item b{ font-size:20px } }
+
+  /* ---------- modal ---------- */
+  .scrim{
+    position:absolute; inset:0; background:rgba(68,56,59,.42); z-index:9;
+    display:none; align-items:center; justify-content:center; padding:22px;
+  }
+  .scrim.show{ display:flex }
+
+  /* 聊天室系統公告 banner（2026-10-23）：normal flow 貼住 messages 頂，唔會遮輸入框 */
+  .chat-notice{
+    display:none; align-items:flex-start; gap:8px;
+    margin:10px 14px 0; padding:10px 12px;
+    border:2px solid var(--border); border-radius:14px;
+    background:var(--accent-soft);
+    box-shadow:3px 4px 0 var(--shadow);
+  }
+  .chat-notice.show{ display:flex }
+  .chat-notice.warn{ background:rgba(217,142,74,.16); border-color:var(--sun) }
+  .chat-notice-body{ flex:1; min-width:0 }
+  .chat-notice-tag{
+    display:block; margin:0 0 3px;
+    font-size:11px; font-weight:800; letter-spacing:2px; color:var(--accent-hover);
+  }
+  .chat-notice.warn .chat-notice-tag{ color:#B26B2A }
+  .chat-notice-text{ font-size:13.5px; line-height:1.6; color:var(--ink); word-break:break-word }
+  .chat-notice-close{
+    flex:none; border:0; background:none; padding:2px 6px;
+    font-size:17px; line-height:1.1; color:var(--ink3); cursor:pointer;
+  }
+  .chat-notice-close:hover{ color:var(--ink) }
+
+  /* 斷線 fallback 全屏 scrim（2026-10-23）：只喺 page-chat 用，唔會蓋登入頁 */
+  .offline-scrim{
+    position:absolute; inset:0; z-index:12; display:none;
+    align-items:center; justify-content:center; text-align:center;
+    padding:22px;
+    background:var(--bg);
+    background-image:var(--paper-layers);
+  }
+  .offline-scrim.show{ display:flex }
+  .offline-card{ max-width:340px }
+  .offline-card h3{
+    margin:0 0 10px; font-family:var(--font-serif); font-size:22px;
+    letter-spacing:1.5px; color:var(--ink);
+  }
+  .offline-card p{ margin:0 0 18px; font-size:13.5px; line-height:1.75; color:var(--ink2) }
+  .offline-count{ margin-top:12px; font-size:12px; color:var(--ink3) }
+
+  .card{
+    width:100%; background:var(--surface); border-radius:18px; border:2px solid var(--border);
+    padding:20px 18px; box-shadow:5px 6px 0 var(--shadow);
+    max-height:100%; overflow-y:auto; overscroll-behavior:contain;
+  }
+  .card h3{ margin:0 0 8px; font-size:17px; font-family:var(--font-serif); letter-spacing:1px }
+  .card p{ margin:0 0 16px; font-size:13.5px; color:var(--ink2); line-height:1.7 }
+  .price{ font-size:24px; font-weight:800; color:var(--accent); margin:2px 0 4px }
+  .price small{ font-size:12px; font-weight:600; color:var(--ink3); margin-left:4px }
+  .card .actions{ display:flex; flex-direction:column; gap:9px; margin-top:6px }
+  .card .fine{ font-size:11.5px; color:var(--ink3); line-height:1.6; margin-top:12px }
+  /* 限時優惠：粗體＋紅字；「限時優惠」四個字放大 300%（主人 2026-10-22 定） */
+  .freebox .promo{ margin-top:12px; color:var(--danger) }
+  .freebox .promo-head{ font-size:34px; font-weight:800; line-height:1.12; letter-spacing:2px }
+  .freebox .promo-sub{ margin-top:7px; font-size:15px; font-weight:700; line-height:1.55 }
+  /* 免費留言 + 另存紀錄（2026-10-21） */
+  .freebox{ margin-top:4px; padding:14px; border-radius:14px; background:var(--surface2); border:1px solid var(--border) }
+  .freetitle{ font-size:13.5px; font-weight:800; color:var(--ink); margin-bottom:8px }
+  .freetag{ font-size:11px; font-weight:700; color:var(--accent); background:#fff; border:1px solid var(--border); border-radius:999px; padding:2px 8px; margin-left:6px }
+  .freebox textarea{ width:100%; resize:none; border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:13.5px; font-family:inherit; line-height:1.5; background:#fff; color:var(--ink); outline:none }
+  .freebox textarea:focus{ border-color:var(--accent) }
+  .freerow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px }
+  #freeCount{ white-space:nowrap }
+  .freebox .fine{ margin-top:6px }
+  .saverow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border) }
+  .saverow label{ font-size:12.5px; color:var(--ink2); display:flex; align-items:center; gap:8px }
+  .paidbox{ margin-top:12px; padding-top:10px; border-top:1px dashed var(--border) }
+  .paidbox summary{ font-size:12.5px; color:var(--ink2); cursor:pointer }
+  .tokenbox{
+    margin-top:4px; padding:14px; border-radius:12px; background:var(--surface2);
+    text-align:center; font-size:22px; font-weight:800; letter-spacing:3px; color:var(--accent);
+  }
+  .close-x{
+    position:absolute; top:8px; right:12px; border:none; background:none; font-size:18px;
+    color:var(--ink3); cursor:pointer; line-height:1;
+  }
+
+  .toast{
+    position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(8px);
+    background:rgba(68,56,59,.94); color:#fff; font-size:12.5px; padding:9px 16px;
+    border-radius:999px; opacity:0; pointer-events:none; transition:.22s; z-index:20; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0) }
+
+  /* 4003 handoff 細 banner（2026-10-23 R3）：另一個分頁/app 接手，唔彈大 modal */
+  .handoff-strip{
+    position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(8px);
+    display:flex; align-items:center; gap:10px; max-width:calc(100% - 32px);
+    background:var(--surface); border:1px solid var(--border); color:var(--ink);
+    border-radius:999px; padding:6px 6px 6px 16px; font-size:12.5px; z-index:21;
+    opacity:0; pointer-events:none; transition:.25s;
+  }
+  .handoff-strip.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto }
+  .handoff-text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .handoff-btn{ padding:5px 12px; font-size:12px; border-radius:999px; white-space:nowrap; flex:none }
+
+  /* ---------- 手繪微互動（SVG 全 inline；CSP 只用 self/data） ---------- */
+  .art{ stroke:#3B3A36; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round }
+  .art-fine{ stroke:#6E6A61; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round }
+  .art-sun{ stroke:#D98E4A; fill:none; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round }
+  .art-soft{ stroke:#C9B79C; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round }
+  .art-dots{ stroke:#C9B79C; fill:none; stroke-width:3; stroke-linecap:round; stroke-dasharray:.1 9.5 }
+  .dot{ fill:#3B3A36; stroke:none }
+  .wash-hole{ fill:#F3E9D2; stroke:none }
+  .wash-leaf{ fill:rgba(124,140,107,.16); stroke:none }
+  .leaf-f{ fill:rgba(124,140,107,.45); stroke:none }
+  .sun-rays{ transform-box:fill-box; transform-origin:center; animation:sway 7.5s ease-in-out infinite }
+  @keyframes sway{ 0%,100%{ transform:rotate(-3deg) } 50%{ transform:rotate(3deg) } }
+  @keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-5px) } }
+  .spinner .buddy{ animation:bob 3.2s ease-in-out infinite }
+  @keyframes hop{ 0%{transform:translateY(0)} 35%{transform:translateY(-9px)} 62%{transform:translateY(1px)} 82%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
+  .hop:hover svg{ animation:hop .6s ease }
+  @keyframes pageIn{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
+  .page.active{ animation:pageIn .5s ease both }
+  .match-banner{
+    position:absolute; left:50%; top:118px; transform:translateX(-50%) translateY(-10px);
+    display:flex; align-items:center; gap:8px; padding:7px 16px 7px 9px;
+    background:var(--surface); border:2px solid var(--border); border-radius:999px;
+    box-shadow:4px 5px 0 var(--shadow); opacity:0; pointer-events:none; z-index:4;
+    transition:opacity .35s ease, transform .35s ease; max-width:88%;
+  }
+  .match-banner.show{ opacity:1; transform:translateX(-50%) translateY(0) }
+  .match-banner svg{ width:34px; height:34px; flex:0 0 auto }
+  .match-banner span{ font-size:13px; letter-spacing:1px; color:var(--ink); font-weight:600; white-space:nowrap }
+  .kc-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px }
+  .kc-buddy{ width:54px; height:54px; flex:0 0 auto }
+  /* 「對方已經離開」modal 頂欄：返回＋關閉（卡片捲動時 sticky 貼頂，唔遮標題） */
+  .kc-topbar{
+    position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center;
+    background:var(--surface); padding:2px 0 10px; margin:-4px 0 6px;
+  }
+  .kc-x{
+    width:32px; height:32px; border:none; background:none; color:var(--ink3);
+    font-size:18px; line-height:1; cursor:pointer; flex:0 0 auto;
+  }
+  .kc-x:hover{ color:var(--ink); background:var(--surface2); border-radius:9px }
+  /* 「換下一位」確認 dialog：細卡置中 */
+  .card-confirm{ max-width:300px }
+  .card-confirm .btn-primary{ margin-top:0 }
+  /* ---------- v5 hero 插畫（2026-10-22）：所有樣式 scoped 喺 .hero 之下，唔撞現有 class ---------- */
+  .hero .ink{ stroke:#3B3A36; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round }
+  .hero .fine{ stroke-width:2.5 }
+  .hero .leaf{ fill:#7C8C6B }
+  .hero .none{ fill:none }
+  .hero .sun{ transform-origin:288px 54px; animation:sun-rotate 40s linear infinite }
+  .hero .rays{ transform-origin:288px 54px; animation:ray-pulse 3s ease-in-out infinite }
+  .hero .canopy{ transform-origin:139px 239px; animation:tree-sway 5.5s ease-in-out infinite alternate }
+  .hero .bubble{ fill:#FFFDF8; opacity:0; transform-box:fill-box; transform-origin:50% 100%; transform:translateY(8px) scale(.6) }
+  .hero .bubble.is-visible{ opacity:1; transform:translateY(0) scale(1) }
+  .hero .bubble.is-leaving{ animation:bubble-hide 180ms ease-out both }
+  .hero.bubble-left #bubble-a, .hero.bubble-right #bubble-b{ animation:bubble-pop 420ms cubic-bezier(.34,1.56,.64,1) both }
+  .hero .person{ transform-box:fill-box; transform-origin:50% 100%; animation:breathe 4s ease-in-out infinite }
+  .hero .person.right{ animation-delay:-2s }
+  @keyframes sun-rotate{ to{ transform:rotate(360deg) } }
+  @keyframes ray-pulse{ 0%,100%{ transform:scale(.86) } 50%{ transform:scale(1) } }
+  @keyframes tree-sway{ from{ transform:rotate(-.65deg) } to{ transform:rotate(.65deg) } }
+  @keyframes leaf-sway{ from{ transform:rotate(-.5deg) } to{ transform:rotate(.5deg) } }
+  @keyframes bubble-pop{ from{ opacity:0; transform:translateY(8px) scale(.6) } to{ opacity:1; transform:translateY(0) scale(1) } }
+  @keyframes bubble-hide{ from{ opacity:1; transform:scale(1) } to{ opacity:0; transform:scale(.9) } }
+  @keyframes breathe{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.015) } }
+  @media (prefers-reduced-motion:reduce){
+    .hero svg *{ animation:none !important }
+    .hero .bubble{ opacity:0; transform:none }
+    .hero .bubble.is-visible{ opacity:1 }
+    .hero .bubble.is-leaving{ opacity:0 }
+  }
+</style>
+<!-- Firebase Web SDK（CSP 已 allow www.gstatic.com） -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><input type="hidden" id="_o_dbjbempljhcmhlfpfacalomonjpalpko" data-inspect-config="7"><script type="text/javascript" src="chrome-extension://dbjbempljhcmhlfpfacalomonjpalpko/scripts/inspector.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"樹窿台","alternateName":"傾計 · 樹窿台","url":"https://treehole.hkgamingapp.com/","inLanguage":"zh-HK"}
+</script>
+<style>.ssbtn-default{position:absolute;z-index:1000000000;background:none;border:none;outline:none;right:0;cursor:pointer;width:26px;height:26px;margin:0;padding:0;top:8px;right:8px;opacity:.6;pointer-events:all;transition-duration:.25s}.ssbtn-default:hover{opacity:1 !important;transition-duration:.25s}.ssbtn-default .fade{transition-duration:5s;opacity:0}.ssbtn-default svg{filter:drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.5))}.ssbtn-youtube{background:none;border:none;box-sizing:border-box}ytd-watch-flexy .ytp-right-controls-left .ssbtn-youtube svg{margin:1px auto;width:22px;height:auto}.ytp-embed .ytp-right-controls .ssbtn-youtube{width:20px !important;margin-right:15px !important}ytd-shorts ytd-shorts-player-controls #right-controls .ssbtn-youtube{pointer-events:auto;width:48px;padding:12px;position:relative}ytd-shorts ytd-shorts-player-controls #right-controls .ssbtn-youtube:hover::after{content:"";display:block;position:absolute;border-radius:28px;background-color:hsla(0,0%,100%,.1);inset:4px}.ytwPlayerTopControlsPlayerControlsTopRight .ssbtn-youtube{max-height:48px;padding:12px;min-width:48px}.ytwPlayerTopControlsPlayerControlsTopRight .ssbtn-youtube svg{width:auto}.ssbtn-vimeo{height:2rem !important;width:2rem !important;margin-top:8px !important;justify-self:flex-end}.ssbtn-vimeo button{width:100% !important;height:100% !important}.ssbtn-vimeo button svg{width:19px}.ssbtn-netflix{background:none;border:none;cursor:pointer;width:4rem;margin:0 .5rem;display:inline-block;flex-shrink:0}.ssbtn-netflix>svg{transform:translateY(-0.5rem)}.ssbtn-netflix:hover{transform:scale(1.2);transition-duration:.25s}.ssbtn-hulu{width:27px;margin-top:4px;margin-right:10px;opacity:.7;cursor:pointer}.ssbtn-hulu:hover{opacity:1}.ssbtn-amazon{outline:none;cursor:pointer;opacity:.8;padding:0;cursor:pointer;border-radius:100px;position:relative;z-index:1;display:flex;align-items:center;justify-content:center}.ssbtn-amazon:hover{opacity:1}@media(min-width: 1200px){.ssbtn-amazon{margin-right:1.5vw}.ssbtn-amazon svg{height:1.5vw;width:1.5vw}}@media(max-width: 1199px){.ssbtn-amazon{width:38px;height:38px}.ssbtn-amazon svg{height:18px;width:18px}}.ssbtn-max{width:24px;height:24px;margin:4px;padding:12px;box-sizing:content-box;position:relative;opacity:.7;cursor:pointer;display:flex;justify-content:center;align-items:center}.ssbtn-max:hover{opacity:1;transform:scale(1.2)}.ssbtn-max svg{width:24px;height:24px}.ssbtn-disney{opacity:1;z-index:1000000000;position:relative;pointer-events:all !important;cursor:pointer}.ssbtn-disney:hover{opacity:.8}.ssbtn-disney svg{width:27px !important;height:31px !important;padding-top:4px;margin-right:7px}.ssbtn-apple{cursor:pointer;opacity:.7}.ssbtn-apple:hover{opacity:1}.ssbtn-apple svg{width:22px !important;height:22px !important;margin-right:2px !important}.ssbtn-peacock{width:3.5rem;height:3.5rem;padding:1rem;opacity:.7;cursor:pointer}.ssbtn-peacock:hover{opacity:1}.kHbLHC1E6j.pv9vV5fjSr .ssbtn-peacock{opacity:0}.ssbtn-frameio{display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.7;width:32px;height:32px;border-radius:6px}.ssbtn-frameio:hover{background-color:#1f1f1f}.ssbtn-frameio svg{width:18px !important;height:18px !important}.ssbtn-crunchyroll{width:calc(var(--kat-spacing)*44) !important;padding:10px !important;position:relative !important;opacity:.75}.ssbtn-crunchyroll:hover{opacity:1}.ssbtn-crunchyroll:hover::before{content:"" !important;position:absolute !important;inset:0 !important;border-radius:100px !important;background-color:#272727 !important;width:100% !important;height:100% !important;z-index:0 !important}.ssbtn-crunchyroll svg{padding:0 2px 2px !important;align-self:center !important;position:relative !important;z-index:1 !important}.ssbtn-viki{font-size:.875rem;height:calc(2.875rem + .625*(100vw - 37.5rem)/42.5);padding:calc(.529412rem + .588235vw);border-radius:50%;cursor:pointer}.ssbtn-viki:hover{background-color:#485263;transform:scale(calc(var(--btn-scale) * 1.1))}.teststyles1234{opacity:.5}body.ssTakeScreenshot.ss-netflix [data-uia=video-canvas]{z-index:10000000}body.ssTakeScreenshot.ss-netflix video{background-color:#000}body.ssTakeScreenshot.ss-netflix .player-timedtext{display:none !important}body.ssTakeScreenshot.ss-netflix.showSubs .player-timedtext{display:block !important}body.ssTakeScreenshot.ss-amazon .dv-player-fullscreen video{z-index:99999999 !important}body.ssTakeScreenshot.ss-amazon.showSubs .atvwebplayersdk-captions-overlay{z-index:999999999 !important;position:relative;opacity:1 !important}body.ssTakeScreenshot.ss-disney disney-web-player-ui>*{display:none !important}body.ssTakeScreenshot.ss-disney.showSubs timed-text-override-region{display:block !important}body.ssTakeScreenshot.ss-hulu .ContentPlayer__contentArea{z-index:10000000000;position:relative}body.ssTakeScreenshot.ss-hulu .ClosedCaption{display:none}body.ssTakeScreenshot.ss-hulu.showSubs .ClosedCaption{display:block}body.ssTakeScreenshot.ss-max video{z-index:99999999;position:relative}body.ssTakeScreenshot.ss-max.showSubs [data-testid=caption_renderer_overlay]{z-index:999999999;position:relative;width:100%;height:100%;display:block !important}body.ssTakeScreenshot.ss-youtube .html5-video-container,body.ssTakeScreenshot.ss-youtube .ytp-caption-window-container{z-index:999999999 !important}body.ssTakeScreenshot.ss-apple #apple-music-video-player{z-index:999999999 !important}body.ssTakeScreenshot.ss-apple .video-player-scrim{display:none}body.ssTakeScreenshot.ss-apple video::cue{visibility:hidden}body.ssTakeScreenshot.ss-apple.showSubs video::cue{visibility:visible}body.ssTakeScreenshot.ss-peacock video{z-index:999999999 !important;position:relative}body.ssTakeScreenshot.ss-peacock.showSubs [data-t=subtitles]{z-index:9999999999 !important}body.ssTakeScreenshot.ss-peacock.showSubs [data-t=subtitles]>*{bottom:15% !important;margin-top:auto !important}body.ssTakeScreenshot.ss-crunchyroll video{z-index:999999999 !important}body.ssTakeScreenshot.ss-crunchyroll .katamariDesktop{display:none !important}body.ssTakeScreenshot.ss-crunchyroll.showSubs .bitmovinplayer-poster+div{z-index:9999999999 !important}body.ssTakeScreenshot.ss-viki video{z-index:999999999 !important}body.ssTakeScreenshot.ss-viki.showSubs .vjs-text-track-display{z-index:9999999999 !important}:host-context(body.ssbtn-over) [data-pointer-mask-svg=true]{display:none !important}
+</style><link rel="stylesheet" href="chrome-extension://ppkojackhibeogijphhfnamhemklmial/css/ScreenshotControl.css"></head>
+<body class="is-waiting" data-new-gr-c-s-check-loaded="14.1341.0" data-gr-ext-installed="">
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="buddy-smile" viewBox="0 0 120 120">
+    <path class="art-fine" d="M60 19Q61 11 68 8"></path>
+    <path class="leaf-f" d="M68 8q10-4 13 5q-9 5-13-5Z"></path>
+    <path class="art" d="M59 21C81 18 99 34 98 58C97 82 84 101 61 100C39 99 21 84 22 61C23 38 37 24 59 21Z"></path>
+    <circle class="dot" cx="44" cy="57" r="2.8"></circle>
+    <circle class="dot" cx="74" cy="57" r="2.8"></circle>
+    <path class="art" d="M46 69Q60 80 74 69"></path>
+    <circle class="art-soft" cx="37" cy="66" r="5"></circle>
+    <circle class="art-soft" cx="81" cy="66" r="5"></circle>
+  </symbol>
+  <symbol id="buddy-laugh" viewBox="0 0 120 120">
+    <path class="art-fine" d="M60 19Q61 11 68 8"></path>
+    <path class="leaf-f" d="M68 8q10-4 13 5q-9 5-13-5Z"></path>
+    <path class="art" d="M59 21C81 18 99 34 98 58C97 82 84 101 61 100C39 99 21 84 22 61C23 38 37 24 59 21Z"></path>
+    <path class="art" d="M38 56Q44 47 51 56"></path>
+    <path class="art" d="M69 56Q76 47 82 56"></path>
+    <path class="art" d="M45 68Q60 91 75 68Q60 77 45 68Z"></path>
+    <circle class="art-soft" cx="36" cy="66" r="5"></circle>
+    <circle class="art-soft" cx="84" cy="66" r="5"></circle>
+  </symbol>
+  <symbol id="buddy-shy" viewBox="0 0 120 120">
+    <path class="art-fine" d="M60 19Q60 12 65 10"></path>
+    <path class="leaf-f" d="M65 10q9-5 12 4q-8 6-12-4Z"></path>
+    <path class="art" d="M59 21C81 18 99 34 98 58C97 82 84 101 61 100C39 99 21 84 22 61C23 38 37 24 59 21Z"></path>
+    <path class="art" d="M41 57q5 4 10 0"></path>
+    <path class="art" d="M69 57q5 4 10 0"></path>
+    <path class="art" d="M52 73q4-3 8 0q4 3 8 0"></path>
+    <circle class="art-soft" cx="34" cy="68" r="7.5"></circle>
+    <circle class="art-soft" cx="86" cy="68" r="7.5"></circle>
+    <path class="art" d="M30 82q10 12 27 13"></path>
+    <path class="art" d="M90 82q-10 12-27 13"></path>
+  </symbol>
+  <!-- 品牌 sprite（2026-10-22，來源 A8.svg + hero 兩組 person）：logo-a8 symbol，kid 用 <g>（外層 viewBox 裁位，避免 symbol viewBox 雙重偏移） -->
+  <symbol id="logo-a8" viewBox="0 0 128 128"><g stroke="#3B3A36" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 50Q17 33 34 33L55 33Q71 33 71 50L71 67Q71 82 56 82L42 95L42 82L34 82Q17 82 17 67Z" fill="#7C8C6B"></path><path d="M57 61Q57 45 73 45L94 45Q111 45 111 62L111 79Q111 94 95 94L95 107L81 94L73 94Q57 94 57 79Z" fill="#D98E4A"></path><g stroke="none"><circle cx="34" cy="54" r="3" fill="#3B3A36"></circle><circle cx="51" cy="54" r="3" fill="#3B3A36"></circle><circle cx="76" cy="66" r="3" fill="#3B3A36"></circle><circle cx="93" cy="66" r="3" fill="#3B3A36"></circle></g><path d="M33 65Q42 74 51 65M76 77Q85 86 94 77" fill="none"></path></g></symbol>
+  <g id="kid-left"><g stroke="#3B3A36" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path fill="#7C8C6B" d="M57 241q-10 9-7 19l22 1 4-14-8-7Z"></path><path fill="#F2D7C2" d="M72 224c-3-10-18-10-23-1-7 12 1 22 11 21 11 0 17-11 12-20Z"></path><path fill="none" d="M49 226q9 2 14-7m-8 31-12 7 10 2m17-11 10 5 7-5m-30 13-8 7h15m6-8 12 7h7"></path><circle cx="65" cy="231" r="1.5" fill="#3B3A36" stroke="none"></circle><path fill="none" stroke-width="2.5" d="M64 237q4 2 7-2"></path></g></g>
+  <g id="kid-right"><g stroke="#3B3A36" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path fill="#D98E4A" d="M251 241q-9 6-10 18l25 2 1-13-8-8Z"></path><path fill="#F2D7C2" d="M244 222c7-9 21-6 24 4 4 11-6 20-16 17-10-2-14-13-8-21Z"></path><path fill="none" d="M250 218q4 9 17 9m-19 22-13 5-7-5m34 0 12 9-10 1m-17 2-12 7h-9m33-7 11 7h9"></path><circle cx="249" cy="232" r="1.5" fill="#3B3A36" stroke="none"></circle><path fill="none" stroke-width="2.5" d="M245 238q4 3 8-1"></path></g></g>
+</svg>
+<div id="app">
+
+  <!-- ============ PAGE 1：登入 ============ -->
+  <section id="page-login" class="page scrollable">
+    <div class="brand">
+      <h1>傾計</h1>
+      <div class="sub">樹窿台</div>
+      <div class="rule"></div>
+    </div>
+
+    <div class="hero bubble-right" role="img" aria-label="一棵有笑臉嘅樹同太陽，樹下兩個小朋友傾偈">
+      <svg viewBox="0 0 342 280" aria-hidden="true">
+        <g id="sun-envelope"><circle id="sun-circle" cx="288" cy="54" r="51" fill="none" stroke="none"></circle><g class="sun ink" style="stroke:#D98E4A" fill="none"><g class="rays"><path d="M288 5v9m0 80v9M239 54h9m80 0h9M253 19l6 6m58 58 6 6M253 89l6-6m58-58 6-6"></path></g><path fill="#D98E4A" d="M319 54c1 18-14 31-31 30-18 1-31-13-30-30-1-18 13-31 30-30 18-1 32 13 31 30Z"></path><path style="stroke:#FAF6EE" d="M278 49h1m17 0h1m-18 12q9 8 18-1"></path></g></g>
+        <path class="ink none" style="stroke:#C9B79C" d="M20 269q69-5 130-1t172-2"></path>
+        <path class="ink" fill="#C9B79C" d="M117 267c12-21 13-48 11-74l23-6c-3 33-1 57 13 79-16-4-29-3-47 1Z"></path>
+        <path class="ink none fine" d="M139 220q-4 19-2 32m14 5-3-9"></path>
+        <g class="canopy ink leaf">
+          <path id="crown-shape" d="M53 174c-20-9-22-30-11-43-10-19 0-40 18-43-2-22 15-37 35-32 9-17 30-21 44-10 18-7 38 1 41 19 21-3 36 13 33 31 19 8 25 27 15 44 10 18 1 39-18 44 1 21-20 33-39 25-7 20-29 28-46 17-16 12-39 4-43-14-24 6-43-15-29-38Z"></path>
+          <path class="none fine" style="stroke:#FAF6EE" d="M65 102q-3-13 10-18m33-22q7-7 16-3m70 54q13 1 14 13M59 163q-5-8-1-15m123 48q9 1 14-7"></path>
+          <g class="branches none"><path d="M139 219q-1-21-12-39m9 21q-22-3-31-17m35 24q18-15 21-33m-31 10q-4-15-1-23m29 23q15-2 23-14"></path></g>
+          <g class="face"><circle class="dot" cx="118" cy="120" r="3"></circle><circle class="dot" cx="149" cy="120" r="3"></circle><path class="none" d="M118 134q16 18 32-1"></path></g>
+          <path class="none fine" d="M83 119q5-4 10-1m77 29q6-4 11-1"></path>
+        </g>
+        <g class="person left ink"><path fill="#7C8C6B" d="M57 241q-10 9-7 19l22 1 4-14-8-7Z"></path><path fill="#F2D7C2" d="M72 224c-3-10-18-10-23-1-7 12 1 22 11 21 11 0 17-11 12-20Z"></path><path class="none" d="M49 226q9 2 14-7m-8 31-12 7 10 2m17-11 10 5 7-5m-30 13-8 7h15m6-8 12 7h7"></path><circle class="dot" cx="65" cy="231" r="1.5"></circle><path class="none fine" d="M64 237q4 2 7-2"></path></g>
+        <g class="person right ink"><path fill="#D98E4A" d="M251 241q-9 6-10 18l25 2 1-13-8-8Z"></path><path fill="#F2D7C2" d="M244 222c7-9 21-6 24 4 4 11-6 20-16 17-10-2-14-13-8-21Z"></path><path class="none" d="M250 218q4 9 17 9m-19 22-13 5-7-5m34 0 12 9-10 1m-17 2-12 7h-9m33-7 11 7h9"></path><circle class="dot" cx="249" cy="232" r="1.5"></circle><path class="none fine" d="M245 238q4 3 8-1"></path></g>
+        <path class="ink none fine" style="stroke:#7C8C6B" d="M28 267l-3-7m4 7 4-9m62 8-3-6m4 6 3-9m91 10-2-8m3 8 5-6m110 6-3-7m4 7 4-11"></path>
+        <g id="bubble-a" class="bubble ink"><path d="M12 188c-8-9-3-21 8-23 2-12 18-16 26-7 11-6 25 2 24 13 12 10 5 25-8 25H47l-8 11-1-12c-12 4-23 2-26-7Z"></path><g class="dot"><circle cx="27" cy="178" r="2"></circle><circle cx="39" cy="178" r="2"></circle><circle cx="51" cy="178" r="2"></circle></g></g>
+        <g id="bubble-b" class="bubble ink is-visible"><path d="M257 178c-7-10 0-22 12-22 5-12 21-13 29-3 13-4 25 5 23 17 12 13 2 26-12 24h-18l-6 12-4-12c-15 5-29-2-24-16Z"></path><path fill="#7C8C6B" d="M280 182q-1-15 16-15 0 15-16 15Z"></path><path class="none fine" d="m278 186 12-13"></path></g>
+      </svg>
+    </div>
+
+    <div class="proof-row">
+      <div class="proof"><span class="pdot" id="proofDot"></span><span id="proofLive">而家 <b id="proofOnline">51</b> 人在線 · </span>累計 <b id="proofTotal">4454</b> 人用過</div>
+    </div>
+
+    <label class="agree" for="agree">
+      <input type="checkbox" id="agree">
+      <span>我已閱讀並同意<a href="https://hkgamingapp.com/" target="_blank" rel="noopener">《服務條款》</a>及<a href="https://hkgamingapp.com/privacy" target="_blank" rel="noopener">《私隱政策》</a></span>
+    </label>
+
+    <div class="login-actions">
+      <button class="btn-oauth" id="btnGoogle" type="button" disabled="">
+        <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+        </svg>
+        使用 Google 登入
+      </button>
+      <button class="btn-oauth apple" id="btnApple" type="button" disabled="">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M16.36 1.43c0 1.14-.42 2.2-1.26 3.03-.9.9-1.95 1.4-3.07 1.31-.03-1.1.44-2.2 1.24-3.02.86-.87 2-1.37 3.09-1.32zM20.9 17.2c-.44 1.02-.65 1.47-1.21 2.37-.79 1.26-1.9 2.83-3.28 2.84-1.23.01-1.55-.8-3.22-.79-1.67.01-2.02.81-3.25.8-1.38-.01-2.43-1.43-3.22-2.69-2.21-3.52-2.44-7.65-1.08-9.85.97-1.56 2.5-2.47 3.93-2.47 1.46 0 2.38.8 3.59.8 1.17 0 1.88-.8 3.57-.8 1.27 0 2.62.69 3.58 1.89-3.15 1.73-2.64 6.22.59 7.52z"></path>
+        </svg>
+        使用 Apple 登入
+      </button>
+    </div>
+
+    <div class="legal">
+      <a href="https://hkgamingapp.com/" target="_blank" rel="noopener">登入即代表你同意樹窿台服務條款</a>
+      <div class="site"><a href="https://treehole.hkgamingapp.com/">treehole.hkgamingapp.com</a></div>
+      <a href="/about">關於樹窿台／最新公告</a>
+    </div>
+
+    <div class="errbox" id="loginErr"></div>
+
+    <div id="demoBox">
+      <div class="row">
+        <input id="demoEmail" type="email" placeholder="示範登入 email" autocomplete="off">
+        <button id="btnDemo" type="button">示範登入</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PAGE 1.5：性別（一次性） ============ -->
+  <section id="page-gender" class="page scrollable">
+    <h2 class="g-title">請問你係</h2>
+    <p class="g-sub">對方會見到你嘅性別。呢個設定只可以做一次。</p>
+
+    <div class="g-options" id="genderOptions">
+      <div class="g-opt" data-g="male" role="button" tabindex="0">
+        <span class="dot"><i></i></span>
+        <span class="label">男</span>
+        <span class="hint">male</span>
+      </div>
+      <div class="g-opt" data-g="female" role="button" tabindex="0">
+        <span class="dot"><i></i></span>
+        <span class="label">女</span>
+        <span class="hint">female</span>
+      </div>
+    </div>
+
+    <div class="g-lock">
+      一經確認，性別會永久綁定喺你嘅帳戶，之後永遠不能更改。
+    </div>
+
+    <button class="btn-primary" id="btnGenderConfirm" disabled="">確認</button>
+    <div class="errbox" id="genderErr"></div>
+  </section>
+
+  <!-- ============ PAGE 2：聊天 ============ -->
+  <section id="page-chat" class="page active">
+    <header class="chat-top">
+      <button class="btn-ghost btn-leave" id="btnLeave" type="button" title="離開並返回簡介" aria-label="離開並返回簡介">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </button>
+      <span class="gender-pill unknown" id="partnerPill"><span class="gd"></span>對方 · 未知</span>
+      <div class="chat-brand" aria-hidden="true">
+        <svg class="kid-mini" viewBox="41 212 50 58"><use href="#kid-left"></use></svg>
+        <svg class="logo" viewBox="0 0 128 128"><use href="#logo-a8"></use></svg>
+        <span class="name">傾偈樹窿台</span>
+        <svg class="kid-mini" viewBox="222 212 60 58"><use href="#kid-right"></use></svg>
+      </div>
+      <button class="btn-ghost" id="btnNext" type="button" disabled="">換下一位</button>
+    </header>
+
+    <div class="stats-bar" id="statsBar">
+      <span><span class="live"></span>上線 <b id="statOnline">51</b></span>
+      <i></i>
+      <span>傾緊計 <b id="statChatting">44</b></span>
+      <i></i>
+      <span>等配對 <b id="statWaiting">0</b></span>
+    </div>
+    <div class="stats-bar stats-total" id="statsTotal">
+      <span>累計 <b id="statTotalUsers">4454</b> 人用過</span>
+      <i></i>
+      <span><b id="statTotalMatches">32896</b> 場對話</span>
+      <i></i>
+      <span>今日新入 <b id="statToday">58</b></span>
+    </div>
+
+    <div class="reply-hint" id="replyHint">
+      <span class="rh-text" id="replyText">3 分鐘內冇回覆會自動斷線；連續發訊息唔會重新計時</span>
+      <button class="rh-btn" id="btnSound" type="button" title="新訊息提示音：開／關" aria-label="新訊息提示音 開／關">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+          <path fill="currentColor" d="M3 9.5v5h3.6L12 19V5L6.6 9.5H3z"></path>
+          <path class="sp-on" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.3q2.2 2.7 0 5.4M18 7.4q3.4 4.6 0 9.2"></path>
+          <path class="sp-off" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2l5.4 5.6M20.9 9.2l-5.4 5.6"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 聊天室系統公告（2026-10-23）：收到 system_notice 由 server 控制；× 只本地隱藏 -->
+    <div class="chat-notice" id="sysNotice" role="status">
+      <div class="chat-notice-body">
+        <span class="chat-notice-tag">系統公告</span>
+        <div class="chat-notice-text" id="sysNoticeText"></div>
+      </div>
+      <button class="chat-notice-close" id="sysNoticeClose" type="button" aria-label="關閉公告" title="關閉公告">×</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="match-banner" id="matchBanner" aria-hidden="true">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><use href="#buddy-laugh"></use></svg>
+      <span>配對到啦，慢慢傾。</span>
+    </div>
+
+    <div class="waiting-wrap" id="waitingWrap">
+      <div class="wb-row">
+        <svg class="kid" viewBox="41 212 50 58" aria-hidden="true"><use href="#kid-left"></use></svg>
+        <svg class="wb-logo" viewBox="0 0 128 128" role="img" aria-label="傾偈樹窿台"><use href="#logo-a8"></use></svg>
+        <svg class="kid" viewBox="222 212 60 58" aria-hidden="true"><use href="#kid-right"></use></svg>
+      </div>
+      <h2 class="wb-title">傾偈樹窿台</h2>
+      <a class="wb-url" href="https://treehole.hkgamingapp.com/" rel="noopener">treehole.hkgamingapp.com</a>
+      <div class="waiting-title">正在搵人傾計</div>
+      <div class="spinner hop" role="status" aria-label="配對中">
+        <svg class="buddy" viewBox="0 0 120 120" aria-hidden="true"><use href="#buddy-smile"></use></svg>
+      </div>
+      <div class="waiting-sub">隨機配到一位陌生人，對話即刻開始。</div>
+      <div class="waiting-stats" id="waitingStats">
+        <div class="ws-item"><b id="wsOnline">51</b><em>上線</em></div>
+        <div class="ws-sep"></div>
+        <div class="ws-item"><b id="wsChatting">44</b><em>傾緊</em></div>
+        <div class="ws-sep"></div>
+        <div class="ws-item"><b id="wsTotal">4454</b><em>人用過</em></div>
+      </div>
+      <div class="waiting-live" id="waitingLive">配對到就會即刻開始，唔使刷新。</div>
+      <button class="btn-ghost wb-leave" id="btnLeaveQueue" type="button">離開排隊，返去簡介</button>
+    </div>
+
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="講啲嘢…" maxlength="500" disabled=""></textarea>
+      <button id="sendBtn" type="button" disabled="">送出</button>
+    </div>
+
+    <!-- keep contact -->
+    <div class="scrim" id="kcScrim">
+      <div class="card" id="kcCard">
+        <div class="kc-topbar">
+          <button id="kcBack" class="btn-ghost kc-nav" type="button" aria-label="返回上一頁">← 返回</button>
+          <button id="kcX" class="kc-x" type="button" aria-label="關閉">✕</button>
+        </div>
+        <div class="kc-head hop">
+          <svg viewBox="0 0 120 120" class="kc-buddy" aria-hidden="true"><use href="#buddy-shy"></use></svg>
+          <h3>對方已經離開</h3>
+        </div>
+        <p id="kcDesc">想唔想同對方保持聯絡？</p>
+        <div id="kcOffer">
+          <!-- 免費留一句（2026-10-21）：未上架未收費前，每個帳戶每 24 小時 1 次，30 字，
+               由 server 代寄去對方 email（雙方都唔會見到對方 email） -->
+          <div class="freebox">
+            <div class="freetitle">免費留一句俾對方 <span class="freetag" id="freeTag">每日 1 次 · 00:00 重設</span></div>
+            <textarea id="freeMsg" rows="2" maxlength="30" placeholder="例：同你傾得好開心，想再傾"></textarea>
+            <div class="freerow">
+              <span id="freeCount" class="fine">0 / 30</span>
+              <button class="btn-primary" id="btnFreeSend" type="button" style="height:40px">免費傳送</button>
+            </div>
+            <div class="fine" id="freeStatus"></div>
+            <div class="promo" id="freePromo">
+              <div class="promo-head">限時優惠</div>
+              <div class="promo-sub" id="promoSub">免費留一句俾對方 · 至新會員制度（MC）推出為止（暫定 2026-11-21）。之後要喺 App 成為會員先可以繼續用。</div>
+            </div>
+            <div class="fine">
+              訊息會經樹窿台 server 轉寄去對方嘅 email；雙方都唔會見到對方嘅 email。
+              你嘅 email 亦有機會收到我哋公司代對方轉發嘅訊息。
+            </div>
+          </div>
+
+          <!-- 另存對話紀錄：要自己剔 + 撳掣，唔會自動下載 -->
+          <div class="saverow">
+            <label for="kcWantMd"><input type="checkbox" id="kcWantMd"> 另存呢段對話紀錄（.md）</label>
+            <button class="btn-ghost" id="btnSaveMd" type="button" disabled="" style="height:38px">下載紀錄</button>
+          </div>
+
+          <details class="paidbox">
+            <summary>想用邀請碼喺 FindMyFriend 留 100 字？（HK$<span id="kcPrice">38</span>）</summary>
+          <p class="fine">
+            付款後你會拿到一組邀請碼，對方亦會收到 email 通知，睇對方有冇興趣。
+            <br><br>
+            想用邀請碼留一句說話俾對方，需要下載 <b>FindMyFriend</b> 並成為會員：
+            登入 → 輸入邀請碼 → 可以留一句<b>最長 100 字</b>嘅訊息。
+            <br><br>
+            對方會收到 email。但對方回唔回應，就冇人控制得到。
+            你嘅 email 地址永遠唔會俾對方見到。
+          </p>
+          <div class="actions">
+            <button class="btn-primary" id="btnKeep" type="button">想，保留聯絡（HK$38）</button>
+            <button class="btn-ghost" id="btnNoKeep" type="button" style="height:44px">唔用了</button>
+          </div>
+          </details>
+        </div>
+        <div id="kcDone" style="display:none">
+          <p>已記錄你嘅聯絡意願。對方會收到電郵通知，睇對方有冇興趣回覆。</p>
+          <div class="tokenbox" id="kcToken">------</div>
+          <p class="fine">
+            邀請碼亦已經寄去你嘅 email（30 日內有效）。<br>
+            用法：下載 <b>FindMyFriend</b> → 成為會員 → 輸入邀請碼 → 留一句最長 100 字嘅訊息。
+          </p>
+          <div class="actions">
+            <button class="btn-ghost" id="btnKcClose" type="button" style="height:44px">返回</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4002：同一帳戶喺另一個視窗／裝置接手 -->
+    <div class="scrim" id="dupScrim">
+      <div class="card card-confirm" id="dupCard" role="dialog" aria-modal="true" aria-labelledby="dupTitle">
+        <h3 id="dupTitle">另一個視窗開住咗</h3>
+        <p>你喺另一個視窗／裝置開住咗樹窿台。想喺呢度繼續，撳下面個掣（另一邊會斷線）。</p>
+        <div class="actions">
+          <button class="btn-primary" id="dupContinue" type="button">喺呢度繼續</button>
+        </div>
+        <p class="fine">如果唔係你開嘅，建議改密碼。</p>
+      </div>
+    </div>
+
+    <div class="scrim" id="nextScrim">
+      <div class="card card-confirm" role="dialog" aria-modal="true" aria-labelledby="nextTitle">
+        <h3 id="nextTitle">確定離開？</h3>
+        <p>確定嘅話就會離開呢段對話，去搵下一位。</p>
+        <div class="actions">
+          <button class="btn-primary" id="btnNextYes" type="button">確定離開</button>
+          <button class="btn-ghost" id="btnNextNo" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 斷線 fallback（2026-10-23）：連續 3 次非 4001／4002 斷線 → 全屏提示去官網；12 秒倒數自動去 -->
+    <div class="offline-scrim" id="offlineScrim">
+      <div class="offline-card">
+        <h3>伺服器暫時未能連接</h3>
+        <p>我哋正在處理。你可以去官網睇最新公告，或者等自動重新連接。</p>
+        <button class="btn-primary" id="offlineGoSite" type="button">去官網</button>
+        <div class="offline-count" id="offlineCountdown">12 秒後自動前往官網</div>
+      </div>
+    </div>
+
+    <!-- 4003：連線由同一裝置另一個分頁／app 接手（2026-10-23 R3）— 細 banner，唔係大 modal -->
+    <div class="handoff-strip" id="handoffStrip" role="status">
+      <span class="handoff-text">連線已轉到另一個分頁／裝置</span>
+      <button class="btn-ghost handoff-btn" id="handoffContinue" type="button">喺呢度繼續</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // waiting 狀態 flag：排隊時收起頂欄 mini 品牌；配對到／離開對話先拆返
+  document.body.classList.add("is-waiting");
+  var API = "";
+  var state = {
+    token: localStorage.getItem("shudong.token") || "",
+    user: null,
+    ws: null,
+    partnerGender: null,
+    matchId: null,
+    keepReqId: null,
+    pendingLeft: null,
+    reconnectTimer: null,
+    genderPick: null,
+    log: [],
+    matchStartedAt: null,
+    archived: {},
+    statsTimer: null,
+    hbTimer: null,
+    lastSeen: 0,
+    pendingPingAt: 0,
+    attempts: 0,
+    dupOpen: false,
+    // 4003 手動接管閘（2026-10-23 R3）：同一裝置另一個 tab 接手後，舊 tab 唔自動重連，
+    // 顯示 handoff banner，用戶撳「喺呢度繼續」先清閘再 connect（否則兩個 tab 無限互踢）
+    handedOff: false,
+    failCount: 0,
+    lastNoticeId: "",
+    offlineTimer: null,
+    // 訊息 ACK＋重送（2026-10-23）：cid -> {text, at, tries, mid}
+    // 送出就入 pending；server 回 ack／自己 echo 帶 cid → 移除；重連 ready 後 flushPending 重送
+    pending: new Map()
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // 同裝置靜默接管（2026-10-23 R3）：每個 browser 一個隨機 uuid（永久存 localStorage）。
+  // WS auth frame 帶 device_id：server 見舊新連線同 device（唔理 tab）→ close 4003；
+  // 舊 tab 收 4003 唔自動重連，顯示 handoff banner（用戶撳「喺呢度繼續」先再連）；
+  // 唔同 device（真兩部機）→ 4002＋「另一個視窗」modal。
+  function newUuid() {
+    try { return crypto.randomUUID(); } catch (e) {}
+    return "u-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 13);
+  }
+  function deviceId() {
+    var d = localStorage.getItem("shudong.device");
+    if (!d) {
+      d = newUuid();
+      localStorage.setItem("shudong.device", d);
+    }
+    return d;
+  }
+  // Tab 編號（2026-10-23 R3）：tab_id 只用嚟做 server log（邊個 tab 幾號），
+  // 唔再影響接管判斷；同 device 唔理 tab 幾多個都係 4003 靜默接管。
+  function tabId() {
+    var t = sessionStorage.getItem("shudong.tab");
+    if (!t) {
+      t = newUuid();
+      sessionStorage.setItem("shudong.tab", t);
+    }
+    return t;
+  }
+
+  function show(pageId) {
+    ["page-login", "page-gender", "page-chat"].forEach(function (p) {
+      $(p).classList.toggle("active", p === pageId);
+    });
+  }
+
+  function toast(text) {
+    var el = $("toast");
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove("show"); }, 2400);
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = opts.headers || {};
+    if (state.token) headers["Authorization"] = "Bearer " + state.token;
+    if (opts.body) headers["Content-Type"] = "application/json";
+    return fetch(API + path, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) throw new Error(data.detail || ("錯誤 " + r.status));
+        return data;
+      });
+    });
+  }
+
+  // ------------------------------------------------ 登入
+  function afterLogin(data) {
+    state.dupOpen = false; // 新登入斬返之前 session 嘅 4002 閘，唔會死喺 modal 後面
+    hideHandoff(); // 順手清 4003 handoff banner／閘（2026-10-23 R3）
+    state.token = data.token;
+    state.user = data.user;
+    localStorage.setItem("shudong.token", data.token);
+    if (!data.user.gender_locked) {
+      show("page-gender");
+    } else {
+      show("page-chat");
+      connect();
+    }
+  }
+
+  var FB_CONFIG = {"apiKey": "AIzaSyBFQx_s-CRq4WWcHBKIxMhrHfANUXfw5C4", "authDomain": "heymama-29b2f.firebaseapp.com", "projectId": "heymama-29b2f", "storageBucket": "heymama-29b2f.firebasestorage.app", "messagingSenderId": "211457866186", "appId": "1:211457866186:web:4f30e5a6c64acdf3327733"};
+  var fbReady = false;
+  var loginBusy = false;
+
+  function setLoginBusy(on) {
+    loginBusy = on;
+    var g = $("btnGoogle"), a = $("btnApple");
+    // 同意閘：busy 解鎖時都要保持「未剔＝鎖」，唔好讓 redirect 流程解鎖埋未剔用戶
+    if (g) g.disabled = on || !$("agree").checked;
+    if (a) a.disabled = on || !$("agree").checked;
+    if (on) $("loginErr").textContent = "登入中…";
+  }
+
+  function initFirebase() {
+    if (fbReady) return true;
+    if (!window.firebase) return false;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+      fbReady = true;
+    } catch (e) {
+      console.warn("firebase init", e);
+    }
+    return fbReady;
+  }
+
+  function loginFail(err) {
+    setLoginBusy(false);
+    var code = (err && err.code) || "";
+    var msg = (err && err.message) || "登入失敗";
+    if (code.indexOf("auth/requests-from-referer") === 0) {
+      msg = "呢個網址未加入 Firebase API key 白名單（要喺 Google Cloud Console 加）。";
+    } else if (code === "auth/unauthorized-domain") {
+      msg = "呢個網址未加入 Firebase 授權網域（要喺 Firebase Console 加）。";
+    } else if (code === "auth/popup-closed-by-user") {
+      msg = "你已經取消咗登入。";
+    } else if (code === "auth/network-request-failed") {
+      msg = "網絡連線失敗，請再試。";
+    } else if (code === "auth/operation-not-allowed") {
+      msg = "呢個登入方式未喺 Firebase 開啟。";
+    }
+    $("loginErr").textContent = msg;
+  }
+
+  function exchangeToken(provider, idToken) {
+    return api("/api/auth/" + provider, {
+      method: "POST",
+      body: { provider: provider, id_token: idToken }
+    }).then(function (data) {
+      setLoginBusy(false);
+      afterLogin(data);
+    }).catch(function (e) {
+      loginFail({ code: "", message: e.message });
+    });
+  }
+
+  function firebaseLogin(provider) {
+    $("loginErr").textContent = "";
+    if (loginBusy) return;
+    if (!initFirebase()) {
+      $("loginErr").textContent = "登入模組未載入（網絡問題），請重新整理再試。";
+      return;
+    }
+    var auth = firebase.auth();
+    var p = provider === "apple"
+      ? new firebase.auth.OAuthProvider("apple.com")
+      : new firebase.auth.GoogleAuthProvider();
+    if (provider === "apple") {
+      p.addScope("email");
+      p.addScope("name");
+    }
+    setLoginBusy(true);
+    auth.signInWithPopup(p).then(function (res) {
+      return res.user.getIdToken();
+    }).then(function (idToken) {
+      return exchangeToken(provider, idToken);
+    }).catch(function (e) {
+      var code = (e && e.code) || "";
+      if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+        auth.signInWithRedirect(p).catch(loginFail);
+        return;
+      }
+      loginFail(e);
+    });
+  }
+
+  function handleRedirectResult() {
+    if (!initFirebase()) return;
+    firebase.auth().getRedirectResult().then(function (res) {
+      if (!res || !res.user) return;
+      setLoginBusy(true);
+      var pid = (res.credential && res.credential.providerId) || "";
+      var provider = pid === "apple.com" ? "apple" : "google";
+      return res.user.getIdToken().then(function (t) { return exchangeToken(provider, t); });
+    }).catch(function () { setLoginBusy(false); });
+  }
+
+  $("btnGoogle").addEventListener("click", function () { firebaseLogin("google"); });
+  $("btnApple").addEventListener("click", function () { firebaseLogin("apple"); });
+
+  // 同意閘：剔除／唔剔除 toggle 兩個登入掣；唔會記住狀態，每次 reload 都重新剔
+  $("agree").addEventListener("change", function () {
+    if (loginBusy) return;
+    var dis = !this.checked;
+    $("btnGoogle").disabled = dis;
+    $("btnApple").disabled = dis;
+  });
+  $("btnGoogle").disabled = !$("agree").checked;
+  $("btnApple").disabled = !$("agree").checked;
+
+  $("btnDemo").addEventListener("click", function () {
+    var email = ($("demoEmail").value || "").trim();
+    if (email.indexOf("@") < 0) { $("loginErr").textContent = "請輸入示範 email"; return; }
+    $("loginErr").textContent = "";
+    api("/api/auth/demo", { method: "POST", body: { provider: "demo", email: email } })
+      .then(afterLogin)
+      .catch(function (e) { $("loginErr").textContent = e.message; });
+  });
+
+  // 示範登入只喺本機（localhost／127.0.0.1）或明確 ?demo=1 先出現；生產環境隱藏
+  var isLocalHost = ["localhost", "127.0.0.1"].indexOf(location.hostname) !== -1;
+  if (isLocalHost || new URLSearchParams(location.search).get("demo") === "1") {
+    $("demoBox").classList.add("show");
+    $("demoEmail").value = localStorage.getItem("shudong.demoEmail") || "";
+    $("demoEmail").addEventListener("change", function () {
+      localStorage.setItem("shudong.demoEmail", $("demoEmail").value);
+    });
+  }
+
+  // ------------------------------------------------ 性別
+  Array.prototype.forEach.call(document.querySelectorAll(".g-opt"), function (opt) {
+    opt.addEventListener("click", function () {
+      state.genderPick = opt.getAttribute("data-g");
+      Array.prototype.forEach.call(document.querySelectorAll(".g-opt"), function (o) {
+        o.classList.toggle("sel", o === opt);
+      });
+      $("btnGenderConfirm").disabled = false;
+    });
+    opt.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); opt.click(); }
+    });
+  });
+
+  $("btnGenderConfirm").addEventListener("click", function () {
+    if (!state.genderPick) return;
+    $("genderErr").textContent = "";
+    api("/api/gender", { method: "POST", body: { gender: state.genderPick } })
+      .then(function (data) {
+        state.user = data.user;
+        show("page-chat");
+        connect();
+      })
+      .catch(function (e) { $("genderErr").textContent = e.message; });
+  });
+
+  // ------------------------------------------------ 聊天
+  var els = {
+    msgs: $("messages"),
+    input: $("input"),
+    send: $("sendBtn"),
+    next: $("btnNext"),
+    pill: $("partnerPill"),
+    waiting: $("waitingWrap"),
+    banner: $("matchBanner")
+  };
+
+  function genderText(g) { return g === "female" ? "女" : (g === "male" ? "男" : "未知"); }
+
+  function setPartnerPill(g) {
+    els.pill.className = "gender-pill " + (g === "female" ? "female" : g === "male" ? "male" : "unknown");
+    els.pill.innerHTML = '<span class="gd"></span>對方 · ' + genderText(g);
+  }
+
+  function addSys(text) {
+    var d = document.createElement("div");
+    d.className = "sys";
+    d.textContent = text;
+    els.msgs.appendChild(d);
+    els.msgs.scrollTop = els.msgs.scrollHeight;
+  }
+
+  // 聊天室系統公告（2026-10-23）：banner 係主顯示，addSys 輔助一句；× 只本地收埋
+  function showNotice(d) {
+    var el = $("sysNotice");
+    if (!el) return;
+    $("sysNoticeText").textContent = d.text || "";
+    el.classList.toggle("warn", d.level === "warn");
+    el.classList.add("show");
+    if (d.id && d.id !== state.lastNoticeId) {
+      state.lastNoticeId = d.id;
+      addSys("【系統公告】" + (d.text || ""));
+    }
+  }
+
+  function hideNotice() {
+    var el = $("sysNotice");
+    if (el) el.classList.remove("show");
+  }
+
+  // 斷線 fallback（2026-10-23）：連續 3 次非 4001／4002 斷線 → 全屏 scrim＋12 秒倒數自動去官網
+  function stopOfflineTimer() {
+    if (state.offlineTimer) {
+      clearInterval(state.offlineTimer);
+      state.offlineTimer = null;
+    }
+  }
+
+  function hideOfflineScrim() {
+    stopOfflineTimer();
+    state.failCount = 0;
+    var el = $("offlineScrim");
+    if (el) {
+      el.classList.remove("show");
+      $("offlineCountdown").textContent = "12 秒後自動前往官網";
+    }
+  }
+
+  function showOfflineScrim() {
+    var el = $("offlineScrim");
+    if (!el) return;
+    if (el.classList.contains("show")) return; // 已經倒數緊，唔好重置
+    el.classList.add("show");
+    var left = 12;
+    var label = $("offlineCountdown");
+    var tick = function () {
+      if (left <= 0) {
+        stopOfflineTimer();
+        if (label) label.textContent = "正在前往官網…";
+        location.replace("https://hkgamingapp.com/");
+        return;
+      }
+      if (label) label.textContent = left + " 秒後自動前往官網";
+      left -= 1;
+    };
+    stopOfflineTimer();
+    tick();
+    state.offlineTimer = setInterval(tick, 1000);
+  }
+
+  function addMsg(text, mine, at, skipLog) {
+    if (!skipLog) {
+      state.log.push({ text: text, mine: mine === true, at: at || new Date().toISOString() });
+    }
+    var d = document.createElement("div");
+    d.className = "msg " + (mine ? "mine" : "theirs");
+    d.textContent = text;
+    if (at) {
+      var s = document.createElement("span");
+      s.className = "t";
+      var dt = new Date(at);
+      s.textContent = isNaN(dt) ? "" : dt.toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit", hour12: false });
+      d.appendChild(s);
+    }
+    els.msgs.appendChild(d);
+    els.msgs.scrollTop = els.msgs.scrollHeight;
+  }
+
+  function setCanSend(on) {
+    els.send.disabled = !on;
+    els.input.disabled = !on;
+    els.next.disabled = !on;
+  }
+
+  // ------------------------------------------------ 心跳＋重連（2026-10-23 L2 加固）
+  // WS 冇心跳會被中途 NAT／proxy 靜靜殺掉（手機網絡 30-120 秒就夠），而且死連線唔會觸發 onclose。
+  // 所以：每 20 秒（±20% jitter）ping，超過 80 秒冇任何訊息就主動重連；
+  // hidden 時唔送 ping（慳電；server 每 25 秒照有 ping 過來，CF idle 條門檻唔會誤中）。
+  var HB_PING_MS = 20000;
+  var HB_DEAD_MS = 80000;
+  // 背景唔自殺（2026-10-23）：Android WebView／背景 tab 會凍結 JS timer 呢段時間 lastSeen
+  // 窒住，返前台 catch-up 照判 dead 就會「自己 close 自己」再重連＝4002/1011 元兇之一。
+  // 記住啱醒返嘅時間：30 秒內唔由 heartbeat 判死，交俾 visibilitychange probe（5 秒冇回覆先 close）。
+  var HB_WAKED_AT = 0;
+
+  function stopHeartbeat() {
+    if (state.hbTimer) { clearTimeout(state.hbTimer); state.hbTimer = null; }
+  }
+
+  function schedulePing(ws) {
+    // recursive setTimeout（唔用 setInterval）：背景 tab 會被節流，附 HB 死線檢查＋±20% jitter
+    var jitter = Math.round(HB_PING_MS * (0.8 + Math.random() * 0.4));
+    state.hbTimer = setTimeout(function () {
+      if (!state.ws || state.ws !== ws || ws.readyState !== 1) return;
+      if (document.hidden) { schedulePing(ws); return; } // hidden：唔判死、唔送 ping，只繼續 schedule
+      if (Date.now() - state.lastSeen > HB_DEAD_MS) {
+        // 連線已經死（冇 pong／冇任何訊息）→ 主動關，等 onclose 重連。
+        // 但啱由背景返嚟 30 秒內唔判死（catch-up frame 唔作準，見上面 HB_WAKED_AT）。
+        if (HB_WAKED_AT && Date.now() - HB_WAKED_AT < 30000) { schedulePing(ws); return; }
+        try { ws.close(); } catch (e) {}
+        return;
+      }
+      try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {}
+      schedulePing(ws);
+    }, jitter);
+  }
+
+  function startHeartbeat(ws) {
+    // identity guard（2026-10-23 R3）：舊 socket 遲來嘅 onopen 唔准搶走／清走新連線嘅心跳
+    if (state.ws !== ws) return;
+    stopHeartbeat();
+    state.lastSeen = Date.now();
+    schedulePing(ws);
+  }
+
+  function connect() {
+    if (state.dupOpen || state.handedOff) return;
+    if (state.ws && state.ws.readyState <= 1) return;
+    var proto = location.protocol === "https:" ? "wss:" : "ws:";
+    var ws = new WebSocket(proto + "//" + location.host + "/ws");
+    state.ws = ws;
+
+    ws.onopen = function () {
+      // Socket identity guard（2026-10-23 R3）：呢個 handler 只屬於仍係 state.ws 嘅 socket。
+      // 舊 socket 遲來嘅 onopen 唔准送 auth（否則第二條 auth 會喺 server 踢走新連線 ＝ 乒乓元兇）
+      if (state.ws !== ws) return;
+      clearTimeout(state.reconnectTimer);
+      state.attempts = 0;
+      state.failCount = 0; // 斷線 fallback 連住就重置
+      startHeartbeat(ws);
+      // M2：連上即送 auth（server 等呢條做認證；ready 前唔送其他野）
+      ws.send(JSON.stringify({ type: "auth", token: state.token, device_id: deviceId(), tab_id: tabId() }));
+    };
+
+    ws.onmessage = function (ev) {
+      if (state.ws !== ws) return; // identity guard：舊 socket 遲到嘅 frame 唔處理
+      state.pendingPingAt = 0; // 任何 frame 都代表條連線活（back-from-bg probe 用）
+      var d;
+      try { d = JSON.parse(ev.data); } catch (e) { return; }
+      state.lastSeen = Date.now();
+      if (d.type === "ping") { try { ws.send(JSON.stringify({ type: "pong" })); } catch (e) {} return; }
+      if (d.type === "pong") return;
+      if (d.type === "ack" && d.cid) { state.pending.delete(d.cid); return; } // 已入 DB，唔使重送
+      if (d.type === "stats") { applyStats(d); return; }
+      if (d.type === "left") { state.leaving = true; location.href = "/about"; return; }
+
+      if (d.type === "ready") {
+        // 收到 ready＝真係 auth 成功：斷線 fallback 全收（同 onopen 雙保險）
+        hideOfflineScrim();
+        flushPending(); // 訊息 ACK＋重送：重連成功後 pending 未送達訊息重送（server 去重）
+        return;
+      }
+
+      if (d.type === "system_notice") {
+        if (d.active === false) {
+          hideNotice();
+        } else {
+          showNotice(d);
+        }
+        return;
+      }
+
+      if (d.type === "waiting") {
+        state.matchId = null;
+        state.partnerGender = null;
+        setPartnerPill(null);
+        setCanSend(false);
+        setReplyPart(null);
+        els.waiting.classList.remove("hide");document.body.classList.add("is-waiting");
+        return;
+      }
+
+      if (d.type === "matched") {
+        state.matchId = d.match_id;
+        state.partnerGender = d.partner.gender;
+        state.matchStartedAt = new Date().toISOString();
+        state.log = [];
+        els.waiting.classList.add("hide");document.body.classList.remove("is-waiting");
+        els.msgs.innerHTML = "";
+        setPartnerPill(d.partner.gender);
+        setCanSend(true);
+        setReplyPart(null);
+        if (els.banner) {
+          els.banner.classList.add("show");
+          clearTimeout(els.banner._t);
+          els.banner._t = setTimeout(function () { els.banner.classList.remove("show"); }, 3200);
+        }
+        addSys("你哋已經配對到。呢個對話唔會顯示任何個人資料。");
+        els.input.focus();
+        return;
+      }
+
+      if (d.type === "message") {
+        if (d.mine === true && d.cid) state.pending.delete(d.cid); // 自己 echo 帶 cid：對帳雙保險
+        addMsg(d.text, d.mine === true, d.at);
+        setReplyPart(d.reply || null);
+        if (d.mine !== true) {
+          ding();
+          if (document.hidden || !document.hasFocus()) startTitleFlash();
+        }
+        return;
+      }
+
+      if (d.type === "partner_left") {
+        if (els.banner) { els.banner.classList.remove("show"); clearTimeout(els.banner._t); }
+        setCanSend(false);
+        setReplyPart(null);
+        state.pendingLeft = d.match_id;
+        els.waiting.classList.add("hide");document.body.classList.remove("is-waiting");
+        var leftTxt = d.sys || (d.reason === "next"
+          ? "對方已經換咗下一位。"
+          : (d.reason === "timeout" ? "對方等咗一陣都冇返嚟，今次對話到此為止。" : "對方已經離開咗對話。"));
+        addSys(leftTxt);
+        openKeepContact(d.match_id);
+        return;
+      }
+
+      if (d.type === "partner_offline") {
+        setCanSend(true);
+        els.input.disabled = true;
+        els.send.disabled = true;
+        els.waiting.classList.add("hide");document.body.classList.remove("is-waiting");
+        addSys("對方連線斷咗，等佢返嚟（最多 " + (d.grace || 45) + " 秒）。你可以刷新，刷新都唔會走失呢間房。");
+        return;
+      }
+
+      if (d.type === "partner_back") {
+        addSys("對方已經返到嚟，可以繼續講。");
+        if (state.matchId) setCanSend(true);
+        return;
+      }
+
+      if (d.type === "resumed" || d.type === "resume_waiting") {
+        state.matchId = d.match_id;
+        state.partnerGender = d.partner ? d.partner.gender : null;
+        state.matchStartedAt = d.started_at || null;
+        state.log = [];
+        els.waiting.classList.add("hide");document.body.classList.remove("is-waiting");
+        els.msgs.innerHTML = "";
+        setPartnerPill(state.partnerGender);
+        setReplyPart(d.reply || null);
+        (d.messages || []).forEach(function (m) {
+          addMsg(m.text, m.from === "you", m.at);
+        });
+        flushPending(); // 之前 ready 嗰下 matchId 未到而 skip 嘅 pending，而家 Matching 上先重送
+        if (d.type === "resume_waiting") {
+          els.input.disabled = true;
+          els.send.disabled = true;
+          addSys("你已經返到原本嘅對話。等對方重新連線（最多 " + (d.grace || 45) + " 秒）。");
+        } else {
+          setCanSend(true);
+          addSys("你返到嚟原本嘅對話，之前嘅訊息已經幫你載返。");
+        }
+        return;
+      }
+
+      if (d.type === "error") {
+        toast(d.detail || "發生錯誤");
+      }
+    };
+
+    ws.onclose = function (ev) {
+      // Socket identity guard（2026-10-23 R3，核心）：遲來嘅舊 onclose 唔准 null state.ws、
+      // 唔准 stopHeartbeat、唔准 schedule connect —— 呢個正係生產 4002 風暴嘅根因
+      // （舊 handler 搞死開好嘅新連線 → 開多一條 → server 踢舊 → 4002 乒乓）
+      if (state.ws !== ws) return;
+      state.ws = null;
+      stopHeartbeat();
+      setCanSend(false);
+      clearTimeout(state.reconnectTimer);
+      if (ev && ev.code === 4003) {
+        // 同裝置接管（2026-10-23 R3）：呢條舊 socket 由同一 device 嘅新連線（另一個 tab／app）接手。
+        // 唔自動重連、唔彈 4002 大 modal：顯示細 banner，用戶撳「喺呢度繼續」先再奪返，
+        // 兩個 tab 唔會無限互踢。
+        if (!localStorage.getItem("shudong.token")) return;
+        showHandoff();
+        return;
+      }
+      if (ev && ev.code === 4002) {
+        // 另一個視窗／裝置接手咗呢個帳戶：唔好自動重連（否則同另一邊互踢乒乓）
+        hideOfflineScrim();
+        stopHeartbeat();
+        clearTimeout(state.reconnectTimer);
+        state.ws = null;
+        state.dupOpen = true;
+        setCanSend(false);
+        document.getElementById("dupScrim").classList.add("show");
+        return;
+      }
+      if (ev && ev.code === 4001) {
+        // M2：auth 失敗／登入過期 → 清 session，跳返登入畫面（唔好自動重連打轉）
+        hideOfflineScrim(); // 4001 唔准彈斷線 fallback
+        clearTimeout(state.reconnectTimer);
+        localStorage.removeItem("shudong.token");
+        state.token = "";
+        toast("登入已過期，請重新登入");
+        show("page-login");
+        return;
+      }
+      if (!localStorage.getItem("shudong.token")) return;
+      els.waiting.classList.remove("hide");document.body.classList.add("is-waiting");
+      $("waitingWrap").querySelector(".waiting-title").textContent = "連線中斷，重新連線中";
+      // 斷線 fallback（2026-10-23）：唔係 4001／4002 而且有 token → 計一次失敗；連續 3 次彈去官網 scrim
+      state.failCount = (state.failCount || 0) + 1;
+      if (state.failCount >= 3) {
+        showOfflineScrim();
+      }
+      // 指數退避＋jitter：1.5→3→6→12→24→30 秒上限，避免網絡未通時連環重連打爆 server
+      state.attempts = (state.attempts || 0) + 1;
+      var delay = Math.min(1500 * Math.pow(2, state.attempts - 1), 30000);
+      delay = Math.round(delay * (0.8 + Math.random() * 0.4));
+      clearTimeout(state.reconnectTimer);
+      state.reconnectTimer = setTimeout(connect, delay);
+    };
+  }
+
+  // 4002 modal：「喺呢度繼續」→ 呢邊開新連線，另一邊就會收到 4002 彈同一個 modal
+  $("dupContinue").addEventListener("click", function () {
+    state.dupOpen = false;
+    document.getElementById("dupScrim").classList.remove("show");
+    state.attempts = 0;
+    connect();
+  });
+
+  // 4003 handoff banner（2026-10-23 R3）：同一裝置另一個 tab 接手 → 舊 tab 靜靜停低
+  function showHandoff() {
+    state.handedOff = true;
+    var s = $("handoffStrip");
+    if (s) s.classList.add("show");
+  }
+  function hideHandoff() {
+    state.handedOff = false;
+    var s = $("handoffStrip");
+    if (s) s.classList.remove("show");
+  }
+  // 「喺呢度繼續」：清 banner＋閘，自然 reconnect → server 對另一邊先收 4003（唔會大 modal）
+  $("handoffContinue").addEventListener("click", function () {
+    hideHandoff();
+    state.attempts = 0;
+    state.failCount = 0;
+    connect();
+  });
+
+  // 系統公告 ×（2026-10-23）：只本地收埋 banner，唔叫 server
+  $("sysNoticeClose").addEventListener("click", hideNotice);
+
+  // 斷線 fallback：手動去官網（唔等倒數）
+  $("offlineGoSite").addEventListener("click", function () {
+    location.href = "https://hkgamingapp.com/";
+  });
+
+  // 網絡返嚟（2026-10-23）：reset 失敗計數，socket 死咗就即刻開返條連線（4002 閘照擋）
+  window.addEventListener("online", function () {
+    state.failCount = 0;
+    if (state.dupOpen || state.handedOff) return;
+    if (!state.token) return;
+    if (state.ws && state.ws.readyState <= 1) return;
+    clearTimeout(state.reconnectTimer);
+    connect();
+  });
+
+  // 訊息 ACK＋重送（2026-10-23）：重連成功（ready／resumed）後把 pending 未送達訊息逐條重送。
+  // 每條最多 3 次、每次隔 1 秒；server 依 (match_id, sender_id, client_id) 去重，唔怕重複寫入。
+  // mid 唔一樣嘅 pending（例如已經換咗新對手）唔重送——舊訊息唔會漏出去新對象。
+  function flushPending() {
+    if (!state.pending.size) return;
+    state.pending.forEach(function (item, cid) {
+      if (item.mid !== state.matchId) return;
+      resendPendingItem(cid, item, 0);
+    });
+  }
+
+  function resendPendingItem(cid, item, attempt) {
+    if (!state.pending.has(cid)) return; // 已 ack／echo 收到
+    if (attempt >= 3) { state.pending.delete(cid); return; } // 3 次都唔通，放棄（唔要條訊息永遠卡住）
+    if (!state.ws || state.ws.readyState !== 1 || item.mid !== state.matchId) return;
+    try { state.ws.send(JSON.stringify({ type: "chat", text: item.text, cid: cid })); } catch (e) { return; }
+    item.tries = attempt + 1;
+    setTimeout(function () { resendPendingItem(cid, item, attempt + 1); }, 1000);
+  }
+
+  function sendCurrent() {
+    var text = els.input.value.trim();
+    if (!text || !state.ws || state.ws.readyState !== 1 || !state.matchId) return;
+    // 訊息 ACK＋重送：帶 cid 入 pending，server ack／echo 先算送達；
+    // socket fatal 時重連 ready 會由 flushPending 重送（server 依 cid 去重）
+    var cid = newUuid();
+    state.pending.set(cid, { text: text, at: Date.now(), tries: 0, mid: state.matchId });
+    state.ws.send(JSON.stringify({ type: "chat", text: text, cid: cid }));
+    els.input.value = "";
+    els.input.style.height = "auto";
+  }
+
+  els.send.addEventListener("click", sendCurrent);
+  els.input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCurrent(); }
+  });
+  els.input.addEventListener("input", function () {
+    els.input.style.height = "auto";
+    els.input.style.height = Math.min(els.input.scrollHeight, 112) + "px";
+  });
+
+  els.next.addEventListener("click", function () {
+    if (!state.ws || state.ws.readyState !== 1) return;
+    if (!state.matchId) return;
+    $("nextScrim").classList.add("show");
+  });
+
+  function closeNextConfirm() {
+    $("nextScrim").classList.remove("show");
+  }
+
+  // 離開而有對話：由「確定離開」觸發，邏輯同舊版一個字都唔變
+  function doNext() {
+    state.matchId = null;
+    setCanSend(false);
+    setPartnerPill(null);
+    els.msgs.innerHTML = "";
+    els.waiting.classList.remove("hide");document.body.classList.add("is-waiting");
+    state.ws.send(JSON.stringify({ type: "next" }));
+  }
+
+  $("btnNextYes").addEventListener("click", function () {
+    closeNextConfirm();
+    doNext();
+  });
+  $("btnNextNo").addEventListener("click", closeNextConfirm);
+  $("nextScrim").addEventListener("click", function (e) {
+    if (e.target === this) closeNextConfirm(); // 撳 scrim 背景＝只取消唔離開
+  });
+
+  // ------------------------------------------------ 回覆倒數＋新訊息提示（2026-10-22）
+  // 後端每條 message／ready／resumed 帶 reply:{awaiting:"you"|"partner"|null, deadline:unix秒}
+  var reply = { awaiting: null, deadline: 0, timer: null };
+  var TITLE_BASE = document.title;
+  var REPLY_IDLE_TEXT = "3 分鐘內冇回覆會自動斷線；連續發訊息唔會重新計時";
+
+  function setReplyPart(d) {
+    reply.awaiting = d && d.awaiting ? d.awaiting : null;
+    reply.deadline = d && d.deadline ? d.deadline : 0;
+    updateReplyHint();
+  }
+
+  function fmtCountdown(ms) {
+    var s = Math.max(0, Math.ceil(ms / 1000));
+    return two(Math.floor(s / 60)) + ":" + two(s % 60);
+  }
+
+  function updateReplyHint() {
+    var box = $("replyHint");
+    var txt = $("replyText");
+    if (!box || !txt) return;
+    box.classList.remove("urgent");
+    if (reply.awaiting && reply.deadline) {
+      var left = reply.deadline * 1000 - Date.now();
+      txt.textContent = (reply.awaiting === "you" ? "對方等你回覆" : "等對方回覆") +
+        " · " + fmtCountdown(left);
+      if (reply.awaiting === "you" && left < 30000) box.classList.add("urgent");
+      if (!reply.timer) reply.timer = setInterval(updateReplyHint, 1000);
+    } else {
+      txt.textContent = REPLY_IDLE_TEXT;
+      clearInterval(reply.timer);
+      reply.timer = null;
+    }
+  }
+
+  // 新訊息提示音：WebAudio 兩粒音（零外部檔案）；autoplay 解鎖靠第一次用戶互動
+  var audioCtx = null;
+  function ensureAudio() {
+    try {
+      if (!audioCtx) {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (!C) return;
+        audioCtx = new C();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) { audioCtx = null; }
+  }
+  document.addEventListener("pointerdown", ensureAudio, true);
+  document.addEventListener("keydown", ensureAudio, true);
+
+  function soundOn() { return localStorage.getItem("shudong.sound") !== "off"; }
+
+  function ding() {
+    if (!soundOn()) return;
+    ensureAudio();
+    if (!audioCtx || audioCtx.state !== "running") return;
+    try {
+      var t = audioCtx.currentTime;
+      [[880, 0, 0.09], [1318.5, 0.12, 0.13]].forEach(function (note) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = note[0];
+        g.gain.setValueAtTime(0.0001, t + note[1]);
+        g.gain.linearRampToValueAtTime(0.15, t + note[1] + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + note[1] + note[2]);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t + note[1]);
+        osc.stop(t + note[1] + note[2] + 0.01);
+      });
+    } catch (e) {}
+  }
+
+  // 標題閃：頁面 hidden／未聚焦時收到新訊息 → document.title 每 1 秒 toggle
+  var titleTimer = null;
+  function stopTitleFlash() {
+    if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+    document.title = TITLE_BASE;
+  }
+  function startTitleFlash() {
+    if (titleTimer) return;
+    document.title = "● 新訊息 · 樹窿台";
+    var flip = true;
+    titleTimer = setInterval(function () {
+      flip = !flip;
+      document.title = flip ? "● 新訊息 · 樹窿台" : TITLE_BASE;
+    }, 1000);
+  }
+  document.addEventListener("visibilitychange", stopTitleFlash);
+  // 由背景返嚟：唔好一返嚟就無條件重連（白瀏覽器 churn）。
+  // socket 死 → 即刻重連（唔使等退避）；socket 仲活 → 送一句 ping 探測，
+  // 5 秒內冇任何回覆（onmessage 會清 pendingPingAt）就主動 close 等 onclose 重連。
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) return;
+    HB_WAKED_AT = Date.now(); // 背景唔自殺：啱醒返 30 秒內 heartbeat 唔判死（見 schedulePing）
+    if (state.dupOpen || state.handedOff) return; // 4002 modal／4003 handoff：唔自動搶返
+    if (!localStorage.getItem("shudong.token")) return;
+    if (!state.ws || state.ws.readyState !== 1) {
+      // 未連／半開 → 照舊即刻重連
+      clearTimeout(state.reconnectTimer);
+      state.attempts = 0;
+      try { if (state.ws) state.ws.close(); } catch (e) {}
+      state.ws = null;
+      connect();
+      return;
+    }
+    var probeWs = state.ws;
+    try { probeWs.send(JSON.stringify({ type: "ping" })); } catch (e) {}
+    state.pendingPingAt = Date.now();
+    setTimeout(function () {
+      if (!state.pendingPingAt) return; // 5 秒內收到過任何訊息 → 條連線活，唔使郁
+      if (state.pendingPingAt === 0 || state.ws !== probeWs) return;
+      // 半死：close（唔會觸發 4001／4002），onclose 走退避重連
+      try { probeWs.close(); } catch (e) {}
+    }, 5000);
+  });
+  window.addEventListener("focus", stopTitleFlash);
+
+  // ------------------------------------------------ 離開對話／排隊 → about（2026-10-23）
+  function leaveToAbout() {
+    state.leaving = true;
+    try {
+      if (state.ws && state.ws.readyState === 1) state.ws.send(JSON.stringify({ type: "leave" }));
+    } catch (e) {}
+    setTimeout(function () { location.href = "/about"; }, 180);
+  }
+  var _btnLeave = $("btnLeave");
+  if (_btnLeave) _btnLeave.addEventListener("click", leaveToAbout);
+  var _btnLeaveQ = $("btnLeaveQueue");
+  if (_btnLeaveQ) _btnLeaveQ.addEventListener("click", leaveToAbout);
+
+  // 由 native app（AppState 返前台）呼叫：死連線即刻重連，活連線發 probe（5 秒冇回覆才 close）
+  window.shudongReconnect = function () {
+    if (!localStorage.getItem("shudong.token")) return "no-token";
+    if (state.dupOpen) return "dup";
+    if (state.handedOff) return "handoff"; // 4003：用戶撳 banner 個掣先再連（native 交我做咗無意義互踢）
+    if (!state.ws || state.ws.readyState !== 1) {
+      clearTimeout(state.reconnectTimer);
+      state.attempts = 0;
+      try { if (state.ws) state.ws.close(); } catch (e) {}
+      state.ws = null;
+      connect();
+      return "reconnect";
+    }
+    var probeWs = state.ws;
+    try { probeWs.send(JSON.stringify({ type: "ping" })); } catch (e) {}
+    state.pendingPingAt = Date.now();
+    setTimeout(function () {
+      if (!state.pendingPingAt) return;
+      if (state.ws !== probeWs) return;
+      try { probeWs.close(); } catch (e) {}
+    }, 5000);
+    return "probe";
+  };
+
+  // 提示音開關（banner 右邊 speaker icon）；狀態存 localStorage.shudong.sound
+  var btnSound = $("btnSound");
+  if (btnSound) {
+    if (!soundOn()) btnSound.classList.add("sp-muted");
+    btnSound.addEventListener("click", function () {
+      if (soundOn()) {
+        localStorage.setItem("shudong.sound", "off");
+        btnSound.classList.add("sp-muted");
+      } else {
+        localStorage.setItem("shudong.sound", "on");
+        btnSound.classList.remove("sp-muted");
+      }
+    });
+  }
+
+  // ------------------------------------------------ 對話紀錄（Markdown）
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtFull(iso) {
+    var d = iso ? new Date(iso) : new Date();
+    if (isNaN(d)) d = new Date();
+    return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) +
+      " " + two(d.getHours()) + ":" + two(d.getMinutes());
+  }
+  function safeTime(iso) {
+    var d = iso ? new Date(iso) : new Date();
+    return isNaN(d) ? "" : two(d.getHours()) + ":" + two(d.getMinutes());
+  }
+
+  function buildMd(reason) {
+    var g = state.user && state.user.gender === "female" ? "女" : (state.user && state.user.gender === "male" ? "男" : "未知");
+    var pg = state.partnerGender === "female" ? "女" : (state.partnerGender === "male" ? "男" : "未知");
+    var lines = [
+      "# 傾計 · 樹窿台 — 對話紀錄",
+      "",
+      "- 對話編號：" + (state.matchId || "—"),
+      "- 你：" + g,
+      "- 對方：" + pg,
+      "- 開始：" + fmtFull(state.matchStartedAt),
+      "- 結束：" + fmtFull(new Date().toISOString()),
+      "- 結束原因：" + (reason || "—"),
+      "- 訊息數：" + state.log.length,
+      "",
+      "---",
+      ""
+    ];
+    if (!state.log.length) {
+      lines.push("（今次冇訊息）");
+      lines.push("");
+    }
+    state.log.forEach(function (m) {
+      lines.push("**" + (m.mine ? "你" : "對方") + "** · " + safeTime(m.at));
+      lines.push("");
+      lines.push(m.text);
+      lines.push("");
+    });
+    lines.push("---");
+    lines.push("");
+    lines.push("由 傾計 / 樹窿台 自動產生。");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  function archiveMd(reason, force) {
+    if (!state.log.length) return false;
+    var key = state.matchId || "no-match";
+    if (!force && state.archived[key]) return false;
+    state.archived[key] = true;
+    var md = buildMd(reason || "對話結束");
+    var blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var d = new Date();
+    a.href = url;
+    a.download = "傾計紀錄-" + d.getFullYear() + two(d.getMonth() + 1) + two(d.getDate()) +
+      "-" + two(d.getHours()) + two(d.getMinutes()) + ".md";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 8000);
+    addSys("今次對話紀錄已打包成 .md 檔下載。");
+    return true;
+  }
+
+  // ------------------------------------------------ 即時人數
+  function applyStats(d) {
+      var o = document.getElementById("statOnline");
+      var c = document.getElementById("statChatting");
+      var w = document.getElementById("statWaiting");
+      if (o) o.textContent = d.online || 0;
+      if (c) c.textContent = d.chatting || 0;
+      if (w) w.textContent = d.waiting || 0;
+      var tu = document.getElementById("statTotalUsers");
+      var tm = document.getElementById("statTotalMatches");
+      var td = document.getElementById("statToday");
+      if (tu) tu.textContent = d.total_users || 0;
+      if (tm) tm.textContent = d.total_matches || 0;
+      if (td) td.textContent = d.today_users || 0;
+      var wl = document.getElementById("waitingLive");
+      var wo = document.getElementById("wsOnline");
+      var po = document.getElementById("proofOnline");
+      var pt = document.getElementById("proofTotal");
+      var pl = document.getElementById("proofLive");
+      var pd = document.getElementById("proofDot");
+      var onlineN = d.online || 0;
+      if (po) po.textContent = onlineN;
+      if (pt) pt.textContent = d.total_users || 0;
+      // 0 人在線時唔好出「而家 0 人在線」（負面），只顯示累計；粒綠點亦收埋
+      if (pl) pl.style.display = onlineN > 0 ? "" : "none";
+      if (pd) pd.style.display = onlineN > 0 ? "" : "none";
+      var wc = document.getElementById("wsChatting");
+      var wt = document.getElementById("wsTotal");
+      if (wo) wo.textContent = d.online || 0;
+      if (wc) wc.textContent = d.chatting || 0;
+      if (wt) wt.textContent = d.total_users || 0;
+      if (wl) {
+        var n = d.online || 0;
+        wl.textContent = n <= 1
+          ? "得你一個喺線上。開多個無痕窗（或叫朋友）就會自動配對。"
+          : "配對到就會即刻開始，唔使刷新。";
+      }
+  }
+  function refreshStats() {
+    fetch(API + "/api/stats").then(function (r) { return r.json(); }).then(applyStats).catch(function () {});
+  }
+  refreshStats();
+  // 2026-10-23：在線數字改由 WS 每 10 秒推送；HTTP poll 只做 60 秒 fallback（慳 server CPU／手機電）
+  state.statsTimer = setInterval(function () { if (!document.hidden) refreshStats(); }, 60000);
+
+  // ------------------------------------------------ keep contact
+  function openKeepContact(matchId) {
+    state.keepReqId = null;
+    $("kcOffer").style.display = "";
+    $("kcDone").style.display = "none";
+    $("kcDesc").textContent = "想唔想同對方保持聯絡？";
+    // 免費留言／另存紀錄：每次開都重置
+    $("freeMsg").value = "";
+    $("freeCount").textContent = "0 / 30";
+    $("freeStatus").textContent = "";
+    $("kcWantMd").checked = false;
+    $("btnSaveMd").disabled = true;
+    $("freeMsg").disabled = false;
+    $("btnFreeSend").disabled = false;
+    refreshFreeInfo();
+    $("kcScrim").classList.add("show");
+    state.pendingLeft = matchId;
+  }
+
+  // 免費留言狀態：quota（每日 00:00 重設）＋優惠期
+  function refreshFreeInfo(keepStatus) {
+    api("/api/free-message/info").then(function (d) {
+      var btn = $("btnFreeSend");
+      if (d.promo_until) {
+        var dt = new Date(d.promo_until);
+        var ps = $("promoSub");
+        if (ps) ps.textContent = "免費留一句俾對方 · 至新會員制度（MC）推出為止（暫定 " +
+          dt.getFullYear() + "-" + two(dt.getMonth() + 1) + "-" + two(dt.getDate()) +
+          "）。之後要喺 App 成為會員先可以繼續用。";
+      }
+      if (!d.promo_active) {
+        btn.disabled = true;
+        $("freeMsg").disabled = true;
+        $("freeStatus").textContent = "免費留言優惠已經結束，請下載 FindMyFriend app 成為會員。";
+        return;
+      }
+      if (d.remaining <= 0) {
+        btn.disabled = true;
+        if (!keepStatus) $("freeStatus").textContent = "今日已經用咗（每日 1 次，00:00 重設）。";
+      } else {
+        btn.disabled = false;
+        if (!$("freeStatus").textContent || $("freeStatus").textContent.indexOf("今日已經用咗") === 0) {
+          $("freeStatus").textContent = "";
+        }
+      }
+    }).catch(function () {});
+  }
+
+  // 另存對話紀錄：一定要自己剔 + 撳掣，唔會自動下載
+  $("kcWantMd").addEventListener("change", function () {
+    $("btnSaveMd").disabled = !this.checked;
+  });
+  $("btnSaveMd").addEventListener("click", function () {
+    if (!$("kcWantMd").checked) return;
+    if (!archiveMd("手動下載", true)) toast("今次冇訊息可以存");
+  });
+
+  // 免費每日一句（經 server 轉寄對方 email）
+  $("freeMsg").addEventListener("input", function () {
+    $("freeCount").textContent = this.value.length + " / 30";
+  });
+  $("btnFreeSend").addEventListener("click", function () {
+    var mid = state.pendingLeft;
+    if (!mid) return;
+    var text = $("freeMsg").value.trim();
+    if (!text) { toast("請輸入訊息"); return; }
+    var btn = this;
+    btn.disabled = true;
+    $("freeStatus").textContent = "傳送中…";
+    api("/api/free-message", { method: "POST", body: { match_id: mid, text: text } })
+      .then(function (res) {
+        $("freeStatus").textContent = "已送出，對方 email 會收到（" + (res.to || "已寄出") + "）。";
+        $("freeMsg").value = "";
+        $("freeCount").textContent = "0 / 30";
+        toast("已送出");
+        refreshFreeInfo(true);
+      })
+      .catch(function (e) { $("freeStatus").textContent = e.message; btn.disabled = false; });
+  });
+
+  function requeue() {
+    els.msgs.innerHTML = "";
+    setPartnerPill(null);
+    setCanSend(false);
+    els.waiting.classList.remove("hide");document.body.classList.add("is-waiting");
+    $("waitingWrap").querySelector(".waiting-title").textContent = "正在搵人傾計";
+    if (state.ws && state.ws.readyState === 1) {
+      state.ws.send(JSON.stringify({ type: "next" }));
+    }
+  }
+
+  // 「唔用了」＝唔保留對方，關 modal → 歸隊等下一段（kcBack／kcX／Escape 行同一條路）
+  function leaveKeepContact() {
+    $("kcScrim").classList.remove("show");
+    if (state.pendingLeft) api("/api/keep-contact", { method: "POST", body: { match_id: state.pendingLeft, want: false } }).catch(function () {});
+    state.pendingLeft = null;
+    requeue();
+  }
+  $("btnNoKeep").addEventListener("click", leaveKeepContact);
+  $("kcBack").addEventListener("click", leaveKeepContact);
+  $("kcX").addEventListener("click", leaveKeepContact);
+
+  // Escape：next 確認開住→只取消；kc modal 開住→等於「唔用了」
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if ($("nextScrim").classList.contains("show")) { closeNextConfirm(); return; }
+    if ($("kcScrim").classList.contains("show")) { e.preventDefault(); leaveKeepContact(); }
+  });
+
+  $("btnKeep").addEventListener("click", function () {
+    var mid = state.pendingLeft;
+    if (!mid) return;
+    $("btnKeep").disabled = true;
+    api("/api/keep-contact", { method: "POST", body: { match_id: mid, want: true } })
+      .then(function (res) {
+        var req = res.request;
+        state.keepReqId = req.id;
+        $("kcPrice").textContent = req.price_hkd;
+        return api("/api/keep-contact/" + req.id + "/pay", { method: "POST" });
+      })
+      .then(function (res) {
+        $("kcOffer").style.display = "none";
+        $("kcDone").style.display = "";
+        $("kcToken").textContent = res.token;
+        $("kcDesc").textContent = "已經幫你保留聯絡。";
+      })
+      .catch(function (e) { toast(e.message); })
+      .finally(function () { $("btnKeep").disabled = false; });
+  });
+
+  $("btnKcClose").addEventListener("click", function () {
+    $("kcScrim").classList.remove("show");
+    state.pendingLeft = null;
+    requeue();
+  });
+
+  // ------------------------------------------------ v5 hero 氣泡（2026-10-22）
+  function initHeroBubbles() {
+    var hero = document.querySelector("#page-login .hero");
+    if (!hero) return;
+    var bubbles = [document.getElementById("bubble-a"), document.getElementById("bubble-b")]
+      .filter(function (b) { return !!b; });
+    if (!bubbles.length) return;
+    // 每 2.4 秒輪流：hero 上 toggle bubble-left／bubble-right，CSS 控制彈出；
+    // prefers-reduced-motion 就唔開 interval，只靜態顯示左氣泡（同 hero.html 一致）
+    function flip(side) {
+      hero.classList.toggle("bubble-left", side === 0);
+      hero.classList.toggle("bubble-right", side !== 0);
+      var cur = bubbles[side] || bubbles[0];
+      bubbles.forEach(function (el) {
+        var on = el === cur;
+        if (!on && el.classList.contains("is-visible")) el.classList.add("is-leaving");
+        el.classList.toggle("is-visible", on);
+      });
+      setTimeout(function () {
+        bubbles.forEach(function (el) { el.classList.remove("is-leaving"); });
+      }, 200);
+    }
+    flip(0);
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      var side = 0;
+      setInterval(function () { flip(side = 1 - side); }, 2400);
+    }
+  }
+
+  // ------------------------------------------------ 啟動
+  function boot() {
+    if (!state.token) { show("page-login"); return; }
+    api("/api/me").then(function (data) {
+      state.user = data.user;
+      if (!data.user.gender_locked) { show("page-gender"); }
+      else { show("page-chat"); connect(); }
+    }).catch(function () {
+      localStorage.removeItem("shudong.token");
+      state.token = "";
+      show("page-login");
+    });
+  }
+
+  handleRedirectResult();
+  boot();
+  initHeroBubbles();
+  window.shudongLogout = function () {
+    localStorage.removeItem("shudong.token");
+    location.reload();
+  };
+})();
+</script>
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true" style="visibility: visible !important;"></grammarly-desktop-integration></html>

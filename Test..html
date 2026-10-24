@@ -1,0 +1,419 @@
+<html lang="zh-HK"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FAF6EE">
+<title>關於樹窿台 — 傾計 · 樹窿台</title>
+<meta name="description" content="樹窿台：香港人嘅匿名樹窿。免費、即時、一對一隨機配對，唔使報名，入到嚟就有人聽。">
+<meta property="og:title" content="傾偈樹窿台 — 香港人嘅匿名樹窿">
+<meta property="og:description" content="唔使報名，入到嚟就有人聽。匿名、即時、一對一文字配對，免費。">
+<meta property="og:url" content="https://treehole.hkgamingapp.com/about">
+<meta property="og:locale" content="zh_HK">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cg stroke='%233B3A36' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 50Q17 33 34 33L55 33Q71 33 71 50L71 67Q71 82 56 82L42 95L42 82L34 82Q17 82 17 67Z' fill='%237C8C6B'/%3E%3Cpath d='M57 61Q57 45 73 45L94 45Q111 45 111 62L111 79Q111 94 95 94L95 107L81 94L73 94Q57 94 57 79Z' fill='%23D98E4A'/%3E%3Cg stroke='none'%3E%3Ccircle cx='34' cy='54' r='3' fill='%233B3A36'/%3E%3Ccircle cx='51' cy='54' r='3' fill='%233B3A36'/%3E%3Ccircle cx='76' cy='66' r='3' fill='%233B3A36'/%3E%3Ccircle cx='93' cy='66' r='3' fill='%233B3A36'/%3E%3C/g%3E%3Cpath d='M33 65Q42 74 51 65M76 77Q85 86 94 77' fill='none'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#FAF6EE; --surface:#FFFDF8; --surface2:#F4EEE0; --surface3:#EBE2CE;
+    --border:#C9B79C; --border-strong:#B29C7C;
+    --accent:#7C8C6B; --accent-hover:#6B7A5B; --accent-soft:rgba(124,140,107,.12);
+    --ink:#3B3A36; --ink2:#6E6A61; --ink3:#9A9385;
+    --ok:#6E8B5E; --danger:#B0574C; --sun:#D98E4A; --shadow:rgba(59,58,54,.12);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", "Noto Sans HK", sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;
+    --paper-layers:
+      radial-gradient(130% 90% at 18% 8%, rgba(255,255,255,.60), rgba(255,255,255,0) 55%),
+      radial-gradient(90% 70% at 88% 92%, rgba(201,183,156,.22), rgba(201,183,156,0) 60%),
+      repeating-linear-gradient(0deg, rgba(59,58,54,.015) 0 2px, rgba(255,255,255,0) 2px 5px),
+      repeating-linear-gradient(90deg, rgba(59,58,54,.010) 0 3px, rgba(255,255,255,0) 3px 7px),
+      radial-gradient(165% 125% at 50% 38%, rgba(255,255,255,0) 55%, rgba(59,58,54,.06) 100%);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html{ scroll-behavior:smooth }
+  body{
+    margin:0; background-color:#ECE4D2; background-image:var(--paper-layers);
+    font-family:var(--font); color:var(--ink); line-height:1.65;
+  }
+  .wrap{ max-width:960px; margin:0 auto; padding:0 22px }
+  a{ color:inherit }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:10;
+    background:rgba(250,246,238,.96); border-bottom:1px solid rgba(201,183,156,.55);
+  }
+  .topbar .inner{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+    min-height:56px; padding-top:4px; padding-bottom:4px;
+  }
+  .topbar .logo{ width:28px; height:28px; flex:0 0 auto }
+  .topbar .name{
+    font-family:var(--font-serif); font-weight:700; font-size:17px; letter-spacing:3px;
+  }
+  /* 公司紫色 wordmark（HK Gaming Apps） */
+  .topbar .wm{ flex:0 0 auto; height:22px; width:22px; border-radius:5px; object-fit:cover }
+  .topbar .wm-stat{ display:none }
+  /* 即時數據（/api/stats，每 10 秒更新） */
+  .topbar .stats{
+    display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px;
+    font-size:12px; line-height:1.4;
+  }
+  .topbar .stats > span{ display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap }
+  .topbar .stats b{ font-weight:800; font-size:13px; color:var(--ink); font-variant-numeric:tabular-nums }
+  .topbar .stats .lbl{ color:var(--ink3) }
+  @media (max-width:899px){
+    .topbar .inner{ padding:2px 22px 8px; gap:6px 8px }
+    .topbar .stats{ order:7; flex:1 1 auto; gap:4px 10px; padding-top:2px }
+  }
+  .topbar .spacer{ flex:1 1 auto }
+  @media (min-width:900px){ .topbar .wm-stat{ display:none } }
+
+  /* ---------- 按鈕（手繪 offset shadow） ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 22px; border-radius:14px; font-weight:700; font-size:15px; letter-spacing:1px;
+    border:2px solid var(--ink); background:var(--surface); color:var(--ink);
+    cursor:pointer; text-decoration:none;
+    box-shadow:4px 5px 0 var(--shadow);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{ transform:translate(2px,3px); box-shadow:2px 2px 0 var(--shadow) }
+  .btn-primary{ background:var(--accent); color:#FFFDF8 }
+  .btn-primary:hover{ background:var(--accent-hover) }
+  .btn-sm{ padding:7px 14px; font-size:13px; border-width:1.5px; border-radius:11px; box-shadow:2px 3px 0 var(--shadow) }
+
+  /* ---------- hero ---------- */
+  .hero{ display:grid; align-items:center; gap:8px; padding:44px 0 30px }
+  .hero h1{
+    margin:0 0 16px; font-family:var(--font-serif); font-weight:700; color:var(--ink);
+    font-size:clamp(44px, 11vw, 62px); letter-spacing:8px; line-height:1.12;
+  }
+  .hero .sub{ margin:0 0 4px; font-size:clamp(16px, 4.2vw, 19px); color:var(--ink2); line-height:1.75 }
+  .hero .ctas{ display:flex; flex-wrap:wrap; gap:14px; margin-top:26px }
+  .a-hero{ margin:0 auto; width:min(300px, 78vw) }
+  .a-hero svg{ display:block; width:100%; height:auto }
+  @media (min-width:760px){
+    .hero{ grid-template-columns:1.05fr .95fr; gap:30px; padding:66px 0 44px }
+    .a-hero{ width:min(360px, 100%); margin:0 }
+  }
+
+  /* hero 插畫（inline 抄自 index.html，靜態無動畫） */
+  .a-hero .ink{ stroke:#3B3A36; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round }
+  .a-hero .fine{ stroke-width:2.5 }
+  .a-hero .none{ fill:none }
+  .a-hero .leaf{ fill:#7C8C6B }
+  .a-hero .dot{ fill:#3B3A36; stroke:none }
+  .a-hero .bubbles{ fill:#FFFDF8 }
+
+  /* ---------- sections ---------- */
+  section{ padding:36px 0 6px }
+  h2{
+    margin:0 0 6px; font-family:var(--font-serif); font-weight:700;
+    font-size:clamp(24px, 6vw, 30px); letter-spacing:4px;
+  }
+  .h2-rule{
+    width:46px; height:3px; background:var(--accent); border-radius:2px;
+    margin:2px 0 22px; position:relative;
+  }
+  .h2-rule::after{
+    content:""; position:absolute; left:52px; top:1px; width:7px; height:7px;
+    border-radius:50%; background:var(--sun); opacity:.85;
+  }
+
+  /* 我哋為咩出現 */
+  .why p{ margin:0 0 14px; max-width:660px; font-size:15.5px; color:var(--ink2) }
+  .why p b{ color:var(--ink); font-weight:700 }
+  /* 開場一句：2 倍大＋刻字（letterpress） */
+  .why .why-lead{
+    display:block; margin:0 0 20px; max-width:900px;
+    font-size:clamp(31px, 2.3vw + 23px, 33px);
+    font-weight:800; line-height:1.35; letter-spacing:.5px; color:var(--ink);
+    text-shadow:0 1px 0 rgba(255,255,255,.85), 0 -1px 0 rgba(59,58,54,.25);
+  }
+  .why .why-lead .wm{
+    display:inline-block; height:30px; width:30px; border-radius:7px; object-fit:cover;
+    vertical-align:-6px; margin-right:8px;
+  }
+
+  /* 點玩 */
+  .steps{ display:grid; gap:16px; margin-top:4px }
+  @media (min-width:760px){ .steps{ grid-template-columns:repeat(3,1fr) } }
+  .card{
+    background:var(--surface); border:2px solid var(--border); border-radius:16px;
+    box-shadow:4px 5px 0 var(--shadow); padding:18px 18px 16px; position:relative;
+  }
+  .step-num{
+    width:32px; height:32px; border-radius:50%; flex:0 0 auto;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:2px solid var(--ink); background:var(--surface2);
+    font-family:var(--font-serif); font-weight:700; font-size:16px;
+  }
+  .step:nth-child(2) .step-num{ border-color:var(--sun); color:var(--sun) }
+  .step:nth-child(3) .step-num{ background:var(--accent); color:#FFFDF8 }
+  .step h3{ margin:12px 0 6px; font-size:16.5px; letter-spacing:1px }
+  .step p{ margin:0; font-size:14px; color:var(--ink2); line-height:1.7 }
+  /* 安心三點（一行細字） */
+  .quick-rules{
+    display:flex; flex-wrap:wrap; align-items:center; gap:6px 20px;
+    margin-top:16px; font-size:13.5px; color:var(--ink2);
+  }
+  .quick-rules span{ position:relative; padding-left:15px }
+  .quick-rules span::before{
+    content:""; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:7px; height:7px; border-radius:50%; background:var(--accent);
+  }
+  .quick-rules span:nth-child(2)::before{ background:var(--sun) }
+
+  /* 公告正方框（hero 對落，一眼見到嘅方框卡） */
+  #news{ padding:20px 0 8px; scroll-margin-top:88px }
+  .ann-card{
+    background:var(--surface); border:2px solid var(--border-strong); border-radius:18px;
+    box-shadow:4px 5px 0 var(--shadow); padding:12px 16px 10px;
+  }
+  .ann-tab{ display:flex; align-items:baseline; gap:10px; padding-bottom:8px }
+  .ann-tab b{ font-family:var(--font-serif); font-weight:700; font-size:19px; letter-spacing:3px }
+  .ann-tab small{ font-size:11.5px; color:var(--ink3) }
+  .ann-scroll{ max-height:476px; overflow-y:auto; overscroll-behavior:contain }
+  .ann{ padding:8px 0 9px; border-top:1px dashed var(--border) }
+  .ann:first-child{ border-top:0 }
+  .ann-row{ display:flex; align-items:baseline; gap:8px; min-width:0 }
+  .ann-date{
+    flex:0 0 auto; font-size:11.5px; color:var(--ink2); background:var(--surface2);
+    border:1px solid var(--border-strong); border-radius:999px; padding:1px 8px;
+    font-variant-numeric:tabular-nums;
+  }
+  .ann-row h3{ margin:0; font-size:15px; letter-spacing:.2px; line-height:1.35 }
+  .ann p{
+    margin:4px 0 0; font-size:13.5px; color:var(--ink2); line-height:1.6;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  }
+  .ann-empty{
+    margin:6px 0; padding:14px; text-align:center; color:var(--ink3); font-size:13.5px;
+    background:var(--surface2); border:1.5px dashed var(--border); border-radius:12px;
+  }
+  @media (min-width:760px){
+    #news{ padding-top:16px }
+    .ann-card{ padding:14px 20px 12px }
+    .ann-scroll{ max-height:452px }
+    .ann-tab b{ font-size:21px }
+    .ann p{ font-size:14px }
+  }
+
+  /* footer */
+  footer{
+    margin-top:46px; padding:26px 0 34px; border-top:1px solid rgba(201,183,156,.55);
+    text-align:center; font-size:12.5px; color:var(--ink3); line-height:2;
+  }
+  footer .f-site{ color:var(--accent-hover); font-weight:700 }
+</style>
+<input type="hidden" id="_o_dbjbempljhcmhlfpfacalomonjpalpko" data-inspect-config="7"><script type="text/javascript" src="chrome-extension://dbjbempljhcmhlfpfacalomonjpalpko/scripts/inspector.js"></script><style>.ssbtn-default{position:absolute;z-index:1000000000;background:none;border:none;outline:none;right:0;cursor:pointer;width:26px;height:26px;margin:0;padding:0;top:8px;right:8px;opacity:.6;pointer-events:all;transition-duration:.25s}.ssbtn-default:hover{opacity:1 !important;transition-duration:.25s}.ssbtn-default .fade{transition-duration:5s;opacity:0}.ssbtn-default svg{filter:drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.5))}.ssbtn-youtube{background:none;border:none;box-sizing:border-box}ytd-watch-flexy .ytp-right-controls-left .ssbtn-youtube svg{margin:1px auto;width:22px;height:auto}.ytp-embed .ytp-right-controls .ssbtn-youtube{width:20px !important;margin-right:15px !important}ytd-shorts ytd-shorts-player-controls #right-controls .ssbtn-youtube{pointer-events:auto;width:48px;padding:12px;position:relative}ytd-shorts ytd-shorts-player-controls #right-controls .ssbtn-youtube:hover::after{content:"";display:block;position:absolute;border-radius:28px;background-color:hsla(0,0%,100%,.1);inset:4px}.ytwPlayerTopControlsPlayerControlsTopRight .ssbtn-youtube{max-height:48px;padding:12px;min-width:48px}.ytwPlayerTopControlsPlayerControlsTopRight .ssbtn-youtube svg{width:auto}.ssbtn-vimeo{height:2rem !important;width:2rem !important;margin-top:8px !important;justify-self:flex-end}.ssbtn-vimeo button{width:100% !important;height:100% !important}.ssbtn-vimeo button svg{width:19px}.ssbtn-netflix{background:none;border:none;cursor:pointer;width:4rem;margin:0 .5rem;display:inline-block;flex-shrink:0}.ssbtn-netflix>svg{transform:translateY(-0.5rem)}.ssbtn-netflix:hover{transform:scale(1.2);transition-duration:.25s}.ssbtn-hulu{width:27px;margin-top:4px;margin-right:10px;opacity:.7;cursor:pointer}.ssbtn-hulu:hover{opacity:1}.ssbtn-amazon{outline:none;cursor:pointer;opacity:.8;padding:0;cursor:pointer;border-radius:100px;position:relative;z-index:1;display:flex;align-items:center;justify-content:center}.ssbtn-amazon:hover{opacity:1}@media(min-width: 1200px){.ssbtn-amazon{margin-right:1.5vw}.ssbtn-amazon svg{height:1.5vw;width:1.5vw}}@media(max-width: 1199px){.ssbtn-amazon{width:38px;height:38px}.ssbtn-amazon svg{height:18px;width:18px}}.ssbtn-max{width:24px;height:24px;margin:4px;padding:12px;box-sizing:content-box;position:relative;opacity:.7;cursor:pointer;display:flex;justify-content:center;align-items:center}.ssbtn-max:hover{opacity:1;transform:scale(1.2)}.ssbtn-max svg{width:24px;height:24px}.ssbtn-disney{opacity:1;z-index:1000000000;position:relative;pointer-events:all !important;cursor:pointer}.ssbtn-disney:hover{opacity:.8}.ssbtn-disney svg{width:27px !important;height:31px !important;padding-top:4px;margin-right:7px}.ssbtn-apple{cursor:pointer;opacity:.7}.ssbtn-apple:hover{opacity:1}.ssbtn-apple svg{width:22px !important;height:22px !important;margin-right:2px !important}.ssbtn-peacock{width:3.5rem;height:3.5rem;padding:1rem;opacity:.7;cursor:pointer}.ssbtn-peacock:hover{opacity:1}.kHbLHC1E6j.pv9vV5fjSr .ssbtn-peacock{opacity:0}.ssbtn-frameio{display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.7;width:32px;height:32px;border-radius:6px}.ssbtn-frameio:hover{background-color:#1f1f1f}.ssbtn-frameio svg{width:18px !important;height:18px !important}.ssbtn-crunchyroll{width:calc(var(--kat-spacing)*44) !important;padding:10px !important;position:relative !important;opacity:.75}.ssbtn-crunchyroll:hover{opacity:1}.ssbtn-crunchyroll:hover::before{content:"" !important;position:absolute !important;inset:0 !important;border-radius:100px !important;background-color:#272727 !important;width:100% !important;height:100% !important;z-index:0 !important}.ssbtn-crunchyroll svg{padding:0 2px 2px !important;align-self:center !important;position:relative !important;z-index:1 !important}.ssbtn-viki{font-size:.875rem;height:calc(2.875rem + .625*(100vw - 37.5rem)/42.5);padding:calc(.529412rem + .588235vw);border-radius:50%;cursor:pointer}.ssbtn-viki:hover{background-color:#485263;transform:scale(calc(var(--btn-scale) * 1.1))}.teststyles1234{opacity:.5}body.ssTakeScreenshot.ss-netflix [data-uia=video-canvas]{z-index:10000000}body.ssTakeScreenshot.ss-netflix video{background-color:#000}body.ssTakeScreenshot.ss-netflix .player-timedtext{display:none !important}body.ssTakeScreenshot.ss-netflix.showSubs .player-timedtext{display:block !important}body.ssTakeScreenshot.ss-amazon .dv-player-fullscreen video{z-index:99999999 !important}body.ssTakeScreenshot.ss-amazon.showSubs .atvwebplayersdk-captions-overlay{z-index:999999999 !important;position:relative;opacity:1 !important}body.ssTakeScreenshot.ss-disney disney-web-player-ui>*{display:none !important}body.ssTakeScreenshot.ss-disney.showSubs timed-text-override-region{display:block !important}body.ssTakeScreenshot.ss-hulu .ContentPlayer__contentArea{z-index:10000000000;position:relative}body.ssTakeScreenshot.ss-hulu .ClosedCaption{display:none}body.ssTakeScreenshot.ss-hulu.showSubs .ClosedCaption{display:block}body.ssTakeScreenshot.ss-max video{z-index:99999999;position:relative}body.ssTakeScreenshot.ss-max.showSubs [data-testid=caption_renderer_overlay]{z-index:999999999;position:relative;width:100%;height:100%;display:block !important}body.ssTakeScreenshot.ss-youtube .html5-video-container,body.ssTakeScreenshot.ss-youtube .ytp-caption-window-container{z-index:999999999 !important}body.ssTakeScreenshot.ss-apple #apple-music-video-player{z-index:999999999 !important}body.ssTakeScreenshot.ss-apple .video-player-scrim{display:none}body.ssTakeScreenshot.ss-apple video::cue{visibility:hidden}body.ssTakeScreenshot.ss-apple.showSubs video::cue{visibility:visible}body.ssTakeScreenshot.ss-peacock video{z-index:999999999 !important;position:relative}body.ssTakeScreenshot.ss-peacock.showSubs [data-t=subtitles]{z-index:9999999999 !important}body.ssTakeScreenshot.ss-peacock.showSubs [data-t=subtitles]>*{bottom:15% !important;margin-top:auto !important}body.ssTakeScreenshot.ss-crunchyroll video{z-index:999999999 !important}body.ssTakeScreenshot.ss-crunchyroll .katamariDesktop{display:none !important}body.ssTakeScreenshot.ss-crunchyroll.showSubs .bitmovinplayer-poster+div{z-index:9999999999 !important}body.ssTakeScreenshot.ss-viki video{z-index:999999999 !important}body.ssTakeScreenshot.ss-viki.showSubs .vjs-text-track-display{z-index:9999999999 !important}:host-context(body.ssbtn-over) [data-pointer-mask-svg=true]{display:none !important}
+</style><link rel="stylesheet" href="chrome-extension://ppkojackhibeogijphhfnamhemklmial/css/ScreenshotControl.css"></head>
+<body data-new-gr-c-s-check-loaded="14.1339.0" data-gr-ext-installed="">
+
+<header class="topbar">
+  <div class="wrap inner">
+    <svg class="logo" viewBox="0 0 128 128" role="img" aria-label="傾偈樹窿台 logo">
+      <g stroke="#3B3A36" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 50Q17 33 34 33L55 33Q71 33 71 50L71 67Q71 82 56 82L42 95L42 82L34 82Q17 82 17 67Z" fill="#7C8C6B"></path>
+        <path d="M57 61Q57 45 73 45L94 45Q111 45 111 62L111 79Q111 94 95 94L95 107L81 94L73 94Q57 94 57 79Z" fill="#D98E4A"></path>
+        <g stroke="none">
+          <circle cx="34" cy="54" r="3" fill="#3B3A36"></circle><circle cx="51" cy="54" r="3" fill="#3B3A36"></circle>
+          <circle cx="76" cy="66" r="3" fill="#3B3A36"></circle><circle cx="93" cy="66" r="3" fill="#3B3A36"></circle>
+        </g>
+        <path d="M33 65Q42 74 51 65M76 77Q85 86 94 77" fill="none"></path>
+      </g>
+    </svg>
+    <span class="name">傾偈樹窿台</span>
+    <img class="wm wm-row" src="img/hkga.png" alt="HK Gaming Apps" width="22" height="22">
+    <span class="spacer"></span>
+    <div class="stats" id="liveStats" aria-label="即時人數">
+      <img class="wm wm-stat" src="img/hkga.png" alt="HK Gaming Apps" width="20" height="20">
+      <span><b id="stOnline">49</b><span class="lbl">線上</span></span>
+      <span><b id="stChatting">46</b><span class="lbl">傾緊</span></span>
+      <span><b id="stPairs">23</b><span class="lbl">配對</span></span>
+      <span><b id="stTotal">4,450</b><span class="lbl">用過</span></span>
+    </div>
+    <a class="btn btn-sm" href="/">登入／入去傾偈</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= hero ================= -->
+  <div class="hero">
+    <div>
+      <h1>傾偈樹窿台</h1>
+      <p class="sub">香港人嘅樹窿：唔使報名，入到嚟就有人聽。</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="/">入去傾偈</a>
+      </div>
+    </div>
+    <div class="a-hero" role="img" aria-label="一棵有笑臉嘅樹同太陽，樹下兩個小朋友傾偈">
+      <svg viewBox="0 0 342 280" aria-hidden="true">
+        <g class="sun ink" style="stroke:#D98E4A" fill="none">
+          <g class="rays"><path d="M288 5v9m0 80v9M239 54h9m80 0h9M253 19l6 6m58 58 6 6M253 89l6-6m58-58 6-6"></path></g>
+          <path fill="#D98E4A" d="M319 54c1 18-14 31-31 30-18 1-31-13-30-30-1-18 13-31 30-30 18-1 32 13 31 30Z"></path>
+          <path style="stroke:#FAF6EE" d="M278 49h1m17 0h1m-18 12q9 8 18-1"></path>
+        </g>
+        <path class="ink none" style="stroke:#C9B79C" d="M20 269q69-5 130-1t172-2"></path>
+        <path class="ink" fill="#C9B79C" d="M117 267c12-21 13-48 11-74l23-6c-3 33-1 57 13 79-16-4-29-3-47 1Z"></path>
+        <path class="ink none fine" d="M139 220q-4 19-2 32m14 5-3-9"></path>
+        <g class="canopy ink leaf">
+          <path d="M53 174c-20-9-22-30-11-43-10-19 0-40 18-43-2-22 15-37 35-32 9-17 30-21 44-10 18-7 38 1 41 19 21-3 36 13 33 31 19 8 25 27 15 44 10 18 1 39-18 44 1 21-20 33-39 25-7 20-29 28-46 17-16 12-39 4-43-14-24 6-43-15-29-38Z"></path>
+          <path class="none fine" style="stroke:#FAF6EE" d="M65 102q-3-13 10-18m33-22q7-7 16-3m70 54q13 1 14 13M59 163q-5-8-1-15m123 48q9 1 14-7"></path>
+          <g class="none"><path d="M139 219q-1-21-12-39m9 21q-22-3-31-17m35 24q18-15 21-33m-31 10q-4-15-1-23m29 23q15-2 23-14"></path></g>
+          <g>
+            <circle class="dot" cx="118" cy="120" r="3"></circle><circle class="dot" cx="149" cy="120" r="3"></circle>
+            <path class="none" d="M118 134q16 18 32-1"></path>
+          </g>
+          <path class="none fine" d="M83 119q5-4 10-1m77 29q6-4 11-1"></path>
+        </g>
+        <g class="person ink">
+          <path fill="#7C8C6B" d="M57 241q-10 9-7 19l22 1 4-14-8-7Z"></path>
+          <path fill="#F2D7C2" d="M72 224c-3-10-18-10-23-1-7 12 1 22 11 21 11 0 17-11 12-20Z"></path>
+          <path class="none" d="M49 226q9 2 14-7m-8 31-12 7 10 2m17-11 10 5 7-5m-30 13-8 7h15m6-8 12 7h7"></path>
+          <circle class="dot" cx="65" cy="231" r="1.5"></circle>
+          <path class="none fine" d="M64 237q4 2 7-2"></path>
+        </g>
+        <g class="person ink">
+          <path fill="#D98E4A" d="M251 241q-9 6-10 18l25 2 1-13-8-8Z"></path>
+          <path fill="#F2D7C2" d="M244 222c7-9 21-6 24 4 4 11-6 20-16 17-10-2-14-13-8-21Z"></path>
+          <path class="none" d="M250 218q4 9 17 9m-19 22-13 5-7-5m34 0 12 9-10 1m-17 2-12 7h-9m33-7 11 7h9"></path>
+          <circle class="dot" cx="249" cy="232" r="1.5"></circle>
+          <path class="none fine" d="M245 238q4 3 8-1"></path>
+        </g>
+        <path class="ink none fine" style="stroke:#7C8C6B" d="M28 267l-3-7m4 7 4-9m62 8-3-6m4 6 3-9m91 10-2-8m3 8 5-6m110 6-3-7m4 7 4-11"></path>
+        <g class="bubble ink bubbles">
+          <path d="M12 188c-8-9-3-21 8-23 2-12 18-16 26-7 11-6 25 2 24 13 12 10 5 25-8 25H47l-8 11-1-12c-12 4-23 2-26-7Z"></path>
+          <g class="dot"><circle cx="27" cy="178" r="2"></circle><circle cx="39" cy="178" r="2"></circle><circle cx="51" cy="178" r="2"></circle></g>
+        </g>
+        <g class="bubble ink bubbles">
+          <path d="M257 178c-7-10 0-22 12-22 5-12 21-13 29-3 13-4 25 5 23 17 12 13 2 26-12 24h-18l-6 12-4-12c-15 5-29-2-24-16Z"></path>
+          <path fill="#7C8C6B" d="M280 182q-1-15 16-15 0 15-16 15Z"></path>
+          <path class="none fine" d="m278 186 12-13"></path>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ================= 公告正方框（announcements.json） ================= -->
+  <section id="news">
+    <div class="ann-card">
+      <div class="ann-tab"><b>最新公告</b></div>
+      <div class="ann-scroll">
+        <div class="ann-list" aria-busy="false" role="list"><article class="ann" role="listitem"><div class="ann-row"><time class="ann-date">2026-10-23</time><h3>服務已恢復正常</h3></div><p>系統維修已完成，服務已於 17:25 恢復正常。多謝耐心等候。</p></article><article class="ann" role="listitem"><div class="ann-row"><time class="ann-date">2026-10-23</time><h3>今晚 17:15 暫停服務（緊急維修）</h3></div><p>樹窿台將於今日 17:15 起暫停服務，進行緊急維修。期間無法配對及聊天，恢復時間另行公告。不便之處，敬請原諒。</p></article><article class="ann" role="listitem"><div class="ann-row"><time class="ann-date">2026-10-23</time><h3>定期系統更新公告</h3></div><p>系統更新已完成，服務已於 08:02 回復正常。</p></article></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 為咩出現 ================= -->
+  <section class="why">
+    <h2>我哋為咩出現</h2>
+    <div class="h2-rule"></div>
+    <p class="why-lead"><img class="wm" src="img/hkga.png" alt="HK Gaming Apps" width="30" height="30">我哋係 HK Gaming Apps，免費提供伺服器同 App 服務，淨係想為香港人喺一日入面多一啲連結。</p>
+    <p>香港人生活逼人，日頭開工、夜晚放工，連透氣時間都要就住分。好多時心入面有嘢想講兩句，但又唔想俾人知自己係邊個、唔想攞自己個面口出去俾人認得。</p>
+    <p>所以有咗樹窿台：<b>匿名、即時、一對一</b>嘅文字樹窿。撳一撳入去，同隨機配到嘅陌生人傾兩句，講完就算，唔使開帳戶、唔使留底。</p>
+  </section>
+
+  <!-- ================= 點玩 ================= -->
+  <section>
+    <h2>點玩</h2>
+    <div class="h2-rule"></div>
+    <div class="steps">
+      <div class="card step">
+        <span class="step-num serif">1</span>
+        <h3>撳入去</h3>
+        <p>撳「入去傾偈」，用 Google 或者 Apple 一鍵登入，揀一次性別就入局。全程只有你自己知道係邊個，對方唔會見到。</p>
+      </div>
+      <div class="card step">
+        <span class="step-num serif">2</span>
+        <h3>隨機配對一位陌生人</h3>
+        <p>系統喺等緊嘅人之中隨機拉一位過嚟。只會見到對方性別標籤，其他一切匿名，冇相冇名冇資料。</p>
+      </div>
+      <div class="card step">
+        <span class="step-num serif">3</span>
+        <h3>3 分鐘內有來有往</h3>
+        <p>對話有來有往就繼續傾得幾耐都得。唔想同對方傾落去，撳「換下一位」即刻轉人。</p>
+      </div>
+    </div>
+    <div class="quick-rules">
+      <span>匿名（唔使開名）</span>
+      <span>3 分鐘規則（任何一邊 3 分鐘冇回覆自動完結）</span>
+      <span>「唔啱傾可以隨時走」</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>HK Gaming Apps · <a class="f-site" href="https://treehole.hkgamingapp.com/">treehole.hkgamingapp.com</a> · © 2026</div>
+  </div>
+</footer>
+
+<script>
+/* 只做一件事：由 announcements.json 讀公告落正方框（一次過顯示，超過就卡內 scroll）。平滑 scroll 由 CSS scroll-behavior 負責。 */
+(function () {
+  var list = document.querySelector('.ann-list');
+  var empty = function () {
+    list.innerHTML = '<p class="ann-empty">暫時沒有公告。</p>';
+    list.setAttribute('aria-busy', 'false');
+  };
+  fetch('announcements.json', { cache: 'no-store' })
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      if (!Array.isArray(data) || data.length === 0) throw new Error('no announcements');
+      for (var i = 0; i < data.length; i++) {
+        var a = data[i];
+        if (!a || typeof a !== 'object' || !a.title || !a.body) throw new Error('bad item');
+      }
+      list.textContent = '';
+      list.setAttribute('aria-busy', 'false');
+      data.forEach(function (a) {
+        var item = document.createElement('article');
+        item.className = 'ann';
+        item.setAttribute('role', 'listitem');
+        var row = document.createElement('div');
+        row.className = 'ann-row';
+        var date = document.createElement('time');
+        date.className = 'ann-date';
+        date.textContent = a.date || '';
+        row.appendChild(date);
+        var t = document.createElement('h3');
+        t.textContent = a.title;
+        row.appendChild(t);
+        var p = document.createElement('p');
+        p.textContent = a.body;
+        item.appendChild(row);
+        item.appendChild(p);
+        list.appendChild(item);
+      });
+    })
+    .catch(empty);
+})();
+</script>
+
+<script>
+/* top bar 即時數據：每 10 秒讀同 origin 嘅 /api/stats；讀唔到顯示 —，唔會出 error。 */
+(function () {
+  var ids = { online: 'stOnline', chatting: 'stChatting', pairs: 'stPairs', total_users: 'stTotal' };
+  var setStat = function (el, v) {
+    if (el) el.textContent = (typeof v === 'number' && isFinite(v)) ? v.toLocaleString('en-US') : '—';
+  };
+  var refresh = function () {
+    fetch('/api/stats', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        for (var k in ids) setStat(document.getElementById(ids[k]), d ? d[k] : undefined);
+      })
+      .catch(function () {
+        for (var k in ids) setStat(document.getElementById(ids[k]), undefined);
+      });
+  };
+  refresh();
+  window.setInterval(refresh, 10000);
+})();
+</script>
