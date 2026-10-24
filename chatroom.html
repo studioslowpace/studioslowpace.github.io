@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>客舍萬事屋 | 鄰里交流區</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <title>客舍萬事屋 | 鄰里人交流區</title>
     
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -36,7 +36,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            position: relative;
+            position: fixed;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
         @media (min-width: 421px) {
@@ -264,7 +264,7 @@
         <div class="phone-title-bar">
             <div class="main-title-box">
                 <span class="logo-btn" onclick="toggleAdminNavbar()" title="點擊切換主理人模式">🏮</span>
-                <span>客舍萬事屋 | 鄰里交流區</span>
+                <span>鄰里人交流區</span>
             </div>
             <button onclick="window.open('https://studioslowpace.com/skillsupermarket.html', '_blank')" class="nav-link-btn" style="color:#78350f; background:#fef3c7; border-color:#fde68a;">萬事屋 ↗</button>
         </div>
@@ -272,8 +272,8 @@
         <!-- 🔒 驗證牆 (未驗證時顯示) -->
         <div id="chat-verify-box" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding: 1.5rem; text-align: center; background: #fff7ed; overflow-y: auto;">
             <div style="margin-bottom: 1rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #78350f;">鄰里居民身分驗證</h3>
-                <p style="font-size: 0.75rem; color: #92400e; margin-top:0.25rem;">請輸入您在萬事屋登記的**聯絡方式**與**姓名**。</p>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #78350f;">鄰里人身分驗證</h3>
+                <p style="font-size: 0.75rem; color: #92400e; margin-top:0.25rem;">請輸入您在客舍萬事屋登記的**聯絡方式**與**姓名**。</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <input type="text" id="chat-verify-contact" placeholder="請輸入聯絡方式 (IG / 電話)" class="input-field" style="text-align: center;">
@@ -294,7 +294,7 @@
                 <div class="phone-sub-bar" style="border-radius: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #eae2d5;">
                     <span>🟢 在線：<strong id="online-users-count-home">1</strong> 人</span>
                     <span>|</span>
-                    <span>📜 居民總數：<strong id="total-users-count-home">0</strong> 人</span>
+                    <span>📜 鄰里人總數：<strong id="total-users-count-home">0</strong> 人</span>
                 </div>
 
                 <!-- 📖 卡片一：雙欄按鈕 (源由 / 守則) -->
@@ -304,7 +304,7 @@
                         <span>點擊查看詳情</span>
                     </div>
                     <div class="info-trigger-btn" onclick="openModal('modal-rules')">
-                        <h5>📜 鄰里守則</h5>
+                        <h5>📜 交流區守則</h5>
                         <span>點擊查看公約</span>
                     </div>
                 </div>
@@ -350,7 +350,7 @@
                 <div class="phone-sub-bar">
                     <span>🟢 在線：<strong id="online-users-count-chat">1</strong> 人</span>
                     <span>|</span>
-                    <span>📜 居民總數：<strong id="total-users-count-chat">0</strong> 人</span>
+                    <span>📜 鄰里人總數：<strong id="total-users-count-chat">0</strong> 人</span>
                 </div>
 
                 <!-- 獨立滾動的訊息對話區 -->

@@ -1661,7 +1661,8 @@ function switchTab(tabName) {
                     : hList.map(person => `
                         <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100">
                             <span class="font-bold text-gray-700 text-xs">🥷 接單人：${person.name}</span>
-                            <button onclick="copyContactInfo('${person.contact}')" class="text-[11px] text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100 font-bold">📋 複製資料</button>
+                            <span class="font-bold text-gray-700 text-xs">📋 聯絡：${person.contact}</span>
+                            <button onclick="copyContactInfo('${person.contact}')" class="text-[11px] text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100 font-bold">複製</button>
                         </div>
                     `).join('');
 
