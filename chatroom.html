@@ -10,34 +10,47 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <style>
+<style>
+        /* ==========================================
+           0. 全域重置與基礎樣式 (文青自然風)
+           ========================================== */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* 1. 滿版背景與滾動鎖定 */
         html, body { 
             height: 100%; 
-            background-color: #f5f2eb; 
+            background-color: #f3f6f9; /* 霧藍灰質感背景 */
             color: #334155; 
             overflow: hidden; /* 防止整個網頁上下滑動 */
         }
         .hidden { display: none !important; }
 
-        .btn-orange { background-color: #ea580c; color: #ffffff; border: none; cursor: pointer; font-weight: 700; border-radius: 0.75rem; }
-        .btn-orange:hover { background-color: #c2410c; }
+        /* 自然藍按鈕樣式 */
+        .btn-blue { 
+            background-color: #2563eb; 
+            color: #ffffff; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 600; 
+            border-radius: 0.75rem; 
+            transition: background 0.2s;
+        }
+        .btn-blue:hover { background-color: #1d4ed8; }
 
-        /* 📱 2. 自動適應手機動態高度 (100dvh) 的容器 */
+        /* ==========================================
+           1. 📱 手機 App 容器 (自動適應 100dvh)
+           ========================================== */
         .phone-app-wrapper {
             width: 100%;
             max-width: 420px;
-            height: 100vh;           /* 備用高度 */
-            height: 100dvh;          /* 🌟 動態適應任何手機真實可視高度 */
+            height: 100vh;
+            height: 100dvh; /* 動態適應真實手機可視高度 */
             margin: 0 auto;
-            background: #faf7f2;
+            background: #fafcfd;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             position: fixed;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
         @media (min-width: 421px) {
             body { padding: 1rem 0; }
@@ -45,16 +58,20 @@
                 position: relative;
                 height: calc(100vh - 2rem);
                 height: calc(100dvh - 2rem);
-                border: 1px solid #e7e0d3;
+                border: 1px solid #cbd5e1;
                 border-radius: 1.5rem;
             }
         }
 
-        /* 3. 固定不變的頂部標題列 */
+        /* ==========================================
+           2. 頂部導航與標題列
+           ========================================== */
+        .admin-nav { background-color: #0f172a; color: #ffffff; padding: 0.75rem 1rem; border-bottom: 2px solid #2563eb; flex-shrink: 0; }
+        
         .phone-title-bar {
-            flex-shrink: 0; /* 🌟 確保打字或滾動時絕對不被壓縮 */
-            background: #ebd8c1;
-            border-bottom: 1px solid #dcc3a5;
+            flex-shrink: 0;
+            background: #e2e8f0; /* 沉穩的紙藍灰色 */
+            border-bottom: 1px solid #cbd5e1;
             padding: 0.6rem 0.85rem;
             display: flex;
             align-items: center;
@@ -65,8 +82,8 @@
             display: flex;
             align-items: center;
             gap: 0.35rem;
-            color: #78350f;
-            font-weight: 900;
+            color: #1e293b;
+            font-weight: 800;
             font-size: 0.9rem;
         }
         .logo-btn {
@@ -76,12 +93,25 @@
             user-select: none;
         }
         .logo-btn:hover { transform: scale(1.15); }
+        .banner-logo-img { width: 15px; height: 15px; object-fit: cover; }
 
-        /* 固定不變的對話頂部 HeaderBar */
+        .nav-link-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.6rem;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.725rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* 對話頂部 HeaderBar */
         .phone-header {
-            flex-shrink: 0; /* 🌟 固定不動 */
-            background: #f3ece0;
-            border-bottom: 1px solid #e2d8c7;
+            flex-shrink: 0;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
             padding: 0.55rem 0.85rem;
             display: flex;
             align-items: center;
@@ -89,59 +119,49 @@
             user-select: none;
             z-index: 10;
         }
-        .nav-link-btn {
-            background: #ffffff;
-            border: 1px solid #d6cebf;
-            border-radius: 0.6rem;
-            padding: 0.25rem 0.55rem;
-            font-size: 0.725rem;
-            font-weight: bold;
-            color: #555;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
         .phone-header-title {
             font-size: 0.85rem;
             font-weight: 800;
-            color: #574332;
+            color: #1e293b;
             cursor: pointer;
             padding: 0.2rem 0.5rem;
             border-radius: 0.5rem;
             transition: background 0.2s;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 0.2rem;
+            gap: 1px;
         }
-        .phone-header-title:hover { background: #e8dfcf; }
+        .phone-header-title:hover { background: #e2e8f0; }
 
         .identity-badge {
             font-size: 0.725rem;
-            font-weight: 700;
-            color: #3b7a57;
+            font-weight: 600;
+            color: #2563eb;
             background: #ffffff;
-            border: 1px solid #c5e1b4;
+            border: 1px solid #bfdbfe;
             padding: 0.2rem 0.55rem;
             border-radius: 9999px;
             cursor: pointer;
         }
-        .identity-badge:hover { background: #e2f0d9; }
+        .identity-badge:hover { background: #eff6ff; }
 
-        /* 數據統計欄 (固定不變) */
+        /* ==========================================
+           3. 數據統計與資訊卡片
+           ========================================== */
         .phone-sub-bar {
-            flex-shrink: 0; /* 🌟 固定不動 */
-            background: #f8f4ec;
-            border-bottom: 1px solid #eae2d5;
+            flex-shrink: 0;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
             padding: 0.4rem 0.75rem;
             font-size: 0.725rem;
-            color: #786858;
+            color: #64748b;
             display: flex;
             justify-content: space-around;
             text-align: center;
         }
-        .phone-sub-bar strong { color: #2e6f40; }
+        .phone-sub-bar strong { color: #2563eb; }
 
-        /* 雙欄按鈕卡片 (源由與守則) */
         .info-card-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -149,30 +169,32 @@
             margin-bottom: 0.75rem;
         }
         .info-trigger-btn {
-            background: #fff7ed;
-            border: 1.5px solid #fed7aa;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
             padding: 0.6rem;
             border-radius: 0.75rem;
             text-align: center;
             cursor: pointer;
             transition: 0.2s;
         }
-        .info-trigger-btn:hover { background: #ffedd5; }
-        .info-trigger-btn h5 { font-size: 0.8rem; font-weight: 800; color: #78350f; }
-        .info-trigger-btn span { font-size: 0.65rem; color: #b45309; }
+        .info-trigger-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .info-trigger-btn h5 { font-size: 0.8rem; font-weight: 800; color: #1e293b; }
+        .info-trigger-btn span { font-size: 0.65rem; color: #64748b; }
 
-        /* 4. 可獨立滾動的訊息對話區 */
+        /* ==========================================
+           4. 對話訊息捲動區
+           ========================================== */
         .phone-chat-messages {
-            flex: 1; /* 🌟 自動吸收剩餘的所有垂直空間 */
+            flex: 1;
             overflow-y: auto;
             padding: 1rem;
             display: flex;
             flex-direction: column;
             gap: 0.65rem;
-            background-color: #fcf9f2;
-            background-image: radial-gradient(#e2d9cc 0.8px, transparent 0.8px);
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
             background-size: 10px 10px;
-            overscroll-behavior: contain; /* 防止橡皮筋滾動效頭帶動全頁 */
+            overscroll-behavior: contain;
         }
 
         .msg-bubble {
@@ -181,24 +203,26 @@
             border-radius: 0.75rem;
             font-size: 0.85rem;
             line-height: 1.45;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             word-break: break-word;
         }
         .msg-row-other { display: flex; justify-content: flex-start; }
-        .msg-bubble-other { background-color: #ffffff; color: #2d241e; border: 1px solid #e8e1d5; border-top-left-radius: 0.1rem; }
+        .msg-bubble-other { background-color: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; border-top-left-radius: 0.1rem; }
 
         .msg-row-self { display: flex; justify-content: flex-end; }
-        .msg-bubble-self { background-color: #e2f0d9; color: #1e4620; border: 1px solid #c5e1b4; border-top-right-radius: 0.1rem; }
+        .msg-bubble-self { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-top-right-radius: 0.1rem; }
 
-        .msg-sender-name { font-size: 0.7rem; font-weight: 700; color: #3b7a57; margin-bottom: 0.15rem; display: block; }
-        .msg-time-stamp { font-size: 0.6rem; color: #a09587; float: right; margin-left: 0.5rem; margin-top: 0.2rem; }
+        .msg-sender-name { font-size: 0.7rem; font-weight: 700; color: #2563eb; margin-bottom: 0.15rem; display: block; }
+        .msg-time-stamp { font-size: 0.6rem; color: #94a3b8; float: right; margin-left: 0.5rem; margin-top: 0.2rem; }
 
-        /* 5. 固定於底部的打字輸入欄 */
+        /* ==========================================
+           5. 底部打字輸入列
+           ========================================== */
         .phone-input-bar {
-            flex-shrink: 0; /* 🌟 固定不動 */
+            flex-shrink: 0;
             padding: 0.6rem 0.75rem;
-            background: #f3ece0;
-            border-top: 1px solid #e2d8c7;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             gap: 0.5rem;
             align-items: center;
@@ -207,49 +231,51 @@
             flex: 1;
             padding: 0.6rem 0.85rem;
             background-color: #ffffff;
-            border: 1px solid #d8cfc0;
+            border: 1px solid #cbd5e1;
             border-radius: 1.25rem;
             font-size: 0.875rem;
             outline: none;
         }
-        .phone-input-field:focus { border-color: #3b7a57; }
+        .phone-input-field:focus { border-color: #2563eb; }
         .phone-send-btn {
-            background-color: #3b7a57;
+            background-color: #2563eb;
             color: #ffffff;
             border: none;
             border-radius: 1.25rem;
             padding: 0.6rem 1.1rem;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
+            transition: background 0.2s;
         }
+        .phone-send-btn:hover { background-color: #1d4ed8; }
 
+        /* 主題清單卡片與通用輸入框 */
         .topic-select-card {
             background: #ffffff;
-            border: 1.5px solid #eae2d5;
+            border: 1.5px solid #e2e8f0;
             border-radius: 0.85rem;
             padding: 0.75rem;
             margin-bottom: 0.5rem;
             cursor: pointer;
             transition: 0.2s;
         }
-        .topic-select-card:hover { border-color: #3b7a57; background: #fdfbf7; }
-
-        .input-field { width: 100%; padding: 0.625rem; background-color: #ffffff; border: 1px solid #e2d8c7; border-radius: 0.75rem; font-size: 0.875rem; }
-        .admin-nav { background-color: #1c1917; color: #ffffff; padding: 0.75rem 1rem; border-bottom: 2px solid #ea580c; flex-shrink: 0; }
+        .topic-select-card:hover { border-color: #2563eb; background: #fafcfd; }
+        .input-field { width: 100%; padding: 0.625rem; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.75rem; font-size: 0.875rem; outline: none; }
+        .input-field:focus { border-color: #2563eb; }
     </style>
 </head>
 <body>
 
-    <!-- 頂部管理選單 (按 🏮 Logo 觸發) -->
+    <!-- 🏮 頂部管理選單 (點擊 Logo 展開) -->
     <div id="admin-navbar" class="hidden admin-nav">
         <div style="max-width: 420px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; gap: 0.35rem; color: #fb923c; align-items: center; font-size: 0.8rem;">
-                <i data-lucide="shield"></i><strong>主理人模式</strong>
+            <div style="display: flex; gap: 0.35rem; color: #60a5fa; align-items: center; font-size: 0.8rem;">
+                <strong>主理人模式</strong>
             </div>
             <div id="admin-logged-out" style="display: flex; gap: 6px;">
                 <input type="password" id="admin-password-input" placeholder="密碼" class="input-field" style="padding: 2px 6px; width: 80px; font-size: 0.75rem;">
-                <button onclick="handleAdminLogin()" class="btn-orange" style="padding: 2px 8px; font-size: 0.75rem;">登入</button>
+                <button onclick="handleAdminLogin()" class="btn-blue" style="padding: 2px 8px; font-size: 0.75rem;">登入</button>
             </div>
             <div id="admin-logged-in" class="hidden" style="display: flex; gap: 6px; align-items: center;">
                 <span style="color: #4ade80; font-size: 0.75rem;">🟢 已登入</span>
@@ -258,47 +284,47 @@
         </div>
     </div>
 
-    <!-- 📱 自動高度手機尺寸主容器 -->
+    <!-- 📱 手機應用主容器 -->
     <main class="phone-app-wrapper">
         
-        <!-- 頂部固定標題列 -->
+        <!-- 頂部標題列 -->
         <div class="phone-title-bar">
             <div class="main-title-box">
-                <span class="logo-btn" onclick="toggleAdminNavbar()" title="點擊切換主理人模式">🏮</span>
+                <span class="logo-btn" onclick="toggleAdminNavbar()" title="點擊切換主理人模式">
+                    <img src="/images/logo-small2.png" alt="Logo" class="banner-logo-img" oncontextmenu="return false;" ondragstart="return false;" />
+                </span>
                 <span>鄰里人交流區</span>
             </div>
-            <button onclick="window.open('https://studioslowpace.com/skillsupermarket.html', '_blank')" class="nav-link-btn" style="color:#78350f; background:#fef3c7; border-color:#fde68a;">客舍萬事屋 ↗</button>
+            <button onclick="window.open('https://studioslowpace.com/skillsupermarket.html', '_blank')" class="nav-link-btn">客舍萬事屋 ↗</button>
         </div>
 
-        <!-- 🔒 驗證牆 (未驗證時顯示) -->
-        <div id="chat-verify-box" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding: 1.5rem; text-align: center; background: #fff7ed; overflow-y: auto;">
+        <!-- 🔒 身分驗證牆 (未登入時顯示) -->
+        <div id="chat-verify-box" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding: 1.5rem; text-align: center; background: #fafcfd; overflow-y: auto;">
             <div style="margin-bottom: 1rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #78350f;">鄰里人身分驗證</h3>
-                <p style="font-size: 0.75rem; color: #92400e; margin-top:0.25rem;">請輸入您在客舍萬事屋登記的**聯絡方式**與**姓名**。</p>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #1e293b;">鄰里人身分驗證</h3>
+                <p style="font-size: 0.75rem; color: #64748b; margin-top:0.25rem;">請輸入您在客舍萬事屋登記的**聯絡方式**與**姓名**。</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <input type="text" id="chat-verify-contact" placeholder="請輸入聯絡方式 (IG / 電話)" class="input-field" style="text-align: center;">
                 <input type="text" id="chat-verify-name" placeholder="請輸入您的姓名 / 稱呼" class="input-field" style="text-align: center;">
-                <button onclick="verifyChatUser()" class="btn-orange" style="padding: 0.75rem; font-size: 0.9rem;">驗證並進入交流區</button>
+                <button onclick="verifyChatUser()" class="btn-blue" style="padding: 0.75rem; font-size: 0.9rem;">驗證並進入交流區</button>
             </div>
         </div>
 
         <!-- 🔓 交流區主視窗 (驗證後解鎖) -->
         <div id="chat-unlocked-box" class="hidden" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
 
-            <!-- ---------------------------------------------------- -->
             <!-- 🏠 PAGE 1: 交流區首頁 -->
-            <!-- ---------------------------------------------------- -->
             <div id="page-home" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 0.85rem;">
                 
                 <!-- 數據統計欄 -->
-                <div class="phone-sub-bar" style="border-radius: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #eae2d5;">
+                <div class="phone-sub-bar" style="border-radius: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #e2e8f0;">
                     <span>🟢 在線：<strong id="online-users-count-home">1</strong> 人</span>
                     <span>|</span>
                     <span>📜 鄰里人總數：<strong id="total-users-count-home">0</strong> 人</span>
                 </div>
 
-                <!-- 📖 卡片一：雙欄按鈕 (源由 / 守則) -->
+                <!-- 📖 資訊按鈕卡片 (源由 / 守則) -->
                 <div class="info-card-grid">
                     <div class="info-trigger-btn" onclick="openModal('modal-origin')">
                         <h5>🌱 社群源由</h5>
@@ -312,47 +338,39 @@
 
                 <!-- 👤 身分切換列 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0 0.1rem;">
-                    <span style="font-size: 0.8rem; font-weight: 800; color: #574332;">📌 請選擇討論主題</span>
-                    <div id="my-identity-badge-home" class="identity-badge" onclick="confirmSwitchIdentity()">
-                        👤 載入中
-                    </div>
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #334155;">📌 請選擇討論主題</span>
+                    <div id="my-identity-badge-home" class="identity-badge" onclick="confirmSwitchIdentity()">👤 載入中</div>
                 </div>
 
-                <!-- 主題列表 -->
+                <!-- 主題列表容器 -->
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     <div style="display:flex; justify-content:flex-end; margin-bottom:0.25rem;">
-                        <button id="btn-add-topic" onclick="openTopicModal()" class="hidden btn-orange" style="padding: 2px 8px; font-size: 0.7rem;">+ 新增主題</button>
+                        <button id="btn-add-topic" onclick="openTopicModal()" class="hidden btn-blue" style="padding: 2px 8px; font-size: 0.7rem;">+ 新增主題</button>
                     </div>
                     <div id="topics-list-container"></div>
                 </div>
-
             </div>
 
-            <!-- ---------------------------------------------------- -->
             <!-- 💬 PAGE 2: 手機對話模式 -->
-            <!-- ---------------------------------------------------- -->
             <div id="page-chat" class="hidden" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
                 
-                <!-- 固定對話頂部 Header Bar -->
-<div class="phone-header">
-    <button class="nav-link-btn" onclick="backToHome()">< 首頁</button>
-    
-    <!-- 🌟 改進後的標題區：支援同時顯示標題與隨時可見的剩餘時間狀態 -->
-    <div class="phone-header-title" onclick="openTopicSwitcherModal()" style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
-        <div style="display: flex; align-items: center; gap: 3px;">
-            <span id="current-topic-title">選擇主題</span>
-            <span style="font-size: 0.6rem; color: #888;">▼</span>
-        </div>
-        <!-- 隨時可見的限時/匿名狀態標籤 -->
-        <span id="current-topic-status-badge" style="font-size: 0.6rem; padding: 0px 5px; border-radius: 3px; display: none; font-weight: normal;"></span>
-    </div>
+                <!-- 對話頂部 Header Bar -->
+                <div class="phone-header">
+                    <button class="nav-link-btn" onclick="backToHome()">< 首頁</button>
+                    
+                    <!-- 標題區：支援同時顯示標題與隨時可見的限時/匿名狀態標籤 -->
+                    <div class="phone-header-title" onclick="openTopicSwitcherModal()">
+                        <div style="display: flex; align-items: center; gap: 3px;">
+                            <span id="current-topic-title">選擇主題</span>
+                            <span style="font-size: 0.6rem; color: #94a3b8;">▼</span>
+                        </div>
+                        <span id="current-topic-status-badge" style="font-size: 0.6rem; padding: 0px 5px; border-radius: 3px; display: none; font-weight: normal;"></span>
+                    </div>
 
-    <div id="my-identity-badge-chat" class="identity-badge" onclick="confirmSwitchIdentity()">
-        👤 載入中
-    </div>
-</div>
+                    <div id="my-identity-badge-chat" class="identity-badge" onclick="confirmSwitchIdentity()">👤 載入中</div>
+                </div>
 
-                <!-- 固定次頂部數據統計欄 -->
+                <!-- 次頂部數據統計欄 -->
                 <div class="phone-sub-bar">
                     <span>🟢 在線：<strong id="online-users-count-chat">1</strong> 人</span>
                     <span>|</span>
@@ -361,89 +379,85 @@
 
                 <!-- 獨立滾動的訊息對話區 -->
                 <div id="topic-chat-messages" class="phone-chat-messages">
-                    <p style="font-size: 0.75rem; color: #a09587; text-align: center; margin: auto;">載入對話中...</p>
+                    <p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin: auto;">載入對話中...</p>
                 </div>
 
-                <!-- 固定於底部的打字發送欄 -->
+                <!-- 底部打字發送欄 -->
                 <form onsubmit="handleSendTopicMessage(event)" class="phone-input-bar">
                     <input type="text" id="chat-input-content" placeholder="講啲嘢..." required class="phone-input-field">
                     <button type="submit" class="phone-send-btn">送出</button>
                 </form>
-
             </div>
-
         </div>
-
     </main>
 
     <!-- 📖 彈窗：社群源由 -->
     <div id="modal-origin" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1200; padding:1rem;">
-        <div style="background:#fff7ed; border:1.5px solid #fed7aa; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #fed7aa; padding-bottom: 0.4rem;">
-                <h3 style="font-size: 0.95rem; font-weight: 800; color: #78350f;">🌱 「客舍萬事屋」源由</h3>
-                <button onclick="closeModal('modal-origin')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#78350f;">✕</button>
+        <div style="background:#fafcfd; border:1.5px solid #cbd5e1; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.4rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">🌱 「客舍萬事屋」源由</h3>
+                <button onclick="closeModal('modal-origin')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#64748b;">✕</button>
             </div>
-            <p style="font-size: 0.775rem; color: #92400e; line-height: 1.6;">
+            <p style="font-size: 0.775rem; color: #475569; line-height: 1.6;">
                 「客舍萬事屋」致力於建立一個步調慢、人情味濃厚的技能互助與生活交流聚落。除了任務委託之外，這裡提供了一個專屬於居民的自由對話角落，讓大家能在此分享點滴、互相串聯。
             </p>
-            <button onclick="closeModal('modal-origin')" class="btn-orange" style="padding:0.4rem; font-size:0.8rem;">了解</button>
+            <button onclick="closeModal('modal-origin')" class="btn-blue" style="padding:0.4rem; font-size:0.8rem;">了解</button>
         </div>
     </div>
 
     <!-- 📖 彈窗：鄰里守則 -->
     <div id="modal-rules" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1200; padding:1rem;">
-        <div style="background:#fff7ed; border:1.5px solid #fed7aa; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #fed7aa; padding-bottom: 0.4rem;">
-                <h3 style="font-size: 0.95rem; font-weight: 800; color: #78350f;">📜 鄰里公約 (使用守則)</h3>
-                <button onclick="closeModal('modal-rules')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#78350f;">✕</button>
+        <div style="background:#fafcfd; border:1.5px solid #cbd5e1; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:340px; display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.4rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">📜 鄰里公約 (使用守則)</h3>
+                <button onclick="closeModal('modal-rules')" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#64748b;">✕</button>
             </div>
-            <ul style="font-size: 0.775rem; color: #92400e; line-height: 1.6; padding-left: 1.1rem; display:flex; flex-direction:column; gap:0.35rem;">
+            <ul style="font-size: 0.775rem; color: #475569; line-height: 1.6; padding-left: 1.1rem; display:flex; flex-direction:column; gap:0.35rem;">
                 <li><strong>友善溫暖交流</strong>：請保持尊重與包容，嚴禁言語攻擊。</li>
                 <li><strong>維護資訊安全</strong>：請勿散播他人私隱或未授權廣告。</li>
                 <li><strong>私密主題密碼</strong>：有密碼保護的主題請勿擅自外流。</li>
             </ul>
-            <button onclick="closeModal('modal-rules')" class="btn-orange" style="padding:0.4rem; font-size:0.8rem;">我已瞭解</button>
+            <button onclick="closeModal('modal-rules')" class="btn-blue" style="padding:0.4rem; font-size:0.8rem;">我已瞭解</button>
         </div>
     </div>
 
-    <!-- 📌 彈窗：對話模式中的主題切換清單 Modal -->
+    <!-- 📌 彈窗：對話模式中的主題切換清單 -->
     <div id="topic-switcher-modal" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1000; padding:1rem;">
-        <div style="background:#faf7f2; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:360px; max-height:80vh; display:flex; flex-direction:column; gap:0.75rem;">
+        <div style="background:#fafcfd; padding:1.25rem; border-radius:1.25rem; width:100%; max-width:360px; max-height:80vh; display:flex; flex-direction:column; gap:0.75rem;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="font-size: 0.95rem; font-weight: 800; color: #574332;">📌 切換討論主題</h3>
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #334155;">📌 切換討論主題</h3>
                 <button onclick="closeTopicSwitcherModal()" style="border:none; background:none; font-size:1.1rem; cursor:pointer; color:#888;">✕</button>
             </div>
             <div id="topics-switcher-list-container" style="overflow-y:auto; flex:1;"></div>
         </div>
     </div>
 
-    <!-- 📌 彈窗：主理人新增主題 Modal -->
+    <!-- 📌 彈窗：主理人新增主題 -->
     <div id="topic-modal" class="hidden" style="position: fixed; inset:0; background: rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:1100; padding:1rem;">
         <div style="background:white; padding:1.25rem; border-radius:1rem; width:100%; max-width:320px; display:flex; flex-direction:column; gap:0.75rem;">
             <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">📌 新增討論主題</h3>
             <form onsubmit="handleCreateTopic(event)" style="display:flex; flex-direction:column; gap:0.6rem;">
                 <div>
-                    <label style="font-size:0.7rem; font-weight:bold; color:#6b7280;">主題名稱</label>
+                    <label style="font-size:0.7rem; font-weight:bold; color:#64748b;">主題名稱</label>
                     <input type="text" id="new-topic-title" required class="input-field" placeholder="例如: 🔒 核心幹部基地">
                 </div>
                 <div>
-                    <label style="font-size:0.7rem; font-weight:bold; color:#6b7280;">主題簡介</label>
+                    <label style="font-size:0.7rem; font-weight:bold; color:#64748b;">主題簡介</label>
                     <input type="text" id="new-topic-desc" class="input-field" placeholder="簡短描述">
                 </div>
                 <div>
-                    <label style="font-size:0.7rem; font-weight:bold; color:#ea580c;">進入密碼 (選填)</label>
+                    <label style="font-size:0.7rem; font-weight:bold; color:#2563eb;">進入密碼 (選填)</label>
                     <input type="password" id="new-topic-password" class="input-field" placeholder="留空代表公開">
                 </div>
-                <!-- 在密碼欄位下方加入此區塊 -->
-<div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
-    <input type="checkbox" id="new-topic-anonymous" style="width:16px; height:16px; cursor:pointer;">
-    <label for="new-topic-anonymous" style="font-size:0.75rem; font-weight:bold; color:#78350f; cursor:pointer;">
-        🕵️ 發起匿名限時主題（對話將保留 24 小時）
-    </label>
-</div>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
+                    <input type="checkbox" id="new-topic-anonymous" style="width:16px; height:16px; cursor:pointer;">
+                    <label for="new-topic-anonymous" style="font-size:0.75rem; font-weight:bold; color:#1e293b; cursor:pointer;">
+                        🕵️ 發起匿名限時主題（對話將保留 24 小時）
+                    </label>
+                </div>
                 <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
-                    <button type="button" onclick="closeTopicModal()" style="flex:1; padding:0.4rem; background:#f3f4f6; border:none; border-radius:0.6rem; font-weight:bold; cursor:pointer; font-size:0.8rem;">取消</button>
-                    <button type="submit" class="btn-orange" style="flex:1; padding:0.4rem; font-size:0.8rem;">確認建立</button>
+                    <button type="button" onclick="closeTopicModal()" style="flex:1; padding:0.4rem; background:#f1f5f9; border:none; border-radius:0.6rem; font-weight:bold; cursor:pointer; font-size:0.8rem;">取消</button>
+                    <button type="submit" class="btn-blue" style="flex:1; padding:0.4rem; font-size:0.8rem;">確認建立</button>
                 </div>
             </form>
         </div>
