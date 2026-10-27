@@ -886,6 +886,15 @@ textarea::placeholder {
     color: #99ca9a;     /* 你也可以順便調整提示文字的顏色 */
 }
 
+/* 限制最多顯示 2 行（標題用） */
+.text-ellipsis-2line {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* 限制最多顯示 5 行（內文用，讓列表不用全部展開） */
 .text-ellipsis-5line {
     display: -webkit-box;
