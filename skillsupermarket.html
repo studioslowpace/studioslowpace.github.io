@@ -886,6 +886,14 @@ textarea::placeholder {
     color: #99ca9a;     /* 你也可以順便調整提示文字的顏色 */
 }
 
+/* 限制最多顯示 5 行（內文用，讓列表不用全部展開） */
+.text-ellipsis-5line {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
     </style>
 </head>
@@ -1572,7 +1580,7 @@ function switchTab(tabName) {
                             <div style="margin-bottom: 0.5rem;">
                                 <span class="tag-orange">${tTag}</span>
                             </div>
-                            <p class="task-card-description text-ellipsis-3line">${tDetails}</p>
+                            <p class="task-card-description text-ellipsis-5line">${tDetails}</p>
                         </div>
                         <div class="task-card-footer">
                             <div class="reward-info-text">
