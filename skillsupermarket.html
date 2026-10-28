@@ -1105,19 +1105,19 @@ textarea::placeholder {
                 </div>
                 <div>
                     <label class="input-label">委託的事情</label>
-                    <input type="text" id="taskTitleInput" required class="input-field" placeholder="請簡單填寫">
+                    <input type="text" id="taskTitleInput" required class="input-field" placeholder="請簡單填寫" autocomplete="off">
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">您的稱呼</label><input type="text" id="clientNameInput" required class="input-field"></div>
-                    <div><label class="input-label">您的聯絡方式 (IG / 電話)</label><input type="text" id="clientContactInput" required class="input-field" placeholder="🔒 僅平台持有人可見"></div>
+                    <div><label class="input-label">您的稱呼</label><input type="text" id="clientNameInput" required class="input-field" autocomplete="off"></div>
+                    <div><label class="input-label">您的聯絡方式 (IG / 電話)</label><input type="text" id="clientContactInput" required class="input-field" placeholder="🔒 僅平台持有人可見" autocomplete="off"></div>
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">限制條件 (如無請填 / )</label><input type="text" id="taskTagInput" required class="input-field" placeholder="指定特定條件持有者"></div>
-                    <div><label class="input-label">額外報酬 (如無請填 / )</label><input type="text" id="rewardInput" required class="input-field" placeholder="增加他人接單的誘因"></div>
+                    <div><label class="input-label">限制條件 (如無請填 / )</label><input type="text" id="taskTagInput" required class="input-field" placeholder="指定特定條件持有者" autocomplete="off"></div>
+                    <div><label class="input-label">額外報酬 (如無請填 / )</label><input type="text" id="rewardInput" required class="input-field" placeholder="增加他人接單的誘因" autocomplete="off"></div>
                 </div>
                 <div>
                     <label class="input-label">委託的詳細說明</label>
-                    <textarea id="taskDetailsInput" required rows="3" class="input-field input-field-textarea" placeholder="請儘量詳細說明"></textarea>
+                    <textarea id="taskDetailsInput" required rows="3" class="input-field input-field-textarea" placeholder="請儘量詳細說明" autocomplete="off"></textarea>
                 </div>
                 <div class="input-block-orange">
                     <label class="input-label input-label-orange">設定管理密碼</label>
@@ -1158,16 +1158,16 @@ textarea::placeholder {
                 </div>
                 <div>
                     <label class="input-label">鄰里人的姓名</label>
-                    <input type="text" id="skillNameInput" required class="input-field input-field-stone">
+                    <input type="text" id="skillNameInput" required class="input-field input-field-stone" autocomplete="off">
                 </div>
                 <div class="form-row-grid">
-                    <div><label class="input-label">慣常使用的技能</label><input type="text" id="skillTagInput" required class="input-field input-field-stone" placeholder="日常會使用的技能/興趣"></div>
-                    <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見"></div>
-                    <div><label class="input-label">正在研習的興趣</label><input type="text" id="skillLearningInput" required class="input-field input-field-stone" placeholder="學習中的技能/興趣"></div>
+                    <div><label class="input-label">慣常使用的技能</label><input type="text" id="skillTagInput" required class="input-field input-field-stone" placeholder="日常會使用的技能/興趣" autocomplete="off"></div>
+                    <div><label class="input-label">聯絡方法</label><input type="text" id="skillContactInput" required class="input-field input-field-stone" placeholder="🔒 僅平台持有人可見" autocomplete="off"></div>
+                    <div><label class="input-label">正在研習的興趣</label><input type="text" id="skillLearningInput" required class="input-field input-field-stone" placeholder="學習中的技能/興趣" autocomplete="off"></div>
                 </div>
                 <div>
                     <label class="input-label">社會認可的資格</label>
-                    <textarea id="skillDescInput" required rows="3" class="input-field input-field-stone input-field-textarea" placeholder="一些認可的資格"></textarea>
+                    <textarea id="skillDescInput" required rows="3" class="input-field input-field-stone input-field-textarea" placeholder="一些認可的資格" autocomplete="off"></textarea>
                 </div>
                 <button type="submit" class="btn-form-submit-stone">新增至鄰里人技能名冊</button>
             </form>
@@ -1240,12 +1240,6 @@ async function fetchAllUserRecordsFromSupabase() {
     } catch (err) { console.error("讀取用戶紀錄失敗:", err.message); }
 }
 
-// 計算某個聯絡人已經發布了幾次任務
-function countUserPosts(contact) {
-    if (!contact) return 0;
-    const cleanContact = contact.trim();
-    return posts.filter(p => p.clientcontact && p.clientcontact.trim() === cleanContact).length;
-}
 
 // 直接從 alluser_record 取得所有人的分數對應表
 function countAllPoints() {
@@ -1852,11 +1846,15 @@ async function handleFormSubmit(event) {
     const clientContact = document.getElementById('clientContactInput').value.trim();
     const clientName = document.getElementById('clientNameInput').value.trim();
     
-    // 💡 檢查此聯絡方式已發布過的任務數量
-    const existingPostCount = countUserPosts(clientContact);
+// 1. 取得所有人的分數對應表
+    const allScores = countAllPoints();
     
-    if (existingPostCount >= 2) {
-        alert("⚠️ 每個帳號/聯絡方式最多只能發布 2 次任務（扣除 2 點萬事分上限），您已達發布上限！");
+    // 2. 取得該聯絡方式目前的分數（如果沒有紀錄則預設為 0 分）
+    const userScore = allScores[clientContact]?.points || 0;
+    
+    // 3. 檢查是否低於負 2 分
+    if (userScore <= -2) {
+        alert(`⚠️ 您的萬事分目前為 ${userScore} 分。每個聯絡方式最多負 2 點萬事分，請先幫手完成其他委託賺取積分，再來發布新委託！`);
         return;
     }
 
@@ -1895,7 +1893,7 @@ async function handleFormSubmit(event) {
         // 如果你有拉取 alluser_record 的函數，也可以在這裡呼叫一次以確保排行榜同步：
         // await fetchAllUserRecordsFromSupabase();
 
-        alert(`✨ 委託發布成功！已為您扣除 1 點萬事分（目前已發布 ${existingPostCount + 1}/2 次）。請記好您的管理密碼！`);
+        alert(`✨ 委託發布成功！已為您扣除 1 點萬事分（您目前的萬事分為 ${userScore - 1} 分）。請記好您的管理密碼！`);
     } catch (err) { 
         alert("發布新委託失敗: " + err.message); 
     }
