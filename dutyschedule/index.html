@@ -20,7 +20,8 @@
             --available-color: #fffde7;  /* 🚀 可選當值時間：轉淺黃 */
             --type-duty: #ffebee;        /* 當值：淺紅 */
             --type-event: #f3e5f5;       /* 活動：淺紫 */
-            --type-private: #f5e6dd;     /* 🚀 私人：轉淺灰 */
+            --type-private: #f5e6dd;     /* 🚀 全私人：轉淺灰 */
+            --type-sup-private: #abb9bd;     /* 🚀 客廳私人：轉淺灰 */
         }
 
         body.theme-inn {
@@ -151,6 +152,7 @@
         .slot.occ-duty { background-color: var(--type-duty) !important; color: #c62828; font-weight: bold; }
         .slot.occ-event { background-color: var(--type-event) !important; color: #6a1b9a; font-weight: bold; }
         .slot.occ-private { background-color: var(--type-private) !important; color: #616161; font-weight: bold; }
+        .slot.occ-sup-private { background-color: var(--type-sup-private) !important; color: #616161; font-weight: bold; }
         
         @media (max-width: 768px) {
             .slot.available { font-size: 11px; }
@@ -240,7 +242,8 @@
                     <li class="legend-item" style="background-color: var(--available-color); color: #f57f17;">🟡 可選當值時間</li>
                     <li class="legend-item" style="background-color: var(--type-duty); color: #c62828;">🛠️ 當值</li>
                     <li class="legend-item" style="background-color: var(--type-event); color: #6a1b9a;">🎉 活動</li>
-                    <li class="legend-item" style="background-color: var(--type-private); color: #616161;">🔒 私人 (不對外開放)</li>
+                    <li class="legend-item" style="background-color: var(--type-private); color: #616161;">🔒 全私人 (不對外開放)</li>
+                    <li class="legend-item" style="background-color: var(--type-sup-private); color: #616161;">🔒 客廰私人 (半開放)</li>
                 </ul>
             </div>
 
@@ -253,7 +256,8 @@
                         <select id="schedule-type-select" disabled>
                             <option value="duty">🛠️ 當值</option>
                             <option value="event">🎉 活動</option>
-                            <option value="private">🔒 私人</option>
+                            <option value="private">🔒 全私人</option>
+                            <option value="sup-private">🔒 客廰私人</option>
                         </select>
                     </div>
                     <div class="input-row">
