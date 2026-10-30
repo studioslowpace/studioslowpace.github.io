@@ -819,7 +819,7 @@ function getWeeksInMonth(monthStr) {
     async function clearMultiSlotData() {
         if(selectedKeys.length === 0) return;
         for(let key of selectedKeys) {
-            if(currentRole === 'intern' || currentRole === 'friend' || currentRole === 'inn_user') {
+            if(currentRole === 'intern' ) {
                 cachedSchedule[key] = { name: "AVAILABLE", type: "duty" };
                 await client.from(TABLE_NAME).upsert({ slot_key: key, user_name: "AVAILABLE" }, { onConflict: 'slot_key' });
             } else {
